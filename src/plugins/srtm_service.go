@@ -61,7 +61,7 @@ type KeyValue struct {
 // mapreduce.KeyValue.
 func mapF(document string, value string) (res []KeyValue) {
 	var arr []string
-	// Split document up into words on non-word boundaries.
+	// Split up string line-by-line.
 	for _, s := range strings.FieldsFunc(value, func(r rune) bool {
 		if r == '\n' {
 			return true

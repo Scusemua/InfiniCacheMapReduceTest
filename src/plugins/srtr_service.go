@@ -112,7 +112,10 @@ func reduceF(key string, values [][]string) []string {
 	for i, s := range values[0] {
 		Debug("%d: %s\n", i, s)
 	}
+
+	// Perform merge sort.
 	sorted := mergeSort(values[0])
+
 	Debug("Merge-sort completed. Sorted values:\n")
 	for i, s := range sorted {
 		Debug("%d: %s\n", i, s)
