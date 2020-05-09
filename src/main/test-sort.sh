@@ -1,5 +1,5 @@
 #!/bin/bash
-go run client.go localhost:1234 srt 10 data.txt &
+go run client.go localhost:1234 srt 1 data.dat &
 pids[0]=$!
 
 go run worker.go localhost:1235 localhost:1234 100 & 
@@ -22,4 +22,4 @@ done
 #fi
 
 # clean up generated intermediate and output files
-rm mrtmp.* mr.sort-res* mr-final.sort.out
+rm mrtmp.* mr.srt-res* #mr-final.srt.out

@@ -1,1 +1,3 @@
 src/main/data.txt
+src/main/part*
+src/main/*.dat

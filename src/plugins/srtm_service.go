@@ -18,7 +18,7 @@ import (
 	"strings"
 )
 
-const debugEnabled = false
+const debugEnabled = true
 
 func Debug(format string, a ...interface{}) (n int, err error) {
 	if debugEnabled {
@@ -51,7 +51,7 @@ type MapReduceArgs struct {
 
 type KeyValue struct {
 	Key   string
-	Value string
+	Value []string
 }
 
 // The mapping function is called once for each piece of the input.
@@ -60,6 +60,7 @@ type KeyValue struct {
 // should be a slice of key/value pairs, each represented by a
 // mapreduce.KeyValue.
 func mapF(document string, value string) (res []KeyValue) {
+	var arr []string
 	// Split document up into words on non-word boundaries.
 	for _, s := range strings.FieldsFunc(value, func(r rune) bool {
 		if r == '\n' {
@@ -67,9 +68,13 @@ func mapF(document string, value string) (res []KeyValue) {
 		}
 		return false
 	}) {
-		sep := strings.Split(s, "  ")
-		res = append(res, KeyValue{sep[0], sep[1] + "  " + sep[2]})
+		Debug("Adding string \"%s\" to array...\n", s)
+		arr = append(arr, s)
+		//res = append(res, KeyValue{sep[0], sep[1] + "  " + sep[2]})
 	}
+	//Debug("\narr:\n%s\n", strings.Join(arr, ","))
+	res = append(res, KeyValue{document, arr})
+	//Debug("\nRes:\n%s\n", res)
 	return res
 }
 
@@ -98,12 +103,15 @@ func doMap(
 	var err error
 	var b []byte
 
-	Debug("Reading %s", inFile)
+	Debug("Reading %s\n", inFile)
 	b, err = ioutil.ReadFile(inFile)
 	checkError(err)
 
+	fmt.Printf("Input file contents:\n%s\n", string(b))
+
 	for _, result := range mapF(inFile, string(b)) {
 		reducerNum := ihash(result.Key) % nReduce
+		Debug("Encoding result for reducerNum %d:\n%s\n", reducerNum, result)
 		err = reduceEncoders[reducerNum].Encode(&result)
 		checkError(err)
 	}
@@ -128,6 +136,8 @@ func (s srtmService) DoService(raw []byte) error {
 		return err
 	}
 	fmt.Printf("Hello from sort service plugin: %s\n", args.InFile)
+
+	fmt.Println("About to execute doMap()...")
 
 	doMap(args.JobName, args.InFile, args.TaskNum, args.NReduce)
 
