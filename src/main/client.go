@@ -14,9 +14,9 @@
 package main
 
 import (
+	"cs675-spring20-labs/lab2/serverless"
 	"log"
 	"os"
-	"serverless"
 	"strconv"
 )
 
@@ -35,6 +35,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	serverless.Debug("jobName: %s, nReduce: %d\n", jobName, nReduce)
 
 	inFiles := os.Args[4:] // the rest of cmd-line argument: the input file names of the job
 

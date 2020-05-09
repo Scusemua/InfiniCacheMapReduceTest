@@ -33,6 +33,10 @@ func checkError(err error) {
 	}
 }
 
+// To compile the map plugin: run:
+// go build --buildmode=plugin -o srtr_service.so srtr_service.go
+// go build --buildmode=plugin -o srtm_service.so srtm_service.go
+
 // Define Inverted Indexing's map service
 type srtmService string
 
@@ -63,8 +67,8 @@ func mapF(document string, value string) (res []KeyValue) {
 		}
 		return false
 	}) {
-		sep = strings.Split(s, "  ")
-		res = append(res, KeyValue{s[0], s[1]})
+		sep := strings.Split(s, "  ")
+		res = append(res, KeyValue{sep[0], sep[1] + "  " + sep[2]})
 	}
 	return res
 }

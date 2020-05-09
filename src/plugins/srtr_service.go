@@ -20,7 +20,8 @@ import (
 )
 
 // To compile the map plugin: run:
-// go build --buildmode=plugin -o iir_service.so iir_service.go
+// go build --buildmode=plugin -o srtr_service.so srtr_service.go
+// go build --buildmode=plugin -o srtm_service.so srtm_service.go
 
 // Define Inverted Indexing's reduce service
 type srtrService string
@@ -60,7 +61,7 @@ func Debug(format string, a ...interface{}) (n int, err error) {
 func reduceF(key string, values []string) string {
 	// Just sort and count the documents. Output as value.
 	sort.Slice(values, func(i, j int) bool { return values[i] < values[j] })
-	return fmt.Sprintf("%d %s", len(values), strings.Join(values, ","))
+	return fmt.Sprintf("%s", strings.Join(values, ","))
 }
 
 // doReduce does the job of a reduce worker: it reads the

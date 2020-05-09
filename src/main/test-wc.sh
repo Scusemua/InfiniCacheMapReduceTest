@@ -19,6 +19,7 @@ echo "Failed test. Output should be as in mr-testout.txt. Your output differs as
   cat diff.out
 else
   echo "Passed test!" > /dev/stderr
+  cat mr-final.wc.out
 fi
 
 # clean up generated intermediate and output files

@@ -13,13 +13,13 @@
 package main
 
 import (
+	"cs675-spring20-labs/lab2/serverless"
 	"fmt"
 	"log"
 	"net"
 	"net/rpc"
 	"os"
 	"plugin"
-	"serverless"
 	"strconv"
 	"sync"
 )
