@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 )
 
 // merge combines the results of the many reduce jobs into a single
@@ -28,7 +29,7 @@ func (drv *Driver) merge() {
 			if err != nil {
 				break
 			}
-			kvs[kv.Key] = kv.Value
+			kvs[kv.Key] = strings.Join(kv.Value, "\n")
 		}
 		file.Close()
 	}
@@ -44,7 +45,7 @@ func (drv *Driver) merge() {
 	}
 	w := bufio.NewWriter(file)
 	for _, k := range keys {
-		fmt.Fprintf(w, "%s: %s\n", k, kvs[k])
+		fmt.Fprintf(w, "%s\n", kvs[k])
 	}
 	w.Flush()
 	file.Close()

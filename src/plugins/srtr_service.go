@@ -76,7 +76,7 @@ func merge(left []string, right []string) (merged []string) {
 	i := 0
 
 	for len(left) > 0 && len(right) > 0 {
-		// The values are the rows from gensort, which are <actual string>  <string index>  <checksum>
+		// The values are the rows from gensort, which are "<actual string>  <string index>  <checksum>"
 		left_split := strings.Split(left[0], "  ")
 		right_split := strings.Split(right[0], "  ")
 
@@ -90,6 +90,7 @@ func merge(left []string, right []string) (merged []string) {
 		i++
 	}
 
+	// Add remaining elements from left/right to the merged array.
 	for j := 0; j < len(left); j++ {
 		merged[i] = left[j]
 		i++
@@ -117,10 +118,9 @@ func reduceF(key string, values [][]string) []string {
 	sorted := mergeSort(values[0])
 
 	Debug("Merge-sort completed. Sorted values:\n")
-	for i, s := range sorted {
-		Debug("%d: %s\n", i, s)
+	for _, s := range sorted {
+		Debug("%s\n", s)
 	}
-	fmt.Sprintf("Sorted:\n%s\n", strings.Join(sorted, ","))
 	return sorted //fmt.Sprintf("%s", strings.Join(sorted, ","))
 }
 
@@ -140,7 +140,6 @@ func doReduce(
 		fileName := serverless.ReduceName(jobName, i, reduceTaskNum)
 		Debug("fileName = %s\n", fileName)
 		f, err := os.Open(fileName)
-		Debug("contents of file \"%s\":\n%s", fileName, f)
 		checkError(err)
 		defer f.Close()
 		dec := json.NewDecoder(f)
@@ -168,6 +167,7 @@ func doReduce(
 		new_kv := new(KeyValue)
 		new_kv.Key = k
 		new_kv.Value = output
+		Debug("Output:\n%s\n", output)
 		err = enc.Encode(&new_kv)
 		checkError(err)
 	}

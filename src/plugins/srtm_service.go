@@ -68,7 +68,6 @@ func mapF(document string, value string) (res []KeyValue) {
 		}
 		return false
 	}) {
-		Debug("Adding string \"%s\" to array...\n", s)
 		arr = append(arr, s)
 		//res = append(res, KeyValue{sep[0], sep[1] + "  " + sep[2]})
 	}
