@@ -1,5 +1,5 @@
 #!/bin/bash
-go run client.go localhost:1234 srt 1 data.dat &
+go run client.go localhost:1234 srt 1 data100000.dat data.dat &
 pids[0]=$!
 
 go run worker.go localhost:1235 localhost:1234 100 & 

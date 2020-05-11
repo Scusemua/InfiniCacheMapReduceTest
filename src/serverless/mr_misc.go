@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"sort"
-	"strings"
 )
 
 // merge combines the results of the many reduce jobs into a single
@@ -29,7 +28,7 @@ func (drv *Driver) merge() {
 			if err != nil {
 				break
 			}
-			kvs[kv.Key] = strings.Join(kv.Value, "\n")
+			kvs[kv.Key] = kv.Value // strings.Join(kv.Value, "\n")
 		}
 		file.Close()
 	}

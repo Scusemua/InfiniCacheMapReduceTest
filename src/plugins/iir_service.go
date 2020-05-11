@@ -38,6 +38,7 @@ type MapReduceArgs struct {
 	TaskNum int
 	NReduce int
 	NOthers int
+	SampleKeys []string
 }
 
 type KeyValue struct {

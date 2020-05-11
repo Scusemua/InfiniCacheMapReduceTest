@@ -48,11 +48,12 @@ type iimService string
 
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
-	JobName string
-	InFile  string
-	TaskNum int
-	NReduce int
-	NOthers int
+	JobName    string
+	InFile     string
+	TaskNum    int
+	NReduce    int
+	NOthers    int
+	SampleKeys []string
 }
 
 type KeyValue struct {

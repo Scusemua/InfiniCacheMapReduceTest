@@ -11,7 +11,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"hash/fnv"
 	"io/ioutil"
 	"log"
 	"os"
@@ -42,16 +41,17 @@ type srtmService string
 
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
-	JobName string
-	InFile  string
-	TaskNum int
-	NReduce int
-	NOthers int
+	JobName    string
+	InFile     string
+	TaskNum    int
+	NReduce    int
+	NOthers    int
+	SampleKeys []string
 }
 
 type KeyValue struct {
 	Key   string
-	Value []string
+	Value string
 }
 
 // The mapping function is called once for each piece of the input.
@@ -60,7 +60,7 @@ type KeyValue struct {
 // should be a slice of key/value pairs, each represented by a
 // mapreduce.KeyValue.
 func mapF(document string, value string) (res []KeyValue) {
-	var arr []string
+	//var arr []string
 	// Split up string line-by-line.
 	for _, s := range strings.FieldsFunc(value, func(r rune) bool {
 		if r == '\n' {
@@ -68,11 +68,12 @@ func mapF(document string, value string) (res []KeyValue) {
 		}
 		return false
 	}) {
-		arr = append(arr, s)
-		//res = append(res, KeyValue{sep[0], sep[1] + "  " + sep[2]})
+		sep := strings.Split(s, "  ")
+		//arr = append(arr, s)
+		res = append(res, KeyValue{sep[0], ""})
 	}
 	//Debug("\narr:\n%s\n", strings.Join(arr, ","))
-	res = append(res, KeyValue{document, arr})
+	//res = append(res, KeyValue{document, arr})
 	//Debug("\nRes:\n%s\n", res)
 	return res
 }
@@ -86,6 +87,7 @@ func doMap(
 	inFile string,
 	taskNum int,
 	nReduce int,
+	trie serverless.TrieNode,
 ) {
 	reduceEncoders := make([]*json.Encoder, nReduce)
 
@@ -109,7 +111,7 @@ func doMap(
 	fmt.Printf("Input file contents:\n%s\n", string(b))
 
 	for _, result := range mapF(inFile, string(b)) {
-		reducerNum := ihash(result.Key) % nReduce
+		reducerNum := ihash(result.Key, trie) % nReduce
 		Debug("Encoding result for reducerNum %d:\n%s\n", reducerNum, result)
 		err = reduceEncoders[reducerNum].Encode(&result)
 		checkError(err)
@@ -118,10 +120,13 @@ func doMap(
 
 // We supply you an ihash function to help with mapping of a given
 // key to an intermediate file.
-func ihash(s string) int {
-	h := fnv.New32a()
-	h.Write([]byte(s))
-	return int(h.Sum32() & 0x7fffffff)
+func ihash(s string, trie serverless.TrieNode) int {
+	partition := serverless.GetPartition(s, trie)
+	fmt.Printf("Partition for key \"%s\": %d\n", s, partition)
+	return partition
+	//h := fnv.New32a()
+	//h.Write([]byte(s))
+	//return int(h.Sum32() & 0x7fffffff)
 }
 
 // DON'T MODIFY THIS FUNCTION
@@ -138,7 +143,12 @@ func (s srtmService) DoService(raw []byte) error {
 
 	fmt.Println("About to execute doMap()...")
 
-	doMap(args.JobName, args.InFile, args.TaskNum, args.NReduce)
+	fmt.Printf("Sample keys: %s\n", strings.Join(args.SampleKeys, ","))
+
+	fmt.Println("Constructing the Trie now...")
+	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
+
+	doMap(args.JobName, args.InFile, args.TaskNum, args.NReduce, trie)
 
 	return nil
 }

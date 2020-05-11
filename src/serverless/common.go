@@ -40,7 +40,7 @@ const (
 // passed to the map and reduce functions.
 type KeyValue struct {
 	Key   string
-	Value []string
+	Value string
 }
 
 // (Lab 2 only) reduceName constructs the name of the intermediate
