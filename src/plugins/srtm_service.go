@@ -70,11 +70,11 @@ func mapF(document string, value string) (res []KeyValue) {
 	}) {
 		sep := strings.Split(s, "  ")
 		//arr = append(arr, s)
-		res = append(res, KeyValue{sep[0], ""})
+		res = append(res, KeyValue{sep[0], s})
 	}
 	//Debug("\narr:\n%s\n", strings.Join(arr, ","))
 	//res = append(res, KeyValue{document, arr})
-	//Debug("\nRes:\n%s\n", res)
+	Debug("\nRes:\n%s\n", res)
 	return res
 }
 

@@ -110,10 +110,10 @@ func merge(left []string, right []string) (merged []string) {
 func reduceF(key string, values []string) string {
 	// Just sort and count the documents. Output as value.
 	//sort.Slice(values, func(i, j int) bool { return values[i] < values[j] })
-	//Debug("Unsorted values:\n")
-	//for i, s := range values[0] {
-	//	Debug("%d: %s\n", i, s)
-	//}
+	fmt.Printf("Values (in Reducer):\n")
+	for i, s := range values[0] {
+		fmt.Printf("%d: %s\n", i, s)
+	}
 
 	// Perform merge sort.
 	//sorted := mergeSort(values[0])
@@ -169,7 +169,7 @@ func doReduce(
 		new_kv := new(KeyValue)
 		new_kv.Key = k
 		new_kv.Value = output
-		Debug("Output:\n%s\n", output)
+		//Debug("Output:\n%s\n", output)
 		err = enc.Encode(&new_kv)
 		checkError(err)
 	}
