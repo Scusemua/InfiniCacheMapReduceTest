@@ -1,5 +1,5 @@
 #!/bin/bash
-go run client.go localhost:1234 srt 5 data500.dat part*.dat &
+go run client.go localhost:1234 srt 10 Partitions_0-10000_Incr1000/merged*.dat Partitions_0-10000_Incr1000/part*.dat &
 pids[0]=$!
 
 go run worker.go localhost:1235 localhost:1234 100 & 

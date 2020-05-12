@@ -1,8 +1,8 @@
 package serverless
 
-import (
-	"fmt"
-)
+// import (
+// 	"fmt"
+// )
 
 type TrieNode interface {
 	FindPartition(key string) int
@@ -79,14 +79,14 @@ func BuildTrie(splits []string, lower int, upper int, prefix string, maxDepth in
 	trial = prefix + string([]byte{1})
 	currentBound = lower
 
-	fmt.Println("=== Initial Values =================")
-	fmt.Printf("trial (bytes) = %v\n", []byte(trial))
-	fmt.Printf("depth = %d\n", depth)
-	fmt.Printf("lower = %d\nupper = %d\nprefix = %v\nmaxDepth = %d\ncurrentBound = %d\n", lower, upper, prefix, maxDepth, currentBound)
-	fmt.Println("------------------------------------")
+	//fmt.Println("=== Initial Values =================")
+	//fmt.Printf("trial (bytes) = %v\n", []byte(trial))
+	//fmt.Printf("depth = %d\n", depth)
+	//fmt.Printf("lower = %d\nupper = %d\nprefix = %v\nmaxDepth = %d\ncurrentBound = %d\n", lower, upper, prefix, maxDepth, currentBound)
+	//fmt.Println("------------------------------------")
 
 	if depth >= maxDepth || lower == upper {
-		fmt.Println("Returning leaf node.")
+		//fmt.Println("Returning leaf node.")
 		leafTrieNode = NewLeafTrieNode(depth, splits, lower, upper)
 		return leafTrieNode
 	}
@@ -107,10 +107,10 @@ func BuildTrie(splits []string, lower int, upper int, prefix string, maxDepth in
 			currentBound = currentBound + 1
 		}
 		asBytes = []byte(trial)
-		fmt.Printf("Length of Trial (str): %d, Length of Trial (bytes): %d\n", len(trial), len(asBytes))
-		fmt.Printf("depth = %d\n", depth)
-		fmt.Printf("currentBound = %d\n", currentBound)
-		fmt.Printf("ch = %d\n", ch)
+		// fmt.Printf("Length of Trial (str): %d, Length of Trial (bytes): %d\n", len(trial), len(asBytes))
+		// fmt.Printf("depth = %d\n", depth)
+		// fmt.Printf("currentBound = %d\n", currentBound)
+		// fmt.Printf("ch = %d\n", ch)
 		asBytes[depth] = byte(ch)
 		trial = string(asBytes)
 		trieNode.child[ch] = BuildTrie(splits, lower, currentBound, trial, maxDepth)
@@ -121,6 +121,6 @@ func BuildTrie(splits []string, lower int, upper int, prefix string, maxDepth in
 	trial = string(asBytes)
 	trieNode.child[255] = BuildTrie(splits, currentBound, upper, trial, maxDepth)
 
-	fmt.Println("Returning the constructed Trie now...")
+	//fmt.Println("Returning the constructed Trie now...")
 	return trieNode
 }

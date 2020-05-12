@@ -12,7 +12,8 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"io"
+	"github.com/go-redis/redis/v7"
+	//"io"
 	"log"
 	"os"
 	"sort"
@@ -110,10 +111,10 @@ func merge(left []string, right []string) (merged []string) {
 func reduceF(key string, values []string) string {
 	// Just sort and count the documents. Output as value.
 	//sort.Slice(values, func(i, j int) bool { return values[i] < values[j] })
-	fmt.Printf("Values (in Reducer):\n")
-	for i, s := range values[0] {
-		fmt.Printf("%d: %s\n", i, s)
-	}
+	// fmt.Printf("Values (in Reducer):\n")
+	// for i, s := range values[0] {
+	// 	fmt.Printf("%d: %s\n", i, s)
+	// }
 
 	// Perform merge sort.
 	//sorted := mergeSort(values[0])
@@ -137,28 +138,35 @@ func doReduce(
 	reduceTaskNum int,
 	nMap int,
 ) {
-	inputs := make([]*KeyValue, 0)
-	for i := 0; i < nMap; i++ {
-		fileName := serverless.ReduceName(jobName, i, reduceTaskNum)
-		Debug("fileName = %s\n", fileName)
-		f, err := os.Open(fileName)
-		checkError(err)
-		defer f.Close()
-		dec := json.NewDecoder(f)
+	client := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
 
-		for {
-			kv := new(KeyValue)
-			if err := dec.Decode(&kv); err == io.EOF {
-				break
-			}
-			checkError(err)
+	inputs := make([]KeyValue, 0)
+	for i := 0; i < nMap; i++ {
+		redisKey := serverless.ReduceName(jobName, i, reduceTaskNum)
+
+		//for {
+		var kvs []KeyValue
+		//fmt.Printf("Retrieving value from Redis from Reducer #%d at key \"%s\"...\n", reduceTaskNum, redisKey)
+		marshalled_result, err := client.Get(redisKey).Result()
+		checkError(err)
+		json.Unmarshal([]byte(marshalled_result), &kvs)
+		//fmt.Printf("Retrieved list of %d KeyValue structs from Redis.\n", len(kvs))
+		for _, kv := range kvs {
+			//fmt.Printf("%+v\n", kv)
 			inputs = append(inputs, kv)
 		}
+		//}
 	}
+	//fmt.Println("inputs =")
+	//fmt.Println(inputs)
 	sort.Slice(inputs, func(i, j int) bool { return inputs[i].Key < inputs[j].Key })
 
 	fileName := serverless.MergeName(jobName, reduceTaskNum)
-	Debug("Creating %s\n", fileName)
+	//Debug("Creating %s\n", fileName)
 	f, err := os.Create(fileName)
 	checkError(err)
 	defer f.Close()

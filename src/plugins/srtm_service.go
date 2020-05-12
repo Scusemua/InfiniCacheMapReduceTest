@@ -11,9 +11,10 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"github.com/go-redis/redis/v7"
 	"io/ioutil"
 	"log"
-	"os"
+	//"os"
 	"strings"
 )
 
@@ -68,13 +69,12 @@ func mapF(document string, value string) (res []KeyValue) {
 		}
 		return false
 	}) {
-		sep := strings.Split(s, "  ")
 		//arr = append(arr, s)
-		res = append(res, KeyValue{sep[0], s})
+		res = append(res, KeyValue{s[0:10], s})
 	}
 	//Debug("\narr:\n%s\n", strings.Join(arr, ","))
 	//res = append(res, KeyValue{document, arr})
-	Debug("\nRes:\n%s\n", res)
+	//Debug("\nRes:\n%s\n", res)
 	return res
 }
 
@@ -89,31 +89,47 @@ func doMap(
 	nReduce int,
 	trie serverless.TrieNode,
 ) {
-	reduceEncoders := make([]*json.Encoder, nReduce)
+	//reduceEncoders := make([]*gob.Encoder, nReduce)
 
-	for i := 0; i < nReduce; i++ {
-		fileName := serverless.ReduceName(jobName, taskNum, i)
-		Debug("Creating %s\n", fileName)
-		f, err := os.Create(fileName)
-		checkError(err)
-		defer f.Close()
-		enc := json.NewEncoder(f)
-		reduceEncoders[i] = enc
-	}
+	client := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	// for i := 0; i < nReduce; i++ {
+	// 	fileName := serverless.ReduceName(jobName, taskNum, i)
+	// 	//Debug("Creating %s\n", fileName)
+	// 	f, err := os.Create(fileName)
+	// 	checkError(err)
+	// 	defer f.Close()
+	// 	//enc := json.NewEncoder(f)
+	// 	//reduceEncoders[i] = enc
+	// }
 
 	var err error
 	var b []byte
 
-	Debug("Reading %s\n", inFile)
+	//Debug("Reading %s\n", inFile)
 	b, err = ioutil.ReadFile(inFile)
 	checkError(err)
 
-	fmt.Printf("Input file contents:\n%s\n", string(b))
-
+	results := make(map[string][]KeyValue)
 	for _, result := range mapF(inFile, string(b)) {
 		reducerNum := ihash(result.Key, trie) % nReduce
-		Debug("Encoding result for reducerNum %d:\n%s\n", reducerNum, result)
-		err = reduceEncoders[reducerNum].Encode(&result)
+		redisKey := serverless.ReduceName(jobName, taskNum, reducerNum)
+		results[redisKey] = append(results[redisKey], result)
+	}
+
+	for k, v := range results {
+		marshalled_result, err := json.Marshal(v)
+		checkError(err)
+		//fmt.Printf("Storing result containing %d KeyValue structs in Redis at key \"%s\".\n", len(v), k)
+		//fmt.Println("Contents of the list:")
+		// for _, r := range v {
+		// 	fmt.Println(r)
+		// }
+		err = client.Set(k, marshalled_result, 0).Err()
 		checkError(err)
 	}
 }
@@ -122,7 +138,7 @@ func doMap(
 // key to an intermediate file.
 func ihash(s string, trie serverless.TrieNode) int {
 	partition := serverless.GetPartition(s, trie)
-	fmt.Printf("Partition for key \"%s\": %d\n", s, partition)
+	//fmt.Printf("Partition for key \"%s\": %d\n", s, partition)
 	return partition
 	//h := fnv.New32a()
 	//h.Write([]byte(s))
@@ -136,16 +152,16 @@ func (s srtmService) DoService(raw []byte) error {
 	dec := gob.NewDecoder(buf)
 	err := dec.Decode(&args)
 	if err != nil {
-		fmt.Printf("Sort: Failed to decode!\n")
+		//fmt.Printf("Sort: Failed to decode!\n")
 		return err
 	}
-	fmt.Printf("Hello from sort service plugin: %s\n", args.InFile)
+	//fmt.Printf("Hello from sort service plugin: %s\n", args.InFile)
 
-	fmt.Println("About to execute doMap()...")
+	//fmt.Println("About to execute doMap()...")
 
-	fmt.Printf("Sample keys: %s\n", strings.Join(args.SampleKeys, ","))
+	//fmt.Printf("Sample keys: %s\n", strings.Join(args.SampleKeys, ","))
 
-	fmt.Println("Constructing the Trie now...")
+	//fmt.Println("Constructing the Trie now...")
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
 
 	doMap(args.JobName, args.InFile, args.TaskNum, args.NReduce, trie)
