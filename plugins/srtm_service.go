@@ -117,6 +117,8 @@ func doMap(
 	// Create a downloader with the session and default options
 	downloader := s3manager.NewDownloader(sess)
 
+	fmt.Printf("Creating file \"%s\" to read S3 data into...\n", s3Key)
+
 	// Create a file to write the S3 Object contents to.
 	s3KeyFile, err = os.Create(s3Key)
 	checkError(err)

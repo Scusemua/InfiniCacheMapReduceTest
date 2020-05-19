@@ -325,6 +325,8 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 	fmt.Printf("Driver generating sample keys took %d ms.", elapsed/1e6)
 	fmt.Printf("Sample keys: %s\n", strings.Join(sampleKeys, ","))
 
+	fmt.Printf("Number of S3 keys: %d\n", len(s3Keys))
+
 	go drv.run(jobName, s3Keys, nReduce, sampleKeys,
 		func(phase jobPhase, serviceName string) { // func schedule()
 			registerChan := make(chan string)

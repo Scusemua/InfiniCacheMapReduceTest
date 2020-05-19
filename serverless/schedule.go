@@ -43,7 +43,7 @@ func (drv *Driver) schedule(
 	// be requeued by invokeService when they fail
 	var nTasks int
 	var jobChan chan *MapReduceArgs
-	Debug("Driver: Creating jobs\n")
+	Debug("Driver: Creating jobs. nTasks: %d\n", len(drv.s3Keys))
 	if phase == mapPhase {
 		nTasks = len(drv.s3Keys)
 		jobChan = make(chan *MapReduceArgs, nTasks)
