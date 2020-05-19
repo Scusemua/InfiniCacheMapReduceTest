@@ -130,7 +130,7 @@ func doMap(
 
 	c := consistent.New()
 	clientMap := make(map[string]*redis.Client)
-	redisHostnames := []string{"ip1:6379", "ip2:6379", "ip3:6379"}
+	redisHostnames := []string{"ec2-54-227-125-109.compute-1.amazonaws.com:6379"}
 
 	fmt.Println("Populating hash ring and client map now...")
 
