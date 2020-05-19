@@ -126,7 +126,7 @@ func doMap(
 	})
 	checkError(err)
 
-	fmt.Printf("File downloaded, %d bytes\n", n)
+	fmt.Printf("File %s downloaded, %d bytes\n", s3Key, n)
 
 	c := consistent.New()
 	clientMap := make(map[string]*redis.Client)

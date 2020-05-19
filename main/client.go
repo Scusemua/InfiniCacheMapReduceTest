@@ -14,7 +14,7 @@
 package main
 
 import (
-	"cs675-spring20-labs/lab2/serverless"
+	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"log"
 	"os"
 	"strconv"

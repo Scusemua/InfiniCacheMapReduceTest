@@ -13,8 +13,8 @@
 package main
 
 import (
-	"cs675-spring20-labs/lab2/serverless"
 	"fmt"
+	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"log"
 	"net"
 	"net/rpc"

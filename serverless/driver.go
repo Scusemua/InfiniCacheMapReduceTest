@@ -16,6 +16,10 @@ package serverless
 import (
 	"bufio"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"io/ioutil"
 	"log"
 	"net"
@@ -51,6 +55,25 @@ func getSampleKeys(sampleFileS3Key string, nReduce int) []string {
 	var stepSize int
 
 	var sampleKeys []string
+
+	// The session the S3 Downloader will use
+	sess := session.Must(session.NewSession())
+
+	// Create a downloader with the session and default options
+	downloader := s3manager.NewDownloader(sess)
+
+	// Create a file to write the S3 Object contents to.
+	s3KeyFile, err = os.Create(sampleFileS3Key)
+	checkError(err)
+
+	// Write the contents of S3 Object to the file
+	n, err := downloader.Download(s3KeyFile, &s3.GetObjectInput{
+		Bucket: aws.String("infinistore-mapreduce"),
+		Key:    aws.String(sampleFileS3Key),
+	})
+	checkError(err)
+
+	fmt.Printf("File %s downloaded, %d bytes\n", sampleFileS3Key, n)
 
 	fmt.Println("\n\nDriver is generating sample keys now...")
 	fmt.Println("Driver is reading data from file", sampleFileS3Key, "to generate the sample keys.")
@@ -287,7 +310,7 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 	// Read in all the S3 keys from the files.
 	for scanner.Scan() {
 		txt := scanner.Text()
-		fmt.Printf("Read S3 key from file: \"%s\"", txt)
+		fmt.Printf("Read S3 key from file: \"%s\"\n", txt)
 		s3Keys = append(s3Keys, txt)
 	}
 
@@ -321,7 +344,4 @@ func (drv *Driver) killWorkers() {
 		if ok == false {
 			fmt.Printf("Driver: RPC %s shutdown error\n", w)
 		} else {
-			fmt.Printf("Driver: RPC %s shutdown gracefully\n", w)
-		}
-	}
-}
+			fmt.Printf("Driver: RPC %s shutdo
