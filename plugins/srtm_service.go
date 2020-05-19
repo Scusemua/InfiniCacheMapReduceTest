@@ -6,12 +6,15 @@
 package main
 
 import (
-	"InfiniCacheMapReduceTest/serverless"
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/go-redis/redis/v7"
 	"github.com/lafikl/consistent"
 	"io/ioutil"
@@ -101,7 +104,10 @@ func doMap(
 	nReduce int,
 	trie serverless.TrieNode,
 ) {
-	//reduceEncoders := make([]*gob.Encoder, nReduce)
+	var err error
+	var b []byte
+	var s3KeyFile *os.File
+	var ioData *os.File
 
 	// The session the S3 Downloader will use
 	sess := session.Must(session.NewSession())
@@ -110,13 +116,13 @@ func doMap(
 	downloader := s3manager.NewDownloader(sess)
 
 	// Create a file to write the S3 Object contents to.
-	f, err := os.Create(filename)
+	s3KeyFile, err = os.Create(s3Key)
 	checkError(err)
 
 	// Write the contents of S3 Object to the file
-	n, err := downloader.Download(f, &s3.GetObjectInput{
-		Bucket: aws.String(myBucket),
-		Key:    aws.String(myString),
+	n, err := downloader.Download(s3KeyFile, &s3.GetObjectInput{
+		Bucket: aws.String("infinistore-mapreduce"),
+		Key:    aws.String(s3Key),
 	})
 	checkError(err)
 
@@ -147,25 +153,6 @@ func doMap(
 		clientMap[hostname] = client
 	}
 
-	// client := redis.NewClient(&redis.Options{
-	// 	Addr:     "ec2-3-80-48-21.compute-1.amazonaws.com:6379",
-	// 	Password: "",
-	// 	DB:       0,
-	// })
-
-	// for i := 0; i < nReduce; i++ {
-	// 	fileName := serverless.ReduceName(jobName, taskNum, i)
-	// 	//Debug("Creating %s\n", fileName)
-	// 	f, err := os.Create(fileName)
-	// 	checkError(err)
-	// 	defer f.Close()
-	// 	//enc := json.NewEncoder(f)
-	// 	//reduceEncoders[i] = enc
-	// }
-
-	var err error
-	var b []byte
-
 	//Debug("Reading %s\n", s3Key)
 	b, err = ioutil.ReadFile(s3Key)
 	checkError(err)
@@ -193,11 +180,11 @@ func doMap(
 		checkError(err)
 	}
 
-	f, err := os.Create("IOData/map_io_data_" + jobName + strconv.Itoa(taskNum) + ".dat")
+	ioData, err = os.Create("IOData/map_io_data_" + jobName + strconv.Itoa(taskNum) + ".dat")
 	checkError(err)
-	defer f.Close()
+	defer ioData.Close()
 	for _, rec := range ioRecords {
-		_, err := f.WriteString(fmt.Sprintf("%v\n", rec))
+		_, err := ioData.WriteString(fmt.Sprintf("%v\n", rec))
 		checkError(err)
 	}
 }

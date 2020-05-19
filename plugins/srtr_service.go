@@ -7,12 +7,11 @@
 package main
 
 import (
-	"InfiniCacheMapReduceTest/serverless"
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/go-redis/redis/v7"
 	"github.com/lafikl/consistent"
 	//"io"
