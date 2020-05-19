@@ -211,17 +211,11 @@ func (s srtmService) DoService(raw []byte) error {
 	dec := gob.NewDecoder(buf)
 	err := dec.Decode(&args)
 	if err != nil {
-		//fmt.Printf("Sort: Failed to decode!\n")
 		return err
 	}
-	//fmt.Printf("Hello from sort service plugin: %s\n", args.s3Key)
-
-	//fmt.Println("About to execute doMap()...")
-
-	//fmt.Printf("Sample keys: %s\n", strings.Join(args.SampleKeys, ","))
-
-	//fmt.Println("Constructing the Trie now...")
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
+
+	fmt.Printf("DoService srtm -- args.s3Key: \"%s\"\n", args.s3Key)
 
 	doMap(args.JobName, args.s3Key, args.TaskNum, args.NReduce, trie)
 
