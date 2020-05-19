@@ -13,11 +13,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v7"
+	"github.com/lafikl/consistent"
 	//"io"
 	"log"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
+	//"unsafe"
 )
 
 // To compile the map plugin: run:
@@ -40,6 +44,14 @@ type MapReduceArgs struct {
 type KeyValue struct {
 	Key   string
 	Value string
+}
+
+type IORecord struct {
+	TaskNum  int
+	RedisKey string
+	Bytes    int
+	Start    int64
+	End      int64
 }
 
 func checkError(err error) {
@@ -138,11 +150,31 @@ func doReduce(
 	reduceTaskNum int,
 	nMap int,
 ) {
-	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
-	})
+	c := consistent.New()
+	clientMap := make(map[string]*Client)
+	redisHostnames := []string{"ip1:6379", "ip2:6379", "ip3:6379"}
+
+	fmt.Println("Populating hash ring and client map now...")
+
+	// Add the IP addresses of the Reds instances to the ring.
+	// Create the Redis clients and store them in the map.
+	for _, hostname := range redisHostnames {
+		// Add hostname to hash ring.
+		c.Add(hostname)
+
+		fmt.Println("Creating Redis client for Redis listening at", hostname)
+
+		// Create client.
+		client := redis.NewClient(&redis.Options{
+			Addr:     hostname,
+			Password: "",
+			DB:       0,
+		})
+
+		// Store client in map.
+		clientMap[hostname] = client
+	}
+	ioRecords := make([]IORecord, 0)
 
 	inputs := make([]KeyValue, 0)
 	for i := 0; i < nMap; i++ {
@@ -150,9 +182,15 @@ func doReduce(
 
 		//for {
 		var kvs []KeyValue
+		start := time.Now()
+		host := c.Get(redisKey)
+		client := clientMap[host]
 		//fmt.Printf("Retrieving value from Redis from Reducer #%d at key \"%s\"...\n", reduceTaskNum, redisKey)
 		marshalled_result, err := client.Get(redisKey).Result()
+		end := time.Now()
 		checkError(err)
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
+		ioRecords = append(ioRecords, rec)
 		json.Unmarshal([]byte(marshalled_result), &kvs)
 		//fmt.Printf("Retrieved list of %d KeyValue structs from Redis.\n", len(kvs))
 		for _, kv := range kvs {
@@ -193,6 +231,14 @@ func doReduce(
 		values = append(values, kv.Value)
 	}
 	doReduce(enc, lastKey, values)
+
+	f2, err2 := os.Create("IOData/reduce_io_data_" + jobName + strconv.Itoa(reduceTaskNum) + ".dat")
+	checkError(err2)
+	defer f2.Close()
+	for _, rec := range ioRecords {
+		_, err2 := f2.WriteString(fmt.Sprintf("%v\n", rec))
+		checkError(err2)
+	}
 }
 
 // DON'T MODIFY THIS FUNCTION

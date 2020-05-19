@@ -7,12 +7,14 @@ import (
 	"log"
 	"os"
 	"sort"
+	"time"
 )
 
 // merge combines the results of the many reduce jobs into a single
 // output file XXX use merge sort
 func (drv *Driver) merge() {
 	Debug("Merge phase\n")
+	now := time.Now()
 	kvs := make(map[string]string)
 	for i := 0; i < drv.nReduce; i++ {
 		p := MergeName(drv.jobName, i)
@@ -46,6 +48,8 @@ func (drv *Driver) merge() {
 	for _, k := range keys {
 		fmt.Fprintf(w, "%s\n", kvs[k])
 	}
+	since := time.Since(now)
+	fmt.Printf("Merge phase took %d ms.", since/1e6)
 	w.Flush()
 	file.Close()
 }

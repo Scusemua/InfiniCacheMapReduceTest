@@ -22,6 +22,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Driver holds all the state that the driver needs to keep track of.
@@ -49,6 +50,9 @@ func getSampleKeys(sampleFile string, nReduce int) []string {
 
 	var sampleKeys []string
 
+	fmt.Println("\n\nDriver is generating sample keys now...")
+	fmt.Println("Driver is reading data from file", sampleFile, "to generate the sample keys.")
+
 	b, err = ioutil.ReadFile(sampleFile)
 	checkError(err)
 
@@ -71,6 +75,8 @@ func getSampleKeys(sampleFile string, nReduce int) []string {
 		sampleKeys = append(sampleKeys, arr[i])
 	}
 
+	fmt.Println("Driver successfully generated", len(arr), "sample keys.")
+
 	return sampleKeys
 }
 
@@ -90,6 +96,7 @@ func NewDriver(address string) (drv *Driver) {
 // 2) receive and execute tasks on the already plugged-in services.
 func (drv *Driver) Register(args *WorkerRegisterArgs, _ *struct{}) error {
 	drv.Lock()
+	fmt.Println("Driver received worker registration from worker at address:", args.WorkerAddr)
 	defer drv.Unlock()
 
 	drv.workers = append(drv.workers, args.WorkerAddr)
@@ -231,6 +238,9 @@ func (drv *Driver) run(
 	drv.nReduce = nReduce
 	drv.sampleKeys = sampleKeys
 
+	jobStartTime := time.Now()
+	fmt.Println("JOB START: ", jobStartTime.Format("2006-01-02 15:04:05:.99999"))
+
 	fmt.Printf("%s: Starting MapReduce job: %s\n", drv.address, jobName)
 
 	// E.g., for word count, the name of the map plugin service
@@ -247,6 +257,12 @@ func (drv *Driver) run(
 	finish()
 	drv.merge()
 
+	jobEndTime := time.Now()
+	jobDuration := time.Since(jobStartTime)
+
+	fmt.Println("JOB END: ", jobEndTime.Format("2006-01-02 15:04:05:.99999"))
+	fmt.Printf("Job Duration: %d ms\n", jobDuration/1000000)
+
 	drv.doneChannel <- true
 }
 
@@ -258,8 +274,12 @@ func (drv *Driver) Run(jobName string, inFiles []string, nReduce int) {
 	drv.startRPCServer()
 
 	sampleFile, inFiles := inFiles[0], inFiles[1:]
+	start := time.Now()
 	sampleKeys := getSampleKeys(sampleFile, nReduce)
+	end := time.Now()
+	elapsed := end.Sub(start)
 
+	fmt.Printf("Driver generating sample keys took %d ms.", elapsed/1e6)
 	fmt.Printf("Sample keys: %s\n", strings.Join(sampleKeys, ","))
 
 	go drv.run(jobName, inFiles, nReduce, sampleKeys,

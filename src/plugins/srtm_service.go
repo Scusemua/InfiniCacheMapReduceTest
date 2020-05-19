@@ -12,10 +12,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v7"
+	"github.com/lafikl/consistent"
 	"io/ioutil"
 	"log"
-	//"os"
+	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 const debugEnabled = true
@@ -55,6 +58,14 @@ type KeyValue struct {
 	Value string
 }
 
+type IORecord struct {
+	TaskNum  int
+	RedisKey string
+	Bytes    int
+	Start    int64
+	End      int64
+}
+
 // The mapping function is called once for each piece of the input.
 // In this framework, the key is the name of the file that is being
 // processed, and the value is the file's contents. The return value
@@ -91,11 +102,36 @@ func doMap(
 ) {
 	//reduceEncoders := make([]*gob.Encoder, nReduce)
 
-	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
-	})
+	c := consistent.New()
+	clientMap := make(map[string]*Client)
+	redisHostnames := []string{"ip1:6379", "ip2:6379", "ip3:6379"}
+
+	fmt.Println("Populating hash ring and client map now...")
+
+	// Add the IP addresses of the Reds instances to the ring.
+	// Create the Redis clients and store them in the map.
+	for _, hostname := range redisHostnames {
+		// Add hostname to hash ring.
+		c.Add(hostname)
+
+		fmt.Println("Creating Redis client for Redis listening at", hostname)
+
+		// Create client.
+		client := redis.NewClient(&redis.Options{
+			Addr:     hostname,
+			Password: "",
+			DB:       0,
+		})
+
+		// Store client in map.
+		clientMap[hostname] = client
+	}
+
+	// client := redis.NewClient(&redis.Options{
+	// 	Addr:     "ec2-3-80-48-21.compute-1.amazonaws.com:6379",
+	// 	Password: "",
+	// 	DB:       0,
+	// })
 
 	// for i := 0; i < nReduce; i++ {
 	// 	fileName := serverless.ReduceName(jobName, taskNum, i)
@@ -121,15 +157,26 @@ func doMap(
 		results[redisKey] = append(results[redisKey], result)
 	}
 
+	ioRecords := make([]IORecord, 0)
+
 	for k, v := range results {
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
-		//fmt.Printf("Storing result containing %d KeyValue structs in Redis at key \"%s\".\n", len(v), k)
-		//fmt.Println("Contents of the list:")
-		// for _, r := range v {
-		// 	fmt.Println(r)
-		// }
+		start := time.Now()
+		host := c.Get(k)
+		client := clientMap[host]
 		err = client.Set(k, marshalled_result, 0).Err()
+		end := time.Now()
+		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
+		ioRecords = append(ioRecords, rec)
+		checkError(err)
+	}
+
+	f, err := os.Create("IOData/map_io_data_" + jobName + strconv.Itoa(taskNum) + ".dat")
+	checkError(err)
+	defer f.Close()
+	for _, rec := range ioRecords {
+		_, err := f.WriteString(fmt.Sprintf("%v\n", rec))
 		checkError(err)
 	}
 }

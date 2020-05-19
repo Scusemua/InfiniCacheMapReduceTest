@@ -8,12 +8,14 @@ if __name__ == "__main__":
    parser.add_argument("-end", "--ending_value", dest = "ending_value", type = int, default = 1000)
    parser.add_argument("-incr", "--increment", dest = "increment", type = int, default = 250)
    parser.add_argument("-file", "--filename", dest = "filename", type = str, default = "part")
+   parser.add_argument("-threads", "--threads", dest = "threads", type = int, default = 1)
    
    args = parser.parse_args()
    starting_val = args.starting_value
    ending_val = args.ending_value
    increment = args.increment 
    filename = args.filename 
+   threads = args.threads
    
    counter = 0
    for i in range(starting_val, ending_val, increment):

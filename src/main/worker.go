@@ -172,14 +172,18 @@ loop:
 			break loop
 		default:
 		}
+		//fmt.Println("Worker", wk.address, "attempting to acquire worker lock...")
 		wk.Lock()
+		//fmt.Println("Worker", wk.address, "successfully acquired worker lock.")
 		if wk.nRPC == 0 {
+			fmt.Println("Worker reached maximum number of RPC messages.")
 			wk.Unlock()
 			break
 		}
 		wk.Unlock()
 		conn, err := wk.l.Accept()
 		if err == nil {
+			fmt.Println("Worker at address", wk.address, "received RPC connection...")
 			wk.Lock()
 			wk.nRPC--
 			wk.Unlock()

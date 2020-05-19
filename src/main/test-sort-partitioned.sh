@@ -1,9 +1,21 @@
 #!/bin/bash
-go run client.go localhost:1234 srt 10 Partitions_0-10000_Incr1000/merged*.dat Partitions_0-10000_Incr1000/part*.dat &
+go run client.go localhost:1234 srt 40 Partitions_0-100000_Incr10000/merged-0-thru-100000.dat 1M_Incr50000/part*.dat &
 pids[0]=$!
 
-go run worker.go localhost:1235 localhost:1234 100 & 
+go run worker.go localhost:1235 localhost:1234 999999 & 
 pids[1]=$!
+
+go run worker.go localhost:1236 localhost:1234 999999 & 
+pids[2]=$!
+
+go run worker.go localhost:1237 localhost:1234 999999 & 
+pids[3]=$!
+
+go run worker.go localhost:1238 localhost:1234 999999 & 
+pids[4]=$!
+
+go run worker.go localhost:1239 localhost:1234 999999 & 
+pids[5]=$!vals
 
 echo "[Test]: waiting for client and worker to finish..." > /dev/stderr
 for pid in ${pids[*]}; do
