@@ -54,6 +54,7 @@ func getSampleKeys(sampleFileS3Key string, nReduce int) []string {
 	var b []byte
 	var stepSize int
 
+	var s3KeyFile *os.File
 	var sampleKeys []string
 
 	// The session the S3 Downloader will use
@@ -344,4 +345,7 @@ func (drv *Driver) killWorkers() {
 		if ok == false {
 			fmt.Printf("Driver: RPC %s shutdown error\n", w)
 		} else {
-			fmt.Printf("Driver: RPC %s shutdo
+			fmt.Printf("Driver: RPC %s shutdown gracefully\n", w)
+		}
+	}
+}
