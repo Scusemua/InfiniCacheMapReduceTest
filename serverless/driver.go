@@ -58,7 +58,9 @@ func getSampleKeys(sampleFileS3Key string, nReduce int) []string {
 	var sampleKeys []string
 
 	// The session the S3 Downloader will use
-	sess := session.Must(session.NewSession())
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1")},
+	))
 
 	// Create a downloader with the session and default options
 	downloader := s3manager.NewDownloader(sess)

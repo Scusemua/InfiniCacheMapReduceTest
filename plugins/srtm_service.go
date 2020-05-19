@@ -110,7 +110,9 @@ func doMap(
 	var ioData *os.File
 
 	// The session the S3 Downloader will use
-	sess := session.Must(session.NewSession())
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1")
+	},))
 
 	// Create a downloader with the session and default options
 	downloader := s3manager.NewDownloader(sess)
