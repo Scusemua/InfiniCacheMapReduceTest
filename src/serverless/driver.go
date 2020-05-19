@@ -14,11 +14,13 @@
 package serverless
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/rpc"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -34,7 +36,7 @@ type Driver struct {
 	doneChannel chan bool
 
 	jobName    string   // the job name of the MapReduce job
-	inFiles    []string // a list of input file names
+	s3Keys     []string // a list of input file names
 	nReduce    int      // number of reduce tasks
 	sampleKeys []string
 
@@ -43,7 +45,7 @@ type Driver struct {
 	l        net.Listener
 }
 
-func getSampleKeys(sampleFile string, nReduce int) []string {
+func getSampleKeys(sampleFileS3Key string, nReduce int) []string {
 	var err error
 	var b []byte
 	var stepSize int
@@ -51,9 +53,9 @@ func getSampleKeys(sampleFile string, nReduce int) []string {
 	var sampleKeys []string
 
 	fmt.Println("\n\nDriver is generating sample keys now...")
-	fmt.Println("Driver is reading data from file", sampleFile, "to generate the sample keys.")
+	fmt.Println("Driver is reading data from file", sampleFileS3Key, "to generate the sample keys.")
 
-	b, err = ioutil.ReadFile(sampleFile)
+	b, err = ioutil.ReadFile(sampleFileS3Key)
 	checkError(err)
 
 	var arr []string
@@ -227,14 +229,14 @@ func (drv *Driver) Wait() {
 // workers and driver process.
 func (drv *Driver) run(
 	jobName string,
-	inFiles []string,
+	s3Keys []string,
 	nReduce int,
 	sampleKeys []string,
 	schedule func(phase jobPhase, serviceName string),
 	finish func(),
 ) {
 	drv.jobName = jobName
-	drv.inFiles = inFiles
+	drv.s3Keys = s3Keys
 	drv.nReduce = nReduce
 	drv.sampleKeys = sampleKeys
 
@@ -269,20 +271,35 @@ func (drv *Driver) run(
 // Run is a function exposed to client.
 // Run calls the internal call `run` to register plugin services and
 // schedule tasks with workers over RPC.
-func (drv *Driver) Run(jobName string, inFiles []string, nReduce int) {
+func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string, nReduce int) {
 	Debug("%s: Starting driver RPC server\n", drv.address)
 	drv.startRPCServer()
 
-	sampleFile, inFiles := inFiles[0], inFiles[1:]
+	// Get the list of S3 keys from the file.
+	file, err := os.Open(s3KeyFile)
+	checkError(err)
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	var s3Keys []string
+
+	// Read in all the S3 keys from the files.
+	for scanner.Scan() {
+		txt := scanner.Text()
+		fmt.Printf("Read S3 key from file: \"%s\"", txt)
+		s3Keys = append(s3Keys, txt)
+	}
+
 	start := time.Now()
-	sampleKeys := getSampleKeys(sampleFile, nReduce)
+	sampleKeys := getSampleKeys(sampleFileS3Key, nReduce)
 	end := time.Now()
 	elapsed := end.Sub(start)
 
 	fmt.Printf("Driver generating sample keys took %d ms.", elapsed/1e6)
 	fmt.Printf("Sample keys: %s\n", strings.Join(sampleKeys, ","))
 
-	go drv.run(jobName, inFiles, nReduce, sampleKeys,
+	go drv.run(jobName, s3Keys, nReduce, sampleKeys,
 		func(phase jobPhase, serviceName string) { // func schedule()
 			registerChan := make(chan string)
 			go drv.prepareService(registerChan, ServiceName(serviceName, phase))

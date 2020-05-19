@@ -34,7 +34,7 @@ type wcrService string
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
 	JobName    string
-	InFile     string
+	s3Key     string
 	TaskNum    int
 	NReduce    int
 	NOthers    int
@@ -143,7 +143,7 @@ func (s wcrService) DoService(raw []byte) error {
 		fmt.Printf("Word Count Service: Failed to decode!\n")
 		return err
 	}
-	fmt.Printf("Hello from wordCountService plugin: %s\n", args.InFile)
+	fmt.Printf("Hello from wordCountService plugin: %s\n", args.s3Key)
 
 	doReduce(args.JobName, args.TaskNum, args.NOthers)
 

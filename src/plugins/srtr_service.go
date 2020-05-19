@@ -7,11 +7,12 @@
 package main
 
 import (
+	"InfiniCacheMapReduceTest/serverless"
 	"bytes"
-	"cs675-spring20-labs/lab2/serverless"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/go-redis/redis/v7"
 	"github.com/lafikl/consistent"
 	//"io"
@@ -34,7 +35,7 @@ type srtrService string
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
 	JobName    string
-	InFile     string
+	s3Key      string
 	TaskNum    int
 	NReduce    int
 	NOthers    int
@@ -151,7 +152,7 @@ func doReduce(
 	nMap int,
 ) {
 	c := consistent.New()
-	clientMap := make(map[string]*Client)
+	clientMap := make(map[string]*redis.Client)
 	redisHostnames := []string{"ip1:6379", "ip2:6379", "ip3:6379"}
 
 	fmt.Println("Populating hash ring and client map now...")
@@ -183,7 +184,8 @@ func doReduce(
 		//for {
 		var kvs []KeyValue
 		start := time.Now()
-		host := c.Get(redisKey)
+		host, err := c.Get(redisKey)
+		checkError(err)
 		client := clientMap[host]
 		//fmt.Printf("Retrieving value from Redis from Reducer #%d at key \"%s\"...\n", reduceTaskNum, redisKey)
 		marshalled_result, err := client.Get(redisKey).Result()
@@ -251,7 +253,7 @@ func (s srtrService) DoService(raw []byte) error {
 		fmt.Printf("Sort: Failed to decode!\n")
 		return err
 	}
-	fmt.Printf("Hello from sort plugin: %s\n", args.InFile)
+	fmt.Printf("Hello from sort plugin: %s\n", args.s3Key)
 
 	doReduce(args.JobName, args.TaskNum, args.NOthers)
 

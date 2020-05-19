@@ -28,7 +28,7 @@ func (drv *Driver) schedule(
 	// MapReduceArgs defines the format of your MapReduce service plugins.
 	type MapReduceArgs struct {
 		JobName    string
-		InFile     string
+		s3Key      string
 		TaskNum    int
 		NReduce    int
 		NOthers    int
@@ -45,13 +45,13 @@ func (drv *Driver) schedule(
 	var jobChan chan *MapReduceArgs
 	Debug("Driver: Creating jobs\n")
 	if phase == mapPhase {
-		nTasks = len(drv.inFiles)
+		nTasks = len(drv.s3Keys)
 		jobChan = make(chan *MapReduceArgs, nTasks)
-		for i, fileName := range drv.inFiles {
+		for i, fileName := range drv.s3Keys {
 			arg := new(MapReduceArgs)
 			arg.TaskNum = i
 			arg.JobName = serviceName
-			arg.InFile = fileName
+			arg.s3Key = fileName
 			arg.NReduce = drv.nReduce
 			arg.SampleKeys = drv.sampleKeys
 			jobChan <- arg
@@ -64,7 +64,7 @@ func (drv *Driver) schedule(
 			arg.TaskNum = i
 			arg.JobName = serviceName
 			arg.NReduce = drv.nReduce
-			arg.NOthers = len(drv.inFiles)
+			arg.NOthers = len(drv.s3Keys)
 			arg.SampleKeys = drv.sampleKeys
 			jobChan <- arg
 		}

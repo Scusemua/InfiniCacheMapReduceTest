@@ -33,11 +33,11 @@ type iirService string
 
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
-	JobName string
-	InFile  string
-	TaskNum int
-	NReduce int
-	NOthers int
+	JobName    string
+	s3Key      string
+	TaskNum    int
+	NReduce    int
+	NOthers    int
 	SampleKeys []string
 }
 
@@ -139,7 +139,7 @@ func (s iirService) DoService(raw []byte) error {
 		fmt.Printf("Inverted Indexing Service: Failed to decode!\n")
 		return err
 	}
-	fmt.Printf("Hello from inverted indexing service plugin: %s\n", args.InFile)
+	fmt.Printf("Hello from inverted indexing service plugin: %s\n", args.s3Key)
 
 	doReduce(args.JobName, args.TaskNum, args.NOthers)
 

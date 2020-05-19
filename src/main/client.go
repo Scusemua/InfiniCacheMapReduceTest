@@ -38,9 +38,10 @@ func main() {
 
 	serverless.Debug("jobName: %s, nReduce: %d\n", jobName, nReduce)
 
-	inFiles := os.Args[4:] // the rest of cmd-line argument: the input file names of the job
+	sampleDataKey := os.Args[4] // The S3 key of the sample data to use for generating sample keys and building the trie.
+	s3KeyFile := os.Args[5]     // File which contains the S3 keys of the input data partitions.
 
-	go drv.Run(jobName, inFiles, nReduce)
+	go drv.Run(jobName, s3KeyFile, sampleDataKey, nReduce)
 
 	drv.Wait()
 }

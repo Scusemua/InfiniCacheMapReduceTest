@@ -6,11 +6,12 @@
 package main
 
 import (
+	"InfiniCacheMapReduceTest/serverless"
 	"bytes"
-	"cs675-spring20-labs/lab2/serverless"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/go-redis/redis/v7"
 	"github.com/lafikl/consistent"
 	"io/ioutil"
@@ -46,7 +47,7 @@ type srtmService string
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
 	JobName    string
-	InFile     string
+	s3Key      string
 	TaskNum    int
 	NReduce    int
 	NOthers    int
@@ -90,20 +91,39 @@ func mapF(document string, value string) (res []KeyValue) {
 }
 
 // doMap does the job of a map worker: it reads one of the input
-// files (inFile), calls the user-defined function (mapF) for that
+// files (s3Key), calls the user-defined function (mapF) for that
 // file's contents, and partitions the output into nReduce
 // intermediate files.
 func doMap(
 	jobName string,
-	inFile string,
+	s3Key string,
 	taskNum int,
 	nReduce int,
 	trie serverless.TrieNode,
 ) {
 	//reduceEncoders := make([]*gob.Encoder, nReduce)
 
+	// The session the S3 Downloader will use
+	sess := session.Must(session.NewSession())
+
+	// Create a downloader with the session and default options
+	downloader := s3manager.NewDownloader(sess)
+
+	// Create a file to write the S3 Object contents to.
+	f, err := os.Create(filename)
+	checkError(err)
+
+	// Write the contents of S3 Object to the file
+	n, err := downloader.Download(f, &s3.GetObjectInput{
+		Bucket: aws.String(myBucket),
+		Key:    aws.String(myString),
+	})
+	checkError(err)
+
+	fmt.Printf("File downloaded, %d bytes\n", n)
+
 	c := consistent.New()
-	clientMap := make(map[string]*Client)
+	clientMap := make(map[string]*redis.Client)
 	redisHostnames := []string{"ip1:6379", "ip2:6379", "ip3:6379"}
 
 	fmt.Println("Populating hash ring and client map now...")
@@ -146,12 +166,12 @@ func doMap(
 	var err error
 	var b []byte
 
-	//Debug("Reading %s\n", inFile)
-	b, err = ioutil.ReadFile(inFile)
+	//Debug("Reading %s\n", s3Key)
+	b, err = ioutil.ReadFile(s3Key)
 	checkError(err)
 
 	results := make(map[string][]KeyValue)
-	for _, result := range mapF(inFile, string(b)) {
+	for _, result := range mapF(s3Key, string(b)) {
 		reducerNum := ihash(result.Key, trie) % nReduce
 		redisKey := serverless.ReduceName(jobName, taskNum, reducerNum)
 		results[redisKey] = append(results[redisKey], result)
@@ -163,7 +183,8 @@ func doMap(
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
 		start := time.Now()
-		host := c.Get(k)
+		host, err := c.Get(k)
+		checkError(err)
 		client := clientMap[host]
 		err = client.Set(k, marshalled_result, 0).Err()
 		end := time.Now()
@@ -202,7 +223,7 @@ func (s srtmService) DoService(raw []byte) error {
 		//fmt.Printf("Sort: Failed to decode!\n")
 		return err
 	}
-	//fmt.Printf("Hello from sort service plugin: %s\n", args.InFile)
+	//fmt.Printf("Hello from sort service plugin: %s\n", args.s3Key)
 
 	//fmt.Println("About to execute doMap()...")
 
@@ -211,7 +232,7 @@ func (s srtmService) DoService(raw []byte) error {
 	//fmt.Println("Constructing the Trie now...")
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
 
-	doMap(args.JobName, args.InFile, args.TaskNum, args.NReduce, trie)
+	doMap(args.JobName, args.s3Key, args.TaskNum, args.NReduce, trie)
 
 	return nil
 }
