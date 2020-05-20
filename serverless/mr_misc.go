@@ -50,24 +50,19 @@ func (drv *Driver) merge(redisHostnames []string) {
 
 		host, err := c.Get(p)
 		checkError(err)
-		client = clientMap[host]
-		marshalled_result, err2 := client.Get(redisKey).Result()
+		client := clientMap[host]
+		marshalled_result, err2 := client.Get(p).Result()
+
+		fmt.Println("Successfully retrieved data from Redis!")
 		end := time.Now()
 		checkError(err2)
 
 		if err != nil {
 			log.Fatal("Merge: ", err)
 		}
-		dec := json.NewDecoder(file)
-		for {
-			var kv KeyValue
-			err = dec.Decode(&kv)
-			if err != nil {
-				break
-			}
-			kvs[kv.Key] = kv.Value // strings.Join(kv.Value, "\n")
-		}
-		file.Close()
+
+		fmt.Println("Unmarshalling data retrieved from Redis now...")
+		json.Unmarshal([]byte(marshalled_result), &kvs)
 	}
 	var keys []string
 	for k := range kvs {
