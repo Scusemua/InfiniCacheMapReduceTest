@@ -68,6 +68,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 	for k := range kvs {
 		keys = append(keys, k)
 	}
+	fmt.Println("There are", len(keys), "keys in the data retrieved from Redis.")
 	sort.Strings(keys)
 
 	file, err := os.Create("mr-final." + drv.jobName + ".out")
