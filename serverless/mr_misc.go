@@ -48,6 +48,8 @@ func (drv *Driver) merge(redisHostnames []string) {
 		fmt.Printf("Merge: reading from Redis: %s\n", p)
 		//file, err := os.Open(p)
 
+		// Read result from Redis.
+		// Previously, we would be reading the result from a file on-disk.
 		host, err := c.Get(p)
 		checkError(err)
 		client := clientMap[host]

@@ -1,5 +1,13 @@
 #!/bin/bash
-DRIVER_HOST="ec2-18-212-213-199.compute-1.amazonaws.com:1234"
+#DRIVER_HOST="ec2-18-212-213-199.compute-1.amazonaws.com:1234"
+
+GET_IP_CMD="curl http://169.254.169.254/latest/meta-data/local-ipv4"
+
+IP=$(eval $GET_IP_CMD)
+
+echo "Got IP: $IP"
+
+DRIVER_HOST="$IP:1234"
 
 # The first command-line argument is nReducers.
 # The second command-line argument should be the file of S3 keys. 

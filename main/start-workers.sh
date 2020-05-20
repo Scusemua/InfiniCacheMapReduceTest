@@ -7,7 +7,7 @@ IP=$(eval $GET_IP_CMD)
 
 echo "Got IP: $IP"
 
-# $1 contains driver host IP
+# $1 contains driver hostname (i.e., <ip>:<port>)
 
 # Start the workers
 go run worker.go $IP:1235 $1 999999 & 
