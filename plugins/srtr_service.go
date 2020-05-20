@@ -206,10 +206,12 @@ func doReduce(
 
 	fileName := serverless.MergeName(jobName, reduceTaskNum)
 	//Debug("Creating %s\n", fileName)
-	f, err := os.Create(fileName)
-	checkError(err)
-	defer f.Close()
-	enc := json.NewEncoder(f)
+	//f, err := os.Create(fileName)
+	//checkError(err)
+	//defer f.Close()
+	//enc := json.NewEncoder(f)
+
+	var []string results 
 
 	doReduce := func(enc *json.Encoder, k string, v []string) {
 		output := reduceF(k, v)
@@ -217,8 +219,9 @@ func doReduce(
 		new_kv.Key = k
 		new_kv.Value = output
 		//Debug("Output:\n%s\n", output)
-		err = enc.Encode(&new_kv)
-		checkError(err)
+		//err = enc.Encode(&new_kv)
+		//checkError(err)
+		results = append(results, new_kv)
 	}
 
 	var lastKey string
@@ -232,6 +235,20 @@ func doReduce(
 		values = append(values, kv.Value)
 	}
 	doReduce(enc, lastKey, values)
+
+	fmt.Println("Writing final result to Redis at key", fileName)
+	marshalled_result, err := json.Marshal(results)
+	checkError(err)
+	start := time.Now()
+	host, err := c.Get(fileName)
+	checkError(err)
+	client := clientMap[host]
+	err = client.Set(fileName, marshalled_result, 0).Err()
+	checkError(err)
+	end := time.Now()
+
+	rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
+	ioRecords = append(ioRecords, rec)	
 
 	f2, err2 := os.Create("IOData/reduce_io_data_" + jobName + strconv.Itoa(reduceTaskNum) + ".dat")
 	checkError(err2)
