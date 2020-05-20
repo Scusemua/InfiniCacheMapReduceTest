@@ -217,7 +217,7 @@ func doReduce(
 		//Debug("Output:\n%s\n", output)
 		//err = enc.Encode(&new_kv)
 		//checkError(err)
-		results = append(results, new_kv)
+		results = append(results, *new_kv)
 	}
 
 	var lastKey string
