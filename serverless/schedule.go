@@ -27,12 +27,13 @@ func (drv *Driver) schedule(
 	Debug("Driver: schedule %s\n", phase)
 	// MapReduceArgs defines the format of your MapReduce service plugins.
 	type MapReduceArgs struct {
-		JobName    string
-		S3Key      string
-		TaskNum    int
-		NReduce    int
-		NOthers    int
-		SampleKeys []string
+		JobName        string
+		S3Key          string
+		TaskNum        int
+		NReduce        int
+		NOthers        int
+		SampleKeys     []string
+		RedisEndpoints []string
 	}
 
 	// Make, for example, serviceName "wc", and phase "Map", into
@@ -52,6 +53,7 @@ func (drv *Driver) schedule(
 			arg.TaskNum = i
 			arg.JobName = serviceName
 			arg.S3Key = string(fileName)
+			args.RedisEndpoints = drv.redisHostnames
 			arg.NReduce = drv.nReduce
 			arg.SampleKeys = drv.sampleKeys
 			jobChan <- arg
@@ -64,6 +66,7 @@ func (drv *Driver) schedule(
 			arg.TaskNum = i
 			arg.JobName = serviceName
 			arg.NReduce = drv.nReduce
+			args.RedisEndpoints = drv.redisHostnames
 			arg.NOthers = len(drv.s3Keys)
 			arg.SampleKeys = drv.sampleKeys
 			jobChan <- arg

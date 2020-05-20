@@ -33,12 +33,13 @@ type srtrService string
 
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
-	JobName    string
-	S3Key      string
-	TaskNum    int
-	NReduce    int
-	NOthers    int
-	SampleKeys []string
+	JobName    		string
+	S3Key      		string
+	TaskNum    		int
+	NReduce    		int
+	NOthers    		int
+	SampleKeys 		[]string
+	RedisEndpoints 	[]string 
 }
 
 type KeyValue struct {
@@ -147,18 +148,18 @@ func reduceF(key string, values []string) string {
 // using serverless.MergeName(jobName, reduceTask).
 func doReduce(
 	jobName string,
+	redisEndpoints []string,
 	reduceTaskNum int,
 	nMap int,
 ) {
 	c := consistent.New()
 	clientMap := make(map[string]*redis.Client)
-	redisHostnames := []string{"ec2-18-212-213-199.compute-1.amazonaws.com:6379"}
 
 	fmt.Println("Populating hash ring and client map now...")
 
 	// Add the IP addresses of the Reds instances to the ring.
 	// Create the Redis clients and store them in the map.
-	for _, hostname := range redisHostnames {
+	for _, hostname := range redisEndpoints {
 		// Add hostname to hash ring.
 		c.Add(hostname)
 
@@ -271,7 +272,7 @@ func (s srtrService) DoService(raw []byte) error {
 	}
 	fmt.Printf("Hello from sort plugin: %s\n", args.S3Key)
 
-	doReduce(args.JobName, args.TaskNum, args.NOthers)
+	doReduce(args.JobName, args.RedisEndpoints, args.TaskNum, args.NOthers)
 
 	return nil
 }

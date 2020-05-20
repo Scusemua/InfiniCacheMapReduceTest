@@ -49,12 +49,13 @@ type srtmService string
 
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
-	JobName    string
-	S3Key      string
-	TaskNum    int
-	NReduce    int
-	NOthers    int
-	SampleKeys []string
+	JobName        string
+	S3Key          string
+	TaskNum        int
+	NReduce        int
+	NOthers        int
+	SampleKeys     []string
+	RedisEndpoints []string
 }
 
 type KeyValue struct {
@@ -100,6 +101,7 @@ func mapF(document string, value string) (res []KeyValue) {
 func doMap(
 	jobName string,
 	S3Key string,
+	redisEndpoints []string,
 	taskNum int,
 	nReduce int,
 	trie serverless.TrieNode,
@@ -134,13 +136,12 @@ func doMap(
 
 	c := consistent.New()
 	clientMap := make(map[string]*redis.Client)
-	redisHostnames := []string{"ec2-18-212-213-199.compute-1.amazonaws.com:6379"}
 
 	fmt.Println("Populating hash ring and client map now...")
 
 	// Add the IP addresses of the Reds instances to the ring.
 	// Create the Redis clients and store them in the map.
-	for _, hostname := range redisHostnames {
+	for _, hostname := range redisEndpoints {
 		// Add hostname to hash ring.
 		c.Add(hostname)
 
@@ -218,7 +219,7 @@ func (s srtmService) DoService(raw []byte) error {
 
 	fmt.Printf("DoService srtm -- args.S3Key: \"%s\"\n", args.S3Key)
 
-	doMap(args.JobName, args.S3Key, args.TaskNum, args.NReduce, trie)
+	doMap(args.JobName, args.S3Key, args.RedisEndpoints, args.TaskNum, args.NReduce, trie)
 
 	return nil
 }

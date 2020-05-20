@@ -39,10 +39,11 @@ type Driver struct {
 	newCond     *sync.Cond
 	doneChannel chan bool
 
-	jobName    string   // the job name of the MapReduce job
-	s3Keys     []string // a list of input file names
-	nReduce    int      // number of reduce tasks
-	sampleKeys []string
+	jobName        string   // the job name of the MapReduce job
+	s3Keys         []string // a list of input file names
+	redisHostnames []string // List of strings of form <ip>:<port> for Redis endpoints/hostnames
+	nReduce        int      // number of reduce tasks
+	sampleKeys     []string // sample keys used for constructing a trie for TeraSort
 
 	shutdown chan struct{} // to shut down the driver's RPC server
 	workers  []string      // a list of workers that get registered on driver
@@ -256,6 +257,7 @@ func (drv *Driver) Wait() {
 func (drv *Driver) run(
 	jobName string,
 	s3Keys []string,
+	redisHostnames []string,
 	nReduce int,
 	sampleKeys []string,
 	schedule func(phase jobPhase, serviceName string),
@@ -265,6 +267,7 @@ func (drv *Driver) run(
 	drv.s3Keys = s3Keys
 	drv.nReduce = nReduce
 	drv.sampleKeys = sampleKeys
+	drv.redisHostnames = redisHostnames
 
 	jobStartTime := time.Now()
 	fmt.Println("JOB START: ", jobStartTime.Format("2006-01-02 15:04:05:.99999"))
@@ -283,7 +286,7 @@ func (drv *Driver) run(
 	fmt.Printf("%s: To start he Reduce phase...\n", drv.address)
 	schedule(reducePhase, jobName)
 	finish()
-	drv.merge()
+	drv.merge(redisHostnames)
 
 	jobEndTime := time.Now()
 	jobDuration := time.Since(jobStartTime)
@@ -301,7 +304,9 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 	Debug("%s: Starting driver RPC server\n", drv.address)
 	drv.startRPCServer()
 
+	// ======================================
 	// Get the list of S3 keys from the file.
+	// ======================================
 	file, err := os.Open(s3KeyFile)
 	checkError(err)
 
@@ -317,6 +322,24 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 		s3Keys = append(s3Keys, txt)
 	}
 
+	// ======================================
+	// Get list of Redis endpoints from file.
+	// ======================================
+	file2, err2 := os.Open("/home/ubuntu/project/src/InfiniCacheMapReduceTest/main/redis_hosts.txt")
+	checkError(err2)
+
+	defer file2.Close()
+
+	scanner2 := bufio.NewScanner(file2)
+	var redisHostnames []string
+
+	// Read in all the Redis endpoints from the files.
+	for scanner2.Scan() {
+		txt := scanner2.Text()
+		fmt.Printf("Read Redis endpoint from file: \"%s\"\n", txt)
+		redisHostnames = append(redisHostnames, txt)
+	}
+
 	start := time.Now()
 	sampleKeys := getSampleKeys(sampleFileS3Key, nReduce)
 	end := time.Now()
@@ -327,7 +350,7 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 
 	fmt.Printf("Number of S3 keys: %d\n", len(s3Keys))
 
-	go drv.run(jobName, s3Keys, nReduce, sampleKeys,
+	go drv.run(jobName, s3Keys, redisHostnames, nReduce, sampleKeys,
 		func(phase jobPhase, serviceName string) { // func schedule()
 			registerChan := make(chan string)
 			go drv.prepareService(registerChan, ServiceName(serviceName, phase))

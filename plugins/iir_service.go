@@ -33,12 +33,13 @@ type iirService string
 
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
-	JobName    string
-	S3Key      string
-	TaskNum    int
-	NReduce    int
-	NOthers    int
-	SampleKeys []string
+	JobName    		string
+	S3Key      		string
+	TaskNum    		int
+	NReduce    		int
+	NOthers    		int
+	SampleKeys 		[]string
+	RedisEndpoints 	[]string 
 }
 
 type KeyValue struct {
