@@ -184,6 +184,7 @@ func doMap(
 		checkError(err)
 	}
 
+	Debug("Writing metric data to file now...\n")
 	ioData, err = os.Create("IOData/map_io_data_" + jobName + strconv.Itoa(taskNum) + ".dat")
 	checkError(err)
 	defer ioData.Close()
