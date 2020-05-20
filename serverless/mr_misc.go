@@ -54,7 +54,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 		marshalled_result, err2 := client.Get(p).Result()
 
 		fmt.Println("Successfully retrieved data from Redis!")
-		end := time.Now()
+
 		checkError(err2)
 
 		if err != nil {
