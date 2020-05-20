@@ -50,7 +50,7 @@ type srtmService string
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
 	JobName    string
-	s3Key      string
+	S3Key      string
 	TaskNum    int
 	NReduce    int
 	NOthers    int
@@ -94,12 +94,12 @@ func mapF(document string, value string) (res []KeyValue) {
 }
 
 // doMap does the job of a map worker: it reads one of the input
-// files (s3Key), calls the user-defined function (mapF) for that
+// files (S3Key), calls the user-defined function (mapF) for that
 // file's contents, and partitions the output into nReduce
 // intermediate files.
 func doMap(
 	jobName string,
-	s3Key string,
+	S3Key string,
 	taskNum int,
 	nReduce int,
 	trie serverless.TrieNode,
@@ -117,20 +117,20 @@ func doMap(
 	// Create a downloader with the session and default options
 	downloader := s3manager.NewDownloader(sess)
 
-	fmt.Printf("Creating file \"%s\" to read S3 data into...\n", s3Key)
+	fmt.Printf("Creating file \"%s\" to read S3 data into...\n", S3Key)
 
 	// Create a file to write the S3 Object contents to.
-	s3KeyFile, err = os.Create(s3Key)
+	s3KeyFile, err = os.Create(S3Key)
 	checkError(err)
 
 	// Write the contents of S3 Object to the file
 	n, err := downloader.Download(s3KeyFile, &s3.GetObjectInput{
 		Bucket: aws.String("infinistore-mapreduce"),
-		Key:    aws.String(s3Key),
+		Key:    aws.String(S3Key),
 	})
 	checkError(err)
 
-	fmt.Printf("File %s downloaded, %d bytes\n", s3Key, n)
+	fmt.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
 	c := consistent.New()
 	clientMap := make(map[string]*redis.Client)
@@ -157,12 +157,12 @@ func doMap(
 		clientMap[hostname] = client
 	}
 
-	//Debug("Reading %s\n", s3Key)
-	b, err = ioutil.ReadFile(s3Key)
+	Debug("Reading %s\n", S3Key)
+	b, err = ioutil.ReadFile(S3Key)
 	checkError(err)
 
 	results := make(map[string][]KeyValue)
-	for _, result := range mapF(s3Key, string(b)) {
+	for _, result := range mapF(S3Key, string(b)) {
 		reducerNum := ihash(result.Key, trie) % nReduce
 		redisKey := serverless.ReduceName(jobName, taskNum, reducerNum)
 		results[redisKey] = append(results[redisKey], result)
@@ -215,9 +215,9 @@ func (s srtmService) DoService(raw []byte) error {
 	}
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
 
-	fmt.Printf("DoService srtm -- args.s3Key: \"%s\"\n", args.s3Key)
+	fmt.Printf("DoService srtm -- args.S3Key: \"%s\"\n", args.S3Key)
 
-	doMap(args.JobName, args.s3Key, args.TaskNum, args.NReduce, trie)
+	doMap(args.JobName, args.S3Key, args.TaskNum, args.NReduce, trie)
 
 	return nil
 }

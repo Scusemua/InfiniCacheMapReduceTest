@@ -34,7 +34,7 @@ type srtrService string
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
 	JobName    string
-	s3Key      string
+	S3Key      string
 	TaskNum    int
 	NReduce    int
 	NOthers    int
@@ -252,7 +252,7 @@ func (s srtrService) DoService(raw []byte) error {
 		fmt.Printf("Sort: Failed to decode!\n")
 		return err
 	}
-	fmt.Printf("Hello from sort plugin: %s\n", args.s3Key)
+	fmt.Printf("Hello from sort plugin: %s\n", args.S3Key)
 
 	doReduce(args.JobName, args.TaskNum, args.NOthers)
 

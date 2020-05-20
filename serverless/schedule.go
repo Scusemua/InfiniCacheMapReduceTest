@@ -29,7 +29,7 @@ func (drv *Driver) schedule(
 	// MapReduceArgs defines the format of your MapReduce service plugins.
 	type MapReduceArgs struct {
 		JobName    string
-		s3Key      string
+		S3Key      string
 		TaskNum    int
 		NReduce    int
 		NOthers    int
@@ -52,7 +52,7 @@ func (drv *Driver) schedule(
 			arg := new(MapReduceArgs)
 			arg.TaskNum = i
 			arg.JobName = serviceName
-			arg.s3Key = string(fileName)
+			arg.S3Key = string(fileName)
 			arg.NReduce = drv.nReduce
 			arg.SampleKeys = drv.sampleKeys
 			jobChan <- arg
@@ -86,7 +86,7 @@ func (drv *Driver) schedule(
 	invokeService := func(worker string, args *MapReduceArgs) {
 		var buf bytes.Buffer
 
-		fmt.Printf("Serializing arguments corresponding to input with S3 key \"%s\" now...\n", args.s3Key)
+		fmt.Printf("Serializing arguments corresponding to input with S3 key \"%s\" now...\n", args.S3Key)
 
 		enc := gob.NewEncoder(&buf)
 		err := enc.Encode(args)

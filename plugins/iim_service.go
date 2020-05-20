@@ -49,7 +49,7 @@ type iimService string
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
 	JobName    string
-	s3Key     string
+	S3Key      string
 	TaskNum    int
 	NReduce    int
 	NOthers    int
@@ -142,9 +142,9 @@ func (s iimService) DoService(raw []byte) error {
 		fmt.Printf("Inverted Indexing Service: Failed to decode!\n")
 		return err
 	}
-	fmt.Printf("Hello from inverted indexing service plugin: %s\n", args.s3Key)
+	fmt.Printf("Hello from inverted indexing service plugin: %s\n", args.S3Key)
 
-	doMap(args.JobName, args.s3Key, args.TaskNum, args.NReduce)
+	doMap(args.JobName, args.S3Key, args.TaskNum, args.NReduce)
 
 	return nil
 }
