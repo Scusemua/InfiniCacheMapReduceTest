@@ -60,14 +60,14 @@ func (drv *Driver) merge(redisHostnames []string) {
 		if err != nil {
 			log.Fatal("Merge: ", err)
 		}
-		
+
 		results := make([]KeyValue, 0)
 
 		fmt.Println("Unmarshalling data retrieved from Redis now...")
 		json.Unmarshal([]byte(marshalled_result), &results)
 
-		for _, kv := results {
-			kvs[kv.Key] = kv.Value 
+		for _, kv := range results {
+			kvs[kv.Key] = kv.Value
 		}
 	}
 	var keys []string
