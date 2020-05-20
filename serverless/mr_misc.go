@@ -45,7 +45,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 	kvs := make(map[string]string)
 	for i := 0; i < drv.nReduce; i++ {
 		p := MergeName(drv.jobName, i)
-		fmt.Printf("Merge: read %s\n", p)
+		fmt.Printf("Merge: reading from Redis: %s\n", p)
 		//file, err := os.Open(p)
 
 		host, err := c.Get(p)
@@ -60,9 +60,15 @@ func (drv *Driver) merge(redisHostnames []string) {
 		if err != nil {
 			log.Fatal("Merge: ", err)
 		}
+		
+		results := make([]KeyValue, 0)
 
 		fmt.Println("Unmarshalling data retrieved from Redis now...")
-		json.Unmarshal([]byte(marshalled_result), &kvs)
+		json.Unmarshal([]byte(marshalled_result), &results)
+
+		for _, kv := results {
+			kvs[kv.Key] = kv.Value 
+		}
 	}
 	var keys []string
 	for k := range kvs {
