@@ -53,7 +53,7 @@ func (drv *Driver) schedule(
 			arg.TaskNum = i
 			arg.JobName = serviceName
 			arg.S3Key = string(fileName)
-			args.RedisEndpoints = drv.redisHostnames
+			arg.RedisEndpoints = drv.redisHostnames
 			arg.NReduce = drv.nReduce
 			arg.SampleKeys = drv.sampleKeys
 			jobChan <- arg
@@ -66,7 +66,7 @@ func (drv *Driver) schedule(
 			arg.TaskNum = i
 			arg.JobName = serviceName
 			arg.NReduce = drv.nReduce
-			args.RedisEndpoints = drv.redisHostnames
+			arg.RedisEndpoints = drv.redisHostnames
 			arg.NOthers = len(drv.s3Keys)
 			arg.SampleKeys = drv.sampleKeys
 			jobChan <- arg
