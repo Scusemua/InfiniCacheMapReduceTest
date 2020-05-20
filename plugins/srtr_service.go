@@ -33,13 +33,13 @@ type srtrService string
 
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
-	JobName    		string
-	S3Key      		string
-	TaskNum    		int
-	NReduce    		int
-	NOthers    		int
-	SampleKeys 		[]string
-	RedisEndpoints 	[]string 
+	JobName        string
+	S3Key          string
+	TaskNum        int
+	NReduce        int
+	NOthers        int
+	SampleKeys     []string
+	RedisEndpoints []string
 }
 
 type KeyValue struct {
@@ -206,13 +206,8 @@ func doReduce(
 	sort.Slice(inputs, func(i, j int) bool { return inputs[i].Key < inputs[j].Key })
 
 	fileName := serverless.MergeName(jobName, reduceTaskNum)
-	//Debug("Creating %s\n", fileName)
-	//f, err := os.Create(fileName)
-	//checkError(err)
-	//defer f.Close()
-	//enc := json.NewEncoder(f)
 
-	var []string results 
+	var results []string
 
 	doReduce := func(enc *json.Encoder, k string, v []string) {
 		output := reduceF(k, v)
@@ -249,7 +244,7 @@ func doReduce(
 	end := time.Now()
 
 	rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
-	ioRecords = append(ioRecords, rec)	
+	ioRecords = append(ioRecords, rec)
 
 	f2, err2 := os.Create("IOData/reduce_io_data_" + jobName + strconv.Itoa(reduceTaskNum) + ".dat")
 	checkError(err2)
