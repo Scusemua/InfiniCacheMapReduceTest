@@ -293,6 +293,7 @@ func (drv *Driver) run(
 	finish()
 	drv.merge(redisHostnames)
 
+	reducePhaseDuration := time.Since(endOfMap)
 	jobEndTime := time.Now()
 	jobDuration := time.Since(jobStartTime)
 
