@@ -86,8 +86,6 @@ func (drv *Driver) schedule(
 	invokeService := func(worker string, args *MapReduceArgs) {
 		var buf bytes.Buffer
 
-		fmt.Printf("Serializing arguments corresponding to input with S3 key \"%s\" now...\n", args.S3Key)
-
 		enc := gob.NewEncoder(&buf)
 		err := enc.Encode(args)
 		checkError(err)
