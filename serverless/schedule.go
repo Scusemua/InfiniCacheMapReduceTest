@@ -15,7 +15,6 @@ package serverless
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
 	"log"
 )
 
