@@ -7,22 +7,22 @@ IP=$(eval $GET_IP_CMD)
 
 echo "Got IP: $IP"
 
-DRIVER_HOST="ec2-18-212-213-199.compute-1.amazonaws.com:1234"
+# $1 contains driver host IP
 
 # Start the workers
-go run worker.go $IP:1235 $DRIVER_HOST 999999 & 
+go run worker.go $IP:1235 $1 999999 & 
 pids[0]=$!
 
-go run worker.go $IP:1236 $DRIVER_HOST 999999 & 
+go run worker.go $IP:1236 $1 999999 & 
 pids[2]=$!
 
-go run worker.go $IP:1237 $DRIVER_HOST 999999 & 
+go run worker.go $IP:1237 $1 999999 & 
 pids[3]=$!
 
-go run worker.go $IP:1238 $DRIVER_HOST 999999 & 
+go run worker.go $IP:1238 $1 999999 & 
 pids[4]=$!
 
-go run worker.go $IP:1239 $DRIVER_HOST 999999 & 
+go run worker.go $IP:1239 $1 999999 & 
 pids[5]=$!
 
 echo "[Test]: waiting for workers to finish..." > /dev/stderr
