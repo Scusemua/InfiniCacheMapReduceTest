@@ -207,9 +207,9 @@ func doReduce(
 
 	fileName := serverless.MergeName(jobName, reduceTaskNum)
 
-	var results []string
+	var results []KeyValue
 
-	doReduce := func(enc *json.Encoder, k string, v []string) {
+	doReduce := func(k string, v []string) {
 		output := reduceF(k, v)
 		new_kv := new(KeyValue)
 		new_kv.Key = k
@@ -224,13 +224,13 @@ func doReduce(
 	values := make([]string, 0)
 	for i, kv := range inputs {
 		if kv.Key != lastKey && i > 0 {
-			doReduce(enc, lastKey, values)
+			doReduce(lastKey, values)
 			values = make([]string, 0)
 		}
 		lastKey = kv.Key
 		values = append(values, kv.Value)
 	}
-	doReduce(enc, lastKey, values)
+	doReduce(lastKey, values)
 
 	fmt.Println("Writing final result to Redis at key", fileName)
 	marshalled_result, err := json.Marshal(results)
