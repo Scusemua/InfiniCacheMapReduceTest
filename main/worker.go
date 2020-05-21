@@ -189,10 +189,10 @@ loop:
 			wk.nRPC--
 			wk.Unlock()
 			go rpcs.ServeConn(conn)
+			log.Println("Worker", wk.address, "finished serving RPC connection.")
 			wk.Lock()
 			wk.nTasks++
 			wk.Unlock()
-
 		} else {
 			break
 		}
