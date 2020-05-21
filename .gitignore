@@ -2,3 +2,5 @@ main/data.txt
 main/part*
 main/*.dat
 main/o.txt
+*.so 
+plugins/*.so
