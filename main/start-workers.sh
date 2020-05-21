@@ -14,6 +14,7 @@ echo "Launching $2 workers..."
 
 for (( i = 0; i < $num_workers ; i++ ))
 do 
+    echo "Launching worker to listen @ $IP:$port, driver @ $1"
     /usr/local/go/bin/go run worker.go $IP:$port $1 999999 & 
     pids[$i]=$!
     port=$((port + 1))
