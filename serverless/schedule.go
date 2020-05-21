@@ -88,7 +88,7 @@ func (drv *Driver) schedule(
 	invokeService := func(worker string, args *MapReduceArgs) {
 		var buf bytes.Buffer
 
-		log.Println("Scheduling task on worker", worker, "now...")
+		log.Println("Scheduling task", args.TaskNum, "on worker", worker, "now...")
 
 		enc := gob.NewEncoder(&buf)
 		err := enc.Encode(args)
