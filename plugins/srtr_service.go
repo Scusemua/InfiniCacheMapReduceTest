@@ -65,7 +65,7 @@ const debugEnabled = true
 
 func Debug(format string, a ...interface{}) (n int, err error) {
 	if debugEnabled {
-		n, err = fmt.Printf(format, a...)
+		n, err = log.Printf(format, a...)
 	}
 	return
 }
@@ -155,7 +155,7 @@ func doReduce(
 	c := consistent.New()
 	clientMap := make(map[string]*redis.Client)
 
-	fmt.Println("Populating hash ring and client map now...")
+	log.Println("Populating hash ring and client map now...")
 
 	// Add the IP addresses of the Reds instances to the ring.
 	// Create the Redis clients and store them in the map.
@@ -163,7 +163,7 @@ func doReduce(
 		// Add hostname to hash ring.
 		c.Add(hostname)
 
-		fmt.Println("Creating Redis client for Redis listening at", hostname)
+		log.Println("Creating Redis client for Redis listening at", hostname)
 
 		// Create client.
 		client := redis.NewClient(&redis.Options{
@@ -232,7 +232,7 @@ func doReduce(
 	}
 	doReduce(lastKey, values)
 
-	fmt.Println("Writing final result to Redis at key", fileName)
+	log.Println("Writing final result to Redis at key", fileName)
 	marshalled_result, err := json.Marshal(results)
 	checkError(err)
 	start := time.Now()
@@ -262,10 +262,10 @@ func (s srtrService) DoService(raw []byte) error {
 	dec := gob.NewDecoder(buf)
 	err := dec.Decode(&args)
 	if err != nil {
-		fmt.Printf("Sort: Failed to decode!\n")
+		log.Printf("Sort: Failed to decode!\n")
 		return err
 	}
-	fmt.Printf("Hello from sort plugin: %s\n", args.S3Key)
+	log.Printf("Hello from sort plugin: %s\n", args.S3Key)
 
 	doReduce(args.JobName, args.RedisEndpoints, args.TaskNum, args.NOthers)
 

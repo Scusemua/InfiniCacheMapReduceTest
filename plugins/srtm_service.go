@@ -29,7 +29,7 @@ const debugEnabled = true
 
 func Debug(format string, a ...interface{}) (n int, err error) {
 	if debugEnabled {
-		n, err = fmt.Printf(format, a...)
+		n, err = log.Printf(format, a...)
 	}
 	return
 }
@@ -119,7 +119,7 @@ func doMap(
 	// Create a downloader with the session and default options
 	downloader := s3manager.NewDownloader(sess)
 
-	fmt.Printf("Creating file \"%s\" to read S3 data into...\n", S3Key)
+	log.Printf("Creating file \"%s\" to read S3 data into...\n", S3Key)
 
 	// Create a file to write the S3 Object contents to.
 	s3KeyFile, err = os.Create(S3Key)
@@ -132,12 +132,12 @@ func doMap(
 	})
 	checkError(err)
 
-	fmt.Printf("File %s downloaded, %d bytes\n", S3Key, n)
+	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
 	c := consistent.New()
 	clientMap := make(map[string]*redis.Client)
 
-	fmt.Println("Populating hash ring and client map now...")
+	log.Println("Populating hash ring and client map now...")
 
 	// Add the IP addresses of the Reds instances to the ring.
 	// Create the Redis clients and store them in the map.
@@ -145,7 +145,7 @@ func doMap(
 		// Add hostname to hash ring.
 		c.Add(hostname)
 
-		fmt.Println("Creating Redis client for Redis listening at", hostname)
+		log.Println("Creating Redis client for Redis listening at", hostname)
 
 		// Create client.
 		client := redis.NewClient(&redis.Options{
@@ -217,7 +217,7 @@ func (s srtmService) DoService(raw []byte) error {
 	}
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
 
-	fmt.Printf("DoService srtm -- args.S3Key: \"%s\"\n", args.S3Key)
+	log.Printf("DoService srtm -- args.S3Key: \"%s\"\n", args.S3Key)
 
 	doMap(args.JobName, args.S3Key, args.RedisEndpoints, args.TaskNum, args.NReduce, trie)
 

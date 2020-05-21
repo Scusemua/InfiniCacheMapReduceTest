@@ -1,7 +1,6 @@
 package serverless
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 )
@@ -12,7 +11,7 @@ const debugEnabled = true
 // DPrintf will only print if the debugEnabled const has been set to true
 func Debug(format string, a ...interface{}) (n int, err error) {
 	if debugEnabled {
-		n, err = fmt.Printf(format, a...)
+		n, err = log.Printf(format, a...)
 	}
 	return
 }
@@ -20,7 +19,7 @@ func Debug(format string, a ...interface{}) (n int, err error) {
 // Propagate error if it exists
 func checkError(err error) {
 	if err != nil {
-		fmt.Printf("Error: %s\n", err)
+		log.Printf("Error: %s\n", err)
 		log.Fatal(err)
 	}
 }
