@@ -4,3 +4,4 @@ main/*.dat
 main/o.txt
 *.so 
 plugins/*.so
+*.out
