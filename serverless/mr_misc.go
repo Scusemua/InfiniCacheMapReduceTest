@@ -3,6 +3,7 @@ package serverless
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"github.com/go-redis/redis/v7"
 	"github.com/lafikl/consistent"
 	"log"
@@ -84,7 +85,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 	}
 	w := bufio.NewWriter(file)
 	for _, k := range keys {
-		log.Fprintf(w, "%s\n", kvs[k])
+		fmt.Fprintf(w, "%s\n", kvs[k])
 	}
 	since := time.Since(now)
 	log.Printf("Merge phase took %d ms.", since/1e6)
