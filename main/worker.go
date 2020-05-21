@@ -143,9 +143,9 @@ func (wk *Worker) register(driver string) {
 
 	ok := serverless.Call(driver, "Driver.Register", args, new(struct{}))
 	if ok == true {
-		fmt.Printf("Successfully registered worker %s\n", wk.address)
+		log.Printf("Successfully registered worker %s\n", wk.address)
 	} else {
-		fmt.Printf("Failed to register worker %s\n", wk.address)
+		log.Printf("Failed to register worker %s\n", wk.address)
 	}
 }
 
@@ -177,14 +177,14 @@ loop:
 		wk.Lock()
 		//fmt.Println("Worker", wk.address, "successfully acquired worker lock.")
 		if wk.nRPC == 0 {
-			fmt.Println("Worker reached maximum number of RPC messages.")
+			log.Println("Worker reached maximum number of RPC messages.")
 			wk.Unlock()
 			break
 		}
 		wk.Unlock()
 		conn, err := wk.l.Accept()
 		if err == nil {
-			fmt.Println("Worker at address", wk.address, "received RPC connection...")
+			log.Println("Worker at address", wk.address, "received RPC connection...")
 			wk.Lock()
 			wk.nRPC--
 			wk.Unlock()
@@ -192,6 +192,7 @@ loop:
 			wk.Lock()
 			wk.nTasks++
 			wk.Unlock()
+
 		} else {
 			break
 		}
