@@ -11,7 +11,7 @@ def get_public_ips(region_name="us-east-1"):
     for reservation in response["Reservations"]:
         for instance in reservation["Instances"]:
             if instance["State"]["Name"] == "running":
-                public_ips.append(instance["PublicDnsName"])
+                public_ips.append(instance["PublicIpAddress"])
     print("Retrieved the following public IP addresses:")
     for ip in public_ips:
         print(ip)
@@ -24,7 +24,6 @@ def execute_command(
 ):
     keyfile = paramiko.RSAKey.from_private_key_file(key_path)
     ssh_clients = list()
-    timeout = 5
     print(" ")
 
     for ip in ips:
@@ -58,6 +57,7 @@ def execute_command(
             print("ssh_stdout.channel.eof_received is still False... skipping...")
 
 def launch_redis_servers(
+    connect_and_ping = True,
     ips = None,
     key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem",
     kill_first = False 
@@ -79,6 +79,17 @@ def launch_redis_servers(
         key_path = key_path
     )
 
+    # Connect to the servers and ping them to verify that they were actually setup properly.
+    if connect_and_ping:
+        for ip in ips:
+            redis_client = redis.Redis(host = ip, port = 6379, db = 0)
+            print("Pinging Redis instance @ {}:6379 now...".format(ip))
+            res = redis_client.ping()
+            if res is False:
+                raise Exception("ERROR: Redis instance @ {} did not start correctly!".format(ip))
+            else:
+                print("True")        
+
 def launch_client(
     client_ip = None,
     key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem",
@@ -93,21 +104,23 @@ def launch_client(
         key_path = key_path
     )    
 
-def launch_workers(
-    client_ip = None,
-    key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem",
+def update_redis_hosts(
+    ips = None,
     redis_ips = None,
-    worker_ips = None
+    key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"
 ):
+    """
+    Update the redis_hosts.txt file on the given VMs.
+    """
     print("Key path = {}".format(key_path))
     create_redis_file_command = "printf \""
 
     for i in range(0, len(redis_ips)):
         redis_ip = redis_ips[i]
         if i == len(redis_ips) - 1:
-            create_redis_file_command = create_redis_file_command + redis_ip + "\""
+            create_redis_file_command = create_redis_file_command + redis_ip + ":6379" + "\""
         else:
-            create_redis_file_command = create_redis_file_command + redis_ip + "\n"
+            create_redis_file_command = create_redis_file_command + redis_ip + ":6379" + "\n"
     
     create_redis_file_command = create_redis_file_command + " > /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/redis_hosts.txt"
     
@@ -115,9 +128,18 @@ def launch_workers(
 
     execute_command(
         command = create_redis_file_command,
-        ips = worker_ips,
+        ips = ips,
         key_path = key_path
     )
+
+def launch_workers(
+    client_ip = None,
+    key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem",
+    redis_ips = None,
+    worker_ips = None
+):
+    print("Key path = {}".format(key_path))
+    update_redis_hosts(ips = [client_ip] + worker_ips)
 
     cmd = "source ~/.bashrc;cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234".format(client_ip)
 

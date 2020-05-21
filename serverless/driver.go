@@ -290,12 +290,15 @@ func (drv *Driver) run(
 	// would be 'iir_service'.
 	fmt.Printf("%s: To start he Reduce phase...\n", drv.address)
 	schedule(reducePhase, jobName)
-	finish()
-	drv.merge(redisHostnames)
 
 	reducePhaseDuration := time.Since(endOfMap)
+	mapReduceDuration := time.Since(jobStartTime)
 
 	fmt.Println("Reduce phase duration:", reducePhaseDuration/1000000, "ms")
+	fmt.Println("DURATION OF MAP PHASE + REDUCE PHASE:", mapReduceDuration/1000000, "ms")
+
+	finish()
+	drv.merge(redisHostnames)
 
 	jobEndTime := time.Now()
 	jobDuration := time.Since(jobStartTime)
