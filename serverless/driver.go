@@ -273,16 +273,16 @@ func (drv *Driver) run(
 
 	log.Printf("%s: Starting MapReduce job: %s\n", drv.address, jobName)
 
-	endOfMap := time.Now()
-	mapPhaseDuration := time.Since(jobStartTime)
-
-	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration/1000000)
-
 	// E.g., for word count, the name of the map plugin service
 	// module would be 'wcm_service'; for inverted indexing, the name
 	// would be 'iim_service'.
 	log.Printf("%s: To start the Map phase...\n", drv.address)
 	schedule(mapPhase, jobName)
+
+	endOfMap := time.Now()
+	mapPhaseDuration := time.Since(jobStartTime)
+
+	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration/1000000)
 
 	// E.g., for word count, the name of the reduce plugin service
 	// module would be 'wcr_service'; for inverted indexing, the name

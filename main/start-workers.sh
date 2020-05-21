@@ -7,23 +7,35 @@ IP=$(eval $GET_IP_CMD)
 
 echo "Got IP: $IP"
 
+num_workers=$2
+port=1235
+
+echo "Launching $2 workers..."
+
+for (( i = 0; i < $num_workers ; i++ ))
+do 
+    /usr/local/go/bin/go run worker.go $IP:$port $1 999999 & 
+    pids[$i]=$!
+    port=$((port + 1))
+done 
+
 # $1 contains driver hostname (i.e., <ip>:<port>)
 
 # Start the workers
-/usr/local/go/bin/go run worker.go $IP:1235 $1 999999 & 
-pids[0]=$!
+# /usr/local/go/bin/go run worker.go $IP:1235 $1 999999 & 
+# pids[0]=$!
 
-/usr/local/go/bin/go run worker.go $IP:1236 $1 999999 & 
-pids[2]=$!
+# /usr/local/go/bin/go run worker.go $IP:1236 $1 999999 & 
+# pids[2]=$!
 
-/usr/local/go/bin/go run worker.go $IP:1237 $1 999999 & 
-pids[3]=$!
+# /usr/local/go/bin/go run worker.go $IP:1237 $1 999999 & 
+# pids[3]=$!
 
-/usr/local/go/bin/go run worker.go $IP:1238 $1 999999 & 
-pids[4]=$!
+# /usr/local/go/bin/go run worker.go $IP:1238 $1 999999 & 
+# pids[4]=$!
 
-/usr/local/go/bin/go run worker.go $IP:1239 $1 999999 & 
-pids[5]=$!
+# /usr/local/go/bin/go run worker.go $IP:1239 $1 999999 & 
+# pids[5]=$!
 
 echo "[Test]: waiting for workers to finish..." > /dev/stderr
 for pid in ${pids[*]}; do

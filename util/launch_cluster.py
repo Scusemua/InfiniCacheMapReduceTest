@@ -15,6 +15,7 @@ def get_public_ips(region_name="us-east-1"):
     print("Retrieved the following public IP addresses:")
     for ip in public_ips:
         print(ip)
+    print("Retrieved {} IPs in total.".format(len(public_ips)))
     return public_ips
 
 def execute_command(
@@ -22,7 +23,7 @@ def execute_command(
     count_limit = 3,
     get_pty = False,
     ips = None,
-    key_path = None
+    key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"
 ):
     keyfile = paramiko.RSAKey.from_private_key_file(key_path)
     ssh_clients = list()
@@ -34,8 +35,9 @@ def execute_command(
         ssh_redis.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh_redis.connect(hostname = ip, username="ubuntu", pkey = keyfile) 
     
+    count = 1
     for IP, ssh_redis_client in ssh_clients:
-        print("Executing command for instance @ {}...".format(IP))
+        print("Executing command for instance @ {}... ({}/{})".format(IP, count, len(ips)))
         print("get_pty:", get_pty)
         ssh_stdin, ssh_stdout, ssh_stderr = ssh_redis_client.exec_command(command, get_pty = get_pty)
         print("Executed command \"{}\"...".format(command))
@@ -58,6 +60,7 @@ def execute_command(
             #    print("Successfully launched Redis server.")
         else:
             print("ssh_stdout.channel.eof_received is still False... skipping...")
+        count += 1
 
 def launch_redis_servers(
     connect_and_ping = True,
@@ -98,6 +101,7 @@ def launch_client(
     key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem",
     nReducers = 10,
     s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt"
+    # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
 ):
     pre_command = """
     . ~/.profile;
@@ -113,6 +117,14 @@ def launch_client(
         ips = [client_ip],
         key_path = key_path
     )    
+
+def wondershape(
+    ips = None,
+    upload_bytes = 1024000,
+    download_bytes = 1024000
+):
+    command = "sudo wondershaper eth0 {} {}".format(upload_bytes, download_bytes)
+    execute_command(command = command, count_limit = 1, get_pty = True, ips = ips)
 
 def update_redis_hosts(
     ips = None,
@@ -144,8 +156,10 @@ def update_redis_hosts(
 
 def launch_workers(
     client_ip = None,
+    count_limit = 5,
     key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem",
     redis_ips = None,
+    workers_per_vm = 5,
     worker_ips = None
 ):
     print("Key path = {}".format(key_path))
@@ -156,7 +170,7 @@ def launch_workers(
     . ~/.bashrc;
     """
 
-    post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234".format(client_ip)
+    post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234 {}".format(client_ip, workers_per_vm)
 
     command = pre_command + post_command
 
@@ -164,7 +178,7 @@ def launch_workers(
 
     execute_command(
         command = command,
-        count_limit = 5,
+        count_limit = count_limit,
         ips = worker_ips,
         key_path = key_path,
         get_pty = True 
@@ -175,10 +189,10 @@ if __name__ == "__main__":
     redis_ips = ips[0:6]
     print("Redis IP's: {}".format(redis_ips))
 
-    client_ip = ips[7]
+    client_ip = ips[6]
     print("Client IP: {}".format(client_ip))
 
-    worker_ips = ips[8:]
+    worker_ips = ips[7:]
     print("Worker IP's: {}".format(worker_ips))
 
     launch_redis_servers(ips = redis_ips, kill_first = True)
@@ -192,10 +206,10 @@ if __name__ == "__main__":
         else:
             print("True")
 
-    launch_client(
-        client_ip = client_ip,
-        nReducers = 50,
-        s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt"
-    )
+    update_redis_hosts(ips = [client_ip], redis_ips = redis_ips)
+
+    wondershape(ips = [client_ip] + worker_ips + redis_ips)
+
+    launch_client(client_ip = client_ip, nReducers = 100, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
 
     launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips)
