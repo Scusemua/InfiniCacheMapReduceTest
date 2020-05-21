@@ -1,0 +1,7 @@
+2020/05/21 20:02:31 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2020/05/21 20:02:31 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+2020/05/21 20:02:31 Worker: 10.0.2.188:1237 To start the RPC server...
+2020/05/21 20:02:31 Register called for srtm_service
+2020/05/21 20:02:32 Opened plugin srtm_service
+2020/05/21 20:02:32 Successfully looked up Interface srtm_service
+2020/05/21 20:02:32 Successfully registered new service srtm_service

@@ -69,6 +69,8 @@ func getSampleKeys(sampleFileS3Key string, nReduce int) []string {
 	s3KeyFile, err = os.Create(sampleFileS3Key)
 	checkError(err)
 
+	now := time.Now()
+
 	// Write the contents of S3 Object to the file
 	n, err := downloader.Download(s3KeyFile, &s3.GetObjectInput{
 		Bucket: aws.String("infinistore-mapreduce"),
@@ -76,9 +78,11 @@ func getSampleKeys(sampleFileS3Key string, nReduce int) []string {
 	})
 	checkError(err)
 
-	log.Printf("File %s downloaded, %d bytes\n", sampleFileS3Key, n)
+	downloadDuration := time.Since(now)
 
-	log.Println("\n\nDriver is generating sample keys now...")
+	log.Printf("File %s downloaded, %d bytes, time elapsed = %d ms\n", sampleFileS3Key, n, downloadDuration/1e6)
+
+	log.Println("Driver is generating sample keys now...")
 	log.Println("Driver is reading data from file", sampleFileS3Key, "to generate the sample keys.")
 
 	b, err = ioutil.ReadFile(sampleFileS3Key)
@@ -350,6 +354,8 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 		log.Printf("Read Redis endpoint from file: \"%s\"\n", txt)
 		redisHostnames = append(redisHostnames, txt)
 	}
+
+	log.Printf("About to generate sample keys...")
 
 	start := time.Now()
 	sampleKeys := getSampleKeys(sampleFileS3Key, nReduce)

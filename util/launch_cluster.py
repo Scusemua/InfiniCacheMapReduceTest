@@ -186,6 +186,7 @@ def launch_workers(
 
 if __name__ == "__main__":
     ips = get_public_ips()
+    workers_per_vm = 3
     redis_ips = ips[0:6]
     print("Redis IP's: {}".format(redis_ips))
 
@@ -195,21 +196,23 @@ if __name__ == "__main__":
     worker_ips = ips[7:]
     print("Worker IP's: {}".format(worker_ips))
 
-    launch_redis_servers(ips = redis_ips, kill_first = True)
+    launch_redis_servers(ips = redis_ips, kill_first = False, connect_and_ping = True)
 
-    for ip in redis_ips:
-        redis_client = redis.Redis(host = ip, port = 6379, db = 0)
-        print("Pinging Redis instance @ {}:6379 now...".format(ip))
-        res = redis_client.ping()
-        if res is False:
-            raise Exception("ERROR: Redis instance @ {} did not start correctly!".format(ip))
-        else:
-            print("True")
+    # for ip in redis_ips:
+    #     redis_client = redis.Redis(host = ip, port = 6379, db = 0)
+    #     print("Pinging Redis instance @ {}:6379 now...".format(ip))
+    #     res = redis_client.ping()
+    #     if res is False:
+    #         raise Exception("ERROR: Redis instance @ {} did not start correctly!".format(ip))
+    #     else:
+    #         print("True")
 
     update_redis_hosts(ips = [client_ip], redis_ips = redis_ips)
 
     wondershape(ips = [client_ip] + worker_ips + redis_ips)
 
-    launch_client(client_ip = client_ip, nReducers = 100, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
+    nReducers = workers_per_vm * len(worker_ips) * 3
+    print("nReducers = {}".format(nReducers))
+    launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
 
-    launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips)
+    launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips, workers_per_vm = workers_per_vm)
