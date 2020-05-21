@@ -3,7 +3,6 @@ package serverless
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"github.com/go-redis/redis/v7"
 	"github.com/lafikl/consistent"
 	"log"
@@ -21,7 +20,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 	c := consistent.New()
 	clientMap := make(map[string]*redis.Client)
 
-	fmt.Println("Populating hash ring and Redis client map now...")
+	log.Println("Populating hash ring and Redis client map now...")
 
 	// Add the IP addresses of the Reds instances to the ring.
 	// Create the Redis clients and store them in the map.
@@ -29,7 +28,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 		// Add hostname to hash ring.
 		c.Add(hostname)
 
-		fmt.Println("Creating Redis client for Redis listening at", hostname)
+		log.Println("Creating Redis client for Redis listening at", hostname)
 
 		// Create client.
 		client := redis.NewClient(&redis.Options{
@@ -45,7 +44,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 	kvs := make(map[string]string)
 	for i := 0; i < drv.nReduce; i++ {
 		p := MergeName(drv.jobName, i)
-		fmt.Printf("Merge: reading from Redis: %s\n", p)
+		log.Printf("Merge: reading from Redis: %s\n", p)
 		//file, err := os.Open(p)
 
 		// Read result from Redis.
@@ -55,7 +54,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 		client := clientMap[host]
 		marshalled_result, err2 := client.Get(p).Result()
 
-		fmt.Println("Successfully retrieved data from Redis!")
+		log.Println("Successfully retrieved data from Redis!")
 
 		checkError(err2)
 
@@ -65,7 +64,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 
 		results := make([]KeyValue, 0)
 
-		fmt.Println("Unmarshalling data retrieved from Redis now...")
+		log.Println("Unmarshalling data retrieved from Redis now...")
 		json.Unmarshal([]byte(marshalled_result), &results)
 
 		for _, kv := range results {
@@ -76,7 +75,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 	for k := range kvs {
 		keys = append(keys, k)
 	}
-	fmt.Println("There are", len(keys), "keys in the data retrieved from Redis.")
+	log.Println("There are", len(keys), "keys in the data retrieved from Redis.")
 	sort.Strings(keys)
 
 	file, err := os.Create("mr-final." + drv.jobName + ".out")
@@ -85,10 +84,10 @@ func (drv *Driver) merge(redisHostnames []string) {
 	}
 	w := bufio.NewWriter(file)
 	for _, k := range keys {
-		fmt.Fprintf(w, "%s\n", kvs[k])
+		log.Fprintf(w, "%s\n", kvs[k])
 	}
 	since := time.Since(now)
-	fmt.Printf("Merge phase took %d ms.", since/1e6)
+	log.Printf("Merge phase took %d ms.", since/1e6)
 	w.Flush()
 	file.Close()
 }

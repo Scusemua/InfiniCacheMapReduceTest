@@ -15,7 +15,6 @@ package serverless
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -77,10 +76,10 @@ func getSampleKeys(sampleFileS3Key string, nReduce int) []string {
 	})
 	checkError(err)
 
-	fmt.Printf("File %s downloaded, %d bytes\n", sampleFileS3Key, n)
+	log.Printf("File %s downloaded, %d bytes\n", sampleFileS3Key, n)
 
-	fmt.Println("\n\nDriver is generating sample keys now...")
-	fmt.Println("Driver is reading data from file", sampleFileS3Key, "to generate the sample keys.")
+	log.Println("\n\nDriver is generating sample keys now...")
+	log.Println("Driver is reading data from file", sampleFileS3Key, "to generate the sample keys.")
 
 	b, err = ioutil.ReadFile(sampleFileS3Key)
 	checkError(err)
@@ -104,7 +103,7 @@ func getSampleKeys(sampleFileS3Key string, nReduce int) []string {
 		sampleKeys = append(sampleKeys, arr[i])
 	}
 
-	fmt.Println("Driver successfully generated", len(arr), "sample keys.")
+	log.Println("Driver successfully generated", len(arr), "sample keys.")
 
 	return sampleKeys
 }
@@ -125,7 +124,7 @@ func NewDriver(address string) (drv *Driver) {
 // 2) receive and execute tasks on the already plugged-in services.
 func (drv *Driver) Register(args *WorkerRegisterArgs, _ *struct{}) error {
 	drv.Lock()
-	fmt.Println("Driver received worker registration from worker at address:", args.WorkerAddr)
+	log.Println("Driver received worker registration from worker at address:", args.WorkerAddr)
 	defer drv.Unlock()
 
 	drv.workers = append(drv.workers, args.WorkerAddr)
@@ -170,7 +169,7 @@ func (drv *Driver) startRPCServer() {
 					conn.Close()
 				}()
 			} else {
-				fmt.Printf("Registration server %s: accept error: %s\n", drv.address, err)
+				log.Printf("Registration server %s: accept error: %s\n", drv.address, err)
 			}
 		}
 		Debug("Registration server done\n")
@@ -184,7 +183,7 @@ func (drv *Driver) startRPCServer() {
 func (drv *Driver) stopRPCServer() {
 	ok := Call(drv.address, "Driver.Shutdown", new(struct{}), new(struct{}))
 	if ok == false {
-		fmt.Printf("Driver cleanup: RPC %s error\n", drv.address)
+		log.Printf("Driver cleanup: RPC %s error\n", drv.address)
 	}
 	Debug("cleanup Registration server: done\n")
 }
@@ -209,10 +208,10 @@ func (drv *Driver) registerService(
 
 	ok := Call(worker, "Worker.RegisterService", args, new(struct{}))
 	if ok == true {
-		fmt.Printf("Successfully registered worker %s\n", worker)
+		log.Printf("Successfully registered worker %s\n", worker)
 		go func() { registerChan <- worker }()
 	} else {
-		fmt.Printf("Failed to register worker %s\n", worker)
+		log.Printf("Failed to register worker %s\n", worker)
 	}
 }
 
@@ -220,7 +219,7 @@ func (drv *Driver) registerService(
 // It enters a for loop over all registered workers to perform
 // service registration by calling registerService.
 func (drv *Driver) prepareService(ch chan string, serviceName string) {
-	fmt.Printf("Driver: enter the worker registration service loop...\n")
+	log.Printf("Driver: enter the worker registration service loop...\n")
 	i := 0
 	for {
 		drv.Lock()
@@ -270,32 +269,32 @@ func (drv *Driver) run(
 	drv.redisHostnames = redisHostnames
 
 	jobStartTime := time.Now()
-	fmt.Println("JOB START: ", jobStartTime.Format("2006-01-02 15:04:05:.99999"))
+	log.Println("JOB START: ", jobStartTime.Format("2006-01-02 15:04:05:.99999"))
 
-	fmt.Printf("%s: Starting MapReduce job: %s\n", drv.address, jobName)
+	log.Printf("%s: Starting MapReduce job: %s\n", drv.address, jobName)
 
 	endOfMap := time.Now()
 	mapPhaseDuration := time.Since(jobStartTime)
 
-	fmt.Printf("Map phase duration: %d ms\n", mapPhaseDuration/1000000)
+	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration/1000000)
 
 	// E.g., for word count, the name of the map plugin service
 	// module would be 'wcm_service'; for inverted indexing, the name
 	// would be 'iim_service'.
-	fmt.Printf("%s: To start the Map phase...\n", drv.address)
+	log.Printf("%s: To start the Map phase...\n", drv.address)
 	schedule(mapPhase, jobName)
 
 	// E.g., for word count, the name of the reduce plugin service
 	// module would be 'wcr_service'; for inverted indexing, the name
 	// would be 'iir_service'.
-	fmt.Printf("%s: To start he Reduce phase...\n", drv.address)
+	log.Printf("%s: To start he Reduce phase...\n", drv.address)
 	schedule(reducePhase, jobName)
 
 	reducePhaseDuration := time.Since(endOfMap)
 	mapReduceDuration := time.Since(jobStartTime)
 
-	fmt.Println("Reduce phase duration:", reducePhaseDuration/1000000, "ms")
-	fmt.Println("DURATION OF MAP PHASE + REDUCE PHASE:", mapReduceDuration/1000000, "ms")
+	log.Println("Reduce phase duration:", reducePhaseDuration/1000000, "ms")
+	log.Println("DURATION OF MAP PHASE + REDUCE PHASE:", mapReduceDuration/1000000, "ms")
 
 	finish()
 	drv.merge(redisHostnames)
@@ -303,8 +302,8 @@ func (drv *Driver) run(
 	jobEndTime := time.Now()
 	jobDuration := time.Since(jobStartTime)
 
-	fmt.Println("JOB END: ", jobEndTime.Format("2006-01-02 15:04:05:.99999"))
-	fmt.Printf("Job Duration: %d ms\n", jobDuration/1000000)
+	log.Println("JOB END: ", jobEndTime.Format("2006-01-02 15:04:05:.99999"))
+	log.Printf("Job Duration: %d ms\n", jobDuration/1000000)
 
 	drv.doneChannel <- true
 }
@@ -330,7 +329,7 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 	// Read in all the S3 keys from the files.
 	for scanner.Scan() {
 		txt := scanner.Text()
-		fmt.Printf("Read S3 key from file: \"%s\"\n", txt)
+		log.Printf("Read S3 key from file: \"%s\"\n", txt)
 		s3Keys = append(s3Keys, txt)
 	}
 
@@ -348,7 +347,7 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 	// Read in all the Redis endpoints from the files.
 	for scanner2.Scan() {
 		txt := scanner2.Text()
-		fmt.Printf("Read Redis endpoint from file: \"%s\"\n", txt)
+		log.Printf("Read Redis endpoint from file: \"%s\"\n", txt)
 		redisHostnames = append(redisHostnames, txt)
 	}
 
@@ -357,10 +356,10 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 	end := time.Now()
 	elapsed := end.Sub(start)
 
-	fmt.Printf("Driver generating sample keys took %d ms.", elapsed/1e6)
-	fmt.Printf("Sample keys: %s\n", strings.Join(sampleKeys, ","))
+	log.Printf("Driver generating sample keys took %d ms.", elapsed/1e6)
+	log.Printf("Sample keys: %s\n", strings.Join(sampleKeys, ","))
 
-	fmt.Printf("Number of S3 keys: %d\n", len(s3Keys))
+	log.Printf("Number of S3 keys: %d\n", len(s3Keys))
 
 	go drv.run(jobName, s3Keys, redisHostnames, nReduce, sampleKeys,
 		func(phase jobPhase, serviceName string) { // func schedule()
@@ -382,9 +381,9 @@ func (drv *Driver) killWorkers() {
 		Debug("Driver: shutdown worker %s\n", w)
 		ok := Call(w, "Worker.Shutdown", new(struct{}), new(struct{}))
 		if ok == false {
-			fmt.Printf("Driver: RPC %s shutdown error\n", w)
+			log.Printf("Driver: RPC %s shutdown error\n", w)
 		} else {
-			fmt.Printf("Driver: RPC %s shutdown gracefully\n", w)
+			log.Printf("Driver: RPC %s shutdown gracefully\n", w)
 		}
 	}
 }
