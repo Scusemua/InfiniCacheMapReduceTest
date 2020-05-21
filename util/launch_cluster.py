@@ -154,6 +154,13 @@ def update_redis_hosts(
         key_path = key_path
     )
 
+def kill_go_processes(
+    ips = None,
+    key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"
+):
+    kill_command = "sudo ps aux | grep go | awk '{print $2}' | xargs kill -9 $1"
+    execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
+
 def launch_workers(
     client_ip = None,
     count_limit = 5,
@@ -187,16 +194,16 @@ def launch_workers(
 if __name__ == "__main__":
     ips = get_public_ips()
     workers_per_vm = 3
-    redis_ips = ips[0:6]
+    redis_ips = ips[0:2]
     print("Redis IP's: {}".format(redis_ips))
 
-    client_ip = ips[6]
+    client_ip = ips[2]
     print("Client IP: {}".format(client_ip))
 
-    worker_ips = ips[7:]
+    worker_ips = ips[3:]
     print("Worker IP's: {}".format(worker_ips))
 
-    launch_redis_servers(ips = redis_ips, kill_first = False, connect_and_ping = True)
+    launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True)
 
     # for ip in redis_ips:
     #     redis_client = redis.Redis(host = ip, port = 6379, db = 0)
@@ -213,6 +220,6 @@ if __name__ == "__main__":
 
     nReducers = workers_per_vm * len(worker_ips) * 3
     print("nReducers = {}".format(nReducers))
-    launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
+    launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
 
     launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips, workers_per_vm = workers_per_vm)

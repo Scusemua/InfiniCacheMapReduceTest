@@ -1,0 +1,68 @@
+2020/05/21 22:54:12 jobName: srt, nReduce: 18
+2020/05/21 22:54:12 10.0.2.251:1234: Starting driver RPC server
+2020/05/21 22:54:12 Registration server starting
+2020/05/21 22:54:12 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
+2020/05/21 22:54:12 rpc.Register: method "Run" has 5 input parameters; needs exactly three
+2020/05/21 22:54:12 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
+2020/05/21 22:54:12 rpc.Register: method "Wait" has 1 input parameters; needs exactly three
+2020/05/21 22:54:12 Read S3 key from file: "1MB-part1-1000-thru-2000.dat"
+2020/05/21 22:54:12 Read S3 key from file: "1MB-part2-2000-thru-3000.dat"
+2020/05/21 22:54:12 Read S3 key from file: "1MB-part3-3000-thru-4000.dat"
+2020/05/21 22:54:12 Read S3 key from file: "1MB-part4-4000-thru-5000.dat"
+2020/05/21 22:54:12 Read S3 key from file: "1MB-part5-5000-thru-6000.dat"
+2020/05/21 22:54:12 Read S3 key from file: "1MB-part6-6000-thru-7000.dat"
+2020/05/21 22:54:12 Read S3 key from file: "1MB-part7-7000-thru-8000.dat"
+2020/05/21 22:54:12 Read S3 key from file: "1MB-part8-8000-thru-9000.dat"
+2020/05/21 22:54:12 Read S3 key from file: "1MB-part9-9000-thru-10000.dat"
+2020/05/21 22:54:12 Read S3 key from file: "1MB-part0-0-thru-1000.dat"
+2020/05/21 22:54:12 Read Redis endpoint from file: "18.215.158.131:6379"
+2020/05/21 22:54:12 Read Redis endpoint from file: "18.212.88.45:6379"
+2020/05/21 22:54:12 About to generate sample keys...
+2020/05/21 22:54:35 File sample_data.dat downloaded, 10000000 bytes, time elapsed = 23275 ms
+2020/05/21 22:54:35 Driver is generating sample keys now...
+2020/05/21 22:54:35 Driver is reading data from file sample_data.dat to generate the sample keys.
+2020/05/21 22:54:35 Driver successfully generated 100000 sample keys.
+2020/05/21 22:54:35 Driver generating sample keys took 23379 ms.
+2020/05/21 22:54:35 Sample keys:   -Y{'qbZ@  000000000000000000000000000103FC  2222555599990000CCCCAAAA7777BBBB11116666FFFFBBBB5555,%?e.4i.oLi  00000000000000000000000000008CF2  99990000FFFFFFFFFFFFDDDD7777CCCC9999EEEE1111AAAAFFFF,*[j/HMoKf/  00000000000000000000000000012BB1  5555DDDDAAAA77771111CCCCAAAACCCC44444444444411116666,/yA.q;$b~e  00000000000000000000000000011CF8  77774444666688882222AAAA6666888877775555FFFFAAAA9999,5,Pq"efDUH  0000000000000000000000000001691D  CCCC000066668888FFFF99993333999977773333FFFFAAAAAAAA,:GEChyyRTH  00000000000000000000000000010833  EEEE111155554444AAAA333366669999555522226666EEEECCCC,?c(Cckob.*  0000000000000000000000000000DF66  FFFF8888FFFFFFFF5555BBBBDDDD5555444499995555AAAABBBB,Dr?e/QiX$a  00000000000000000000000000009C20  4444BBBB44446666CCCC9999AAAAFFFF9999EEEE333366661111,J2pJA7tLg<  00000000000000000000000000002B39  3333DDDD000022227777BBBB44445555DDDD444422224444EEEE,OD#b{>c6Pr  0000000000000000000000000000EDB4  3333CCCC0000BBBB5555CCCCCCCC66668888666622221111DDDD,ThuwS4<xau  00000000000000000000000000001026  AAAA7777222288885555777788885555BBBBDDDD3333EEEEBBBB,Y}+$:dh^O\  000000000000000000000000000001F5  777788883333EEEEAAAABBBB8888BBBB66664444999999992222,_<AM#MeU9&  00000000000000000000000000000418  BBBBEEEEDDDD111100008888AAAA5555CCCC7777888800009999,dJS::|3\i   00000000000000000000000000004B30  999966662222EEEE2222AAAAEEEE444477775555EEEE11111111,iiKG>7o299  00000000000000000000000000004202  DDDD555566660000EEEEEEEE0000BBBBEEEECCCCAAAADDDDFFFF,o&sFv.CAv!  0000000000000000000000000000D1A7  FFFF6666FFFFDDDD1111BBBB9999DDDD6666FFFFEEEEDDDD8888,tDy)f(>*re  000000000000000000000000000151D6  888877774444BBBB00008888BBBB99990000EEEEDDDDFFFFBBBB,y^blYU}NRy  0000000000000000000000000000BAA5  EEEE77774444DDDDAAAADDDD1111FFFF99999999111166662222,~}pxDXNQ*~  0000000000000000000000000000F530  DDDDFFFFDDDDFFFFFFFF444444442222EEEE0000CCCC11111111
+2020/05/21 22:54:35 Number of S3 keys: 10
+2020/05/21 22:54:35 JOB START:  2020-05-21 22:54:35:.7829
+2020/05/21 22:54:35 10.0.2.251:1234: Starting MapReduce job: srt
+2020/05/21 22:54:35 10.0.2.251:1234: To start the Map phase...
+2020/05/21 22:54:35 Driver: schedule Map
+2020/05/21 22:54:35 Driver: Creating jobs. nTasks: 10
+2020/05/21 22:54:35 Driver: Creating jobs
+2020/05/21 22:54:35 Driver: starting runner
+2020/05/21 22:54:35 Driver: Waiting for tasks to be complete
+2020/05/21 22:54:35 Driver: Job runner waiting for jobs
+2020/05/21 22:54:35 Driver: Job runner got job
+2020/05/21 22:54:35 Driver: enter the worker registration service loop...
+2020/05/21 22:55:08 Driver received worker registration from worker at address: 10.0.2.226:1237
+2020/05/21 22:55:08 Driver: to register new service: srtm_service
+2020/05/21 22:55:08 Successfully registered worker 10.0.2.226:1237
+2020/05/21 22:55:08 Driver: Job runner got job
+2020/05/21 22:55:08 Schedule: scheduling task 0 on worker 10.0.2.226:1237 now...
+2020/05/21 22:55:08 Driver received worker registration from worker at address: 10.0.2.226:1235
+2020/05/21 22:55:08 Driver: to register new service: srtm_service
+2020/05/21 22:55:08 Successfully registered worker 10.0.2.226:1235
+2020/05/21 22:55:08 Driver: Job runner got job
+2020/05/21 22:55:08 Schedule: scheduling task 1 on worker 10.0.2.226:1235 now...
+2020/05/21 22:55:08 Driver received worker registration from worker at address: 10.0.2.226:1236
+2020/05/21 22:55:08 Driver: to register new service: srtm_service
+2020/05/21 22:55:08 Successfully registered worker 10.0.2.226:1236
+2020/05/21 22:55:08 Driver: Job runner got job
+2020/05/21 22:55:08 Schedule: scheduling task 2 on worker 10.0.2.226:1236 now...
+2020/05/21 22:55:13 Driver received worker registration from worker at address: 10.0.2.52:1235
+2020/05/21 22:55:13 Driver: to register new service: srtm_service
+2020/05/21 22:55:13 Successfully registered worker 10.0.2.52:1235
+2020/05/21 22:55:13 Driver: Job runner got job
+2020/05/21 22:55:13 Schedule: scheduling task 3 on worker 10.0.2.52:1235 now...
+2020/05/21 22:55:13 Driver received worker registration from worker at address: 10.0.2.52:1236
+2020/05/21 22:55:13 Driver: to register new service: srtm_service
+2020/05/21 22:55:13 Successfully registered worker 10.0.2.52:1236
+2020/05/21 22:55:13 Driver: Job runner got job
+2020/05/21 22:55:13 Schedule: scheduling task 4 on worker 10.0.2.52:1236 now...
+2020/05/21 22:55:13 Driver received worker registration from worker at address: 10.0.2.52:1237
+2020/05/21 22:55:13 Driver: to register new service: srtm_service
+2020/05/21 22:55:13 Successfully registered worker 10.0.2.52:1237
+2020/05/21 22:55:13 Driver: Job runner got job
+2020/05/21 22:55:13 Schedule: scheduling task 5 on worker 10.0.2.52:1237 now...

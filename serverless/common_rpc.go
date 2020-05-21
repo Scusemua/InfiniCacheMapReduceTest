@@ -2,6 +2,7 @@ package serverless
 
 import (
 	"fmt"
+	"log"
 	"net/rpc"
 )
 
@@ -46,12 +47,14 @@ type RPCArgs struct {
 // Please don't change this function.
 //
 func Call(srv string, rpcname string, args interface{}, reply interface{}) bool {
+	log.Printf("Dialing %s for RPC call for function %s now...\n", srv, rpcname)
 	c, errx := rpc.Dial("tcp", srv)
 	if errx != nil {
 		return false
 	}
 	defer c.Close()
 
+	log.Printf("Making RPC call for function %s to remote @ %s now...\n", rpcname, srv)
 	err := c.Call(rpcname, args, reply)
 	if err == nil {
 		return true
