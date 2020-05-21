@@ -96,7 +96,7 @@ func (svc *Service) openPlugin() error {
 // RegisterService is caled by the driver to plugin a new service that has already been
 // compiled into a .so static object library.
 func (wk *Worker) RegisterService(args *serverless.ServiceRegisterArgs, _ *struct{}) error {
-	serverless.Debug("Register called for %s\n", args.ServiceName)
+	log.Printf("Register called for %s\n", args.ServiceName)
 
 	service := newService(args.ServiceName)
 	err := service.openPlugin()
@@ -105,19 +105,19 @@ func (wk *Worker) RegisterService(args *serverless.ServiceRegisterArgs, _ *struc
 	}
 	serviceMap[args.ServiceName] = service
 
-	serverless.Debug("Successfully registered new service %s\n", args.ServiceName)
+	log.Printf("Successfully registered new service %s\n", args.ServiceName)
 	return nil
 }
 
 // InvokeService is called by the driver (schedule) when a new task
 // is being scheduled on this worker.
 func (wk *Worker) InvokeService(args serverless.RPCArgs, _ *struct{}) error {
-	serverless.Debug("worker InvokeService: %s\n", args.Name)
+	log.Printf("worker InvokeService: %s\n", args.Name)
 
 	svc, ok := serviceMap[args.Name]
 	if !ok {
 		msg := fmt.Sprintf("Unknown service in call to InvokeService: %s\n", args.Name)
-		serverless.Debug(msg)
+		log.Println(msg)
 		return fmt.Errorf(msg)
 	}
 	svc.interf.DoService(args.Args)
@@ -128,7 +128,7 @@ func (wk *Worker) InvokeService(args serverless.RPCArgs, _ *struct{}) error {
 // Shutdown is called by the driver when all work has been completed.
 // No response needed.
 func (wk *Worker) Shutdown(_ *struct{}, _ *struct{}) error {
-	serverless.Debug("Worker shutdown %s\n", wk.address)
+	log.Printf("Worker shutdown %s\n", wk.address)
 	close(wk.shutdown)
 	wk.l.Close()
 	return nil
