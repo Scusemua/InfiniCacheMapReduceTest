@@ -15,6 +15,7 @@ package main
 import (
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+	"io"
 	"log"
 	"net"
 	"net/rpc"
@@ -210,6 +211,15 @@ func main() {
 	wk.nRPC = nRPC
 	wk.shutdown = make(chan struct{})
 	wk.nTasks = 0
+
+	f, err := os.OpenFile("WorkerLog-"+string(wk.address)+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+
+	mw := io.MultiWriter(os.Stdout, f)
+	log.SetOutput(mw)
 
 	wk.startRPCServer()
 }

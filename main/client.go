@@ -16,6 +16,7 @@ package main
 import (
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -37,6 +38,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	f, err := os.OpenFile("Client-"+string(os.Args[1])+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+
+	mw := io.MultiWriter(os.Stdout, f)
+	log.SetOutput(mw)
 
 	serverless.Debug("jobName: %s, nReduce: %d\n", jobName, nReduce)
 

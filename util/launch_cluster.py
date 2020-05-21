@@ -19,6 +19,8 @@ def get_public_ips(region_name="us-east-1"):
 
 def execute_command(
     command = None,
+    count_limit = 3,
+    get_pty = False,
     ips = None,
     key_path = None
 ):
@@ -34,14 +36,15 @@ def execute_command(
     
     for IP, ssh_redis_client in ssh_clients:
         print("Executing command for instance @ {}...".format(IP))
-        ssh_stdin, ssh_stdout, ssh_stderr = ssh_redis_client.exec_command(command)
+        print("get_pty:", get_pty)
+        ssh_stdin, ssh_stdout, ssh_stderr = ssh_redis_client.exec_command(command, get_pty = get_pty)
         print("Executed command \"{}\"...".format(command))
         count = 0
         while not ssh_stdout.channel.eof_received:
             print("Waiting for EOF received...")
             time.sleep(1)
             count += 1
-            if count >= 3:
+            if count >= count_limit:
                 break
         if ssh_stdout.channel.eof_received:
             print("Calling ssh_stdout.channel.recv_exit_status()...")
@@ -96,10 +99,17 @@ def launch_client(
     nReducers = 10,
     s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt"
 ):
-    launch_client_command = "./home/ubuntu/project/src/InfiniCacheMapReduceTest/main/start-client.sh {} {}".format(nReducers, s3_key_file)
+    pre_command = """
+    . ~/.profile;
+    . ~/.bashrc;
+    """
+
+    post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-client.sh {} {}".format(nReducers, s3_key_file)
+
+    command = pre_command + post_command
 
     execute_command(
-        command = launch_client_command,
+        command = command,
         ips = [client_ip],
         key_path = key_path
     )    
@@ -139,30 +149,25 @@ def launch_workers(
     worker_ips = None
 ):
     print("Key path = {}".format(key_path))
-    update_redis_hosts(ips = [client_ip] + worker_ips)
+    update_redis_hosts(ips = [client_ip] + worker_ips, redis_ips = redis_ips)
 
-    cmd = "source ~/.bashrc;cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234".format(client_ip)
+    pre_command = """
+    . ~/.profile;
+    . ~/.bashrc;
+    """
 
-    # execute_command(
-    #     command = cd_command,
-    #     ips = worker_ips,
-    #     key_path = key_path
-    # )
+    post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234".format(client_ip)
 
-    # pwd_command = "pwd"
+    command = pre_command + post_command
 
-    # execute_command(
-    #     command = pwd_command,
-    #     ips = worker_ips,
-    #     key_path = key_path
-    # )
-
-    # start_workers_command = "
+    print("Full command: {}".format(command))
 
     execute_command(
-        command = cmd,
+        command = command,
+        count_limit = 5,
         ips = worker_ips,
-        key_path = key_path
+        key_path = key_path,
+        get_pty = True 
     )    
 
 if __name__ == "__main__":
