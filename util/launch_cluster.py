@@ -25,6 +25,7 @@ def execute_command(
     keyfile = paramiko.RSAKey.from_private_key_file(key_path)
     ssh_clients = list()
     timeout = 5
+    print(" ")
 
     for ip in ips:
         ssh_redis = paramiko.SSHClient()
@@ -48,9 +49,11 @@ def execute_command(
             ssh_stdout.channel.recv_exit_status()
             print("Reading lines from stdout...")
             lines = ssh_stdout.readlines()
-            print("Lines = {}".format(lines))        
-            if len(lines) > 0:
-                print("Successfully launched Redis server.")
+            print("STDOUT Lines = {}".format(lines))      
+            lines2 = ssh_stderr.readlines()
+            print("STDErr Lines = {}".format(lines2))  
+            #if len(lines) > 0:
+            #    print("Successfully launched Redis server.")
         else:
             print("ssh_stdout.channel.eof_received is still False... skipping...")
 
@@ -79,7 +82,7 @@ def launch_redis_servers(
 def launch_client(
     client_ip = None,
     key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem",
-    nReducer = 10,
+    nReducers = 10,
     s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt"
 ):
     launch_client_command = "./home/ubuntu/project/src/InfiniCacheMapReduceTest/main/start-client.sh {} {}".format(nReducers, s3_key_file)
@@ -96,12 +99,13 @@ def launch_workers(
     redis_ips = None,
     worker_ips = None
 ):
-    create_redis_file_command = "printf "
+    print("Key path = {}".format(key_path))
+    create_redis_file_command = "printf \""
 
     for i in range(0, len(redis_ips)):
         redis_ip = redis_ips[i]
         if i == len(redis_ips) - 1:
-            create_redis_file_command = create_redis_file_command + redis_ip 
+            create_redis_file_command = create_redis_file_command + redis_ip + "\""
         else:
             create_redis_file_command = create_redis_file_command + redis_ip + "\n"
     
@@ -115,10 +119,26 @@ def launch_workers(
         key_path = key_path
     )
 
-    start_workers_command = "./home/ubuntu/project/src/InfiniCacheMapReduceTest/main/start-workers.sh {}".format(client_ip)
+    cmd = "source ~/.bashrc;cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234".format(client_ip)
+
+    # execute_command(
+    #     command = cd_command,
+    #     ips = worker_ips,
+    #     key_path = key_path
+    # )
+
+    # pwd_command = "pwd"
+
+    # execute_command(
+    #     command = pwd_command,
+    #     ips = worker_ips,
+    #     key_path = key_path
+    # )
+
+    # start_workers_command = "
 
     execute_command(
-        command = start_workers_command,
+        command = cmd,
         ips = worker_ips,
         key_path = key_path
     )    
@@ -147,12 +167,8 @@ if __name__ == "__main__":
 
     launch_client(
         client_ip = client_ip,
-        nReducer = 50,
+        nReducers = 50,
         s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt"
     )
 
-    launch_workers(
-        client_ip = client_ip,
-        redis_ips = redis_ips,
-        worker_ips = worker_ips
-    )
+    launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips)

@@ -10,19 +10,19 @@ echo "Got IP: $IP"
 # $1 contains driver hostname (i.e., <ip>:<port>)
 
 # Start the workers
-go run worker.go $IP:1235 $1 999999 & 
+/usr/local/go/bin/go run worker.go $IP:1235 $1 999999 & 
 pids[0]=$!
 
-go run worker.go $IP:1236 $1 999999 & 
+/usr/local/go/bin/go run worker.go $IP:1236 $1 999999 & 
 pids[2]=$!
 
-go run worker.go $IP:1237 $1 999999 & 
+/usr/local/go/bin/go run worker.go $IP:1237 $1 999999 & 
 pids[3]=$!
 
-go run worker.go $IP:1238 $1 999999 & 
+/usr/local/go/bin/go run worker.go $IP:1238 $1 999999 & 
 pids[4]=$!
 
-go run worker.go $IP:1239 $1 999999 & 
+/usr/local/go/bin/go run worker.go $IP:1239 $1 999999 & 
 pids[5]=$!
 
 echo "[Test]: waiting for workers to finish..." > /dev/stderr
