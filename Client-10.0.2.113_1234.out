@@ -1,358 +1,0 @@
-2020/05/21 18:56:05 jobName: srt, nReduce: 100
-2020/05/21 18:56:05 10.0.2.113:1234: Starting driver RPC server
-2020/05/21 18:56:05 Registration server starting
-2020/05/21 18:56:05 rpc.Register: method "Lock" has 1 input parameters; needs exactly three
-2020/05/21 18:56:05 rpc.Register: method "Run" has 5 input parameters; needs exactly three
-2020/05/21 18:56:05 rpc.Register: method "Unlock" has 1 input parameters; needs exactly three
-2020/05/21 18:56:05 rpc.Register: method "Wait" has 1 input parameters; needs exactly three
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part0-0-thru-2500000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part1-2500000-thru-5000000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part16-40000000-thru-42500000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part2-5000000-thru-7500000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part6-15000000-thru-17500000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part10-25000000-thru-27500000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part13-32500000-thru-35000000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part17-42500000-thru-45000000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part3-7500000-thru-10000000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part7-17500000-thru-20000000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part11-27500000-thru-30000000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part14-35000000-thru-37500000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part18-45000000-thru-47500000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part4-10000000-thru-12500000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part8-20000000-thru-22500000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part12-30000000-thru-32500000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part15-37500000-thru-40000000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part19-47500000-thru-50000000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part5-12500000-thru-15000000.dat"
-2020/05/21 18:56:05 Read S3 key from file: "5gb-part9-22500000-thru-25000000.dat"
-2020/05/21 18:56:05 Read Redis endpoint from file: "34.229.0.107:6379"
-2020/05/21 18:56:05 Read Redis endpoint from file: "52.91.171.65:6379"
-2020/05/21 18:56:05 Read Redis endpoint from file: "184.73.136.143:6379"
-2020/05/21 18:56:05 Read Redis endpoint from file: "54.167.87.88:6379"
-2020/05/21 18:56:05 Read Redis endpoint from file: "54.226.67.1:6379"
-2020/05/21 18:56:05 Read Redis endpoint from file: "52.87.253.10:6379"
-2020/05/21 18:56:25 File sample_data.dat downloaded, 10000000 bytes
-2020/05/21 18:56:25 
-
-Driver is generating sample keys now...
-2020/05/21 18:56:25 Driver is reading data from file sample_data.dat to generate the sample keys.
-2020/05/21 18:56:25 Driver successfully generated 100000 sample keys.
-2020/05/21 18:56:25 Driver generating sample keys took 20734 ms.
-2020/05/21 18:56:25 Sample keys:   -Y{'qbZ@  000000000000000000000000000103FC  2222555599990000CCCCAAAA7777BBBB11116666FFFFBBBB5555, }BWcxR^0&  0000000000000000000000000000854B  00004444DDDD444477773333CCCCAAAA4444FFFF1111DDDD4444,!xbAIUcp5R  0000000000000000000000000000469A  2222000099991111AAAA8888EEEE11111111AAAA999922227777,"wmV}ly;iY  0000000000000000000000000000991E  CCCC2222FFFF2222BBBBBBBB44445555CCCC33334444DDDD3333,#s@&a9sPLK  000000000000000000000000000163D8  44444444BBBB77770000DDDD5555999922227777111144449999,$kPx-<,:{Z  00000000000000000000000000007612  66660000FFFF8888EEEE4444BBBB3333CCCC666655550000FFFF,%g_5D6!O.x  00000000000000000000000000012EEB  99994444FFFFFFFFEEEE3333CCCC888899997777EEEE33334444,&d:!C/}*L2  00000000000000000000000000002BB4  EEEE55551111EEEE111188885555666644448888CCCC1111DDDD,'_L4HS:Ke]  00000000000000000000000000011C80  8888BBBBEEEE3333555544448888BBBBCCCCBBBB111188881111,(WfkCb=g<;  0000000000000000000000000000CA73  88882222DDDD3333BBBB5555EEEE7777DDDDDDDD8888AAAACCCC,)X?$LF!_ly  00000000000000000000000000000494  77779999AAAA55558888111111119999AAAA0000DDDDBBBBDDDD,*R9u +/W81  0000000000000000000000000000AA81  5555FFFFBBBBDDDD2222DDDDBBBBFFFFBBBB0000FFFFCCCC6666,+My"Bv+fv4  00000000000000000000000000005484  44441111EEEE5555FFFF4444BBBBCCCCBBBBDDDD33330000DDDD,,NqT:rNeG;  00000000000000000000000000014549  FFFFFFFF6666777777771111111188885555DDDD6666BBBBEEEE,-Eb?7N<,fI  00000000000000000000000000003898  EEEEBBBB4444AAAAFFFF0000FFFFBBBBCCCC0000111188889999,.DP @h)^E;  000000000000000000000000000180AD  000088881111BBBBDDDD4444EEEEBBBB7777999933339999AAAA,/>4[S(![(T  00000000000000000000000000012DEE  3333222222220000AAAAFFFF8888CCCCDDDD2222888844443333,08a7>`Q]4o  0000000000000000000000000000DE3D  FFFF555588883333FFFF2222000000002222555555558888AAAA,13pQ<kw[Fq  00000000000000000000000000012900  CCCC55558888CCCCDDDD0000AAAACCCCFFFF9999333300001111,2,0qC|f2N+  00000000000000000000000000008566  666655554444999977777777333300005555EEEE7777AAAABBBB,3*$Bw]q6&)  000000000000000000000000000070FB  3333EEEE9999DDDD9999CCCC9999777711119999999922224444,4$\gnFAO{;  000000000000000000000000000070E2  BBBBCCCC77772222AAAA5555EEEE3333FFFF333377777777FFFF,4yGy+Xe7]C  0000000000000000000000000000DACA  AAAA333322229999FFFFCCCC9999AAAA2222AAAA5555BBBB7777,5rw9RJOO&!  00000000000000000000000000004A89  77770000DDDD33339999FFFFAAAA77779999DDDDBBBB7777EEEE,6j[<'5$|HC  0000000000000000000000000000382A  AAAA0000FFFF777711114444DDDDCCCCCCCC11119999DDDD7777,7a|BQwFr"5  00000000000000000000000000014D50  BBBBCCCC55550000FFFFBBBB3333FFFFFFFF9999BBBB77771111,8`ZyOoQEJ`  00000000000000000000000000006D14  EEEECCCC5555666655559999DDDDAAAACCCCAAAABBBB3333DDDD,9_rgh;bqUw  00000000000000000000000000003128  9999888811115555CCCC3333EEEE44442222DDDD2222BBBB9999,:[t[ *j~=r  0000000000000000000000000001236B  8888AAAA66669999AAAAEEEEAAAA44447777AAAA1111BBBB4444,;Vp[1Iu<tb  00000000000000000000000000017DF9  EEEE666633334444CCCC3333EEEE5555DDDDBBBB55558888EEEE,<P '&$B-_j  000000000000000000000000000056B5  5555BBBB8888BBBB4444DDDD2222AAAA99997777EEEEDDDD2222,=Je2PQ+%&H  0000000000000000000000000000D9BF  5555CCCC888877779999DDDD9999EEEEBBBBEEEE666644440000,>G&|T0s{+   00000000000000000000000000000628  DDDD2222FFFF11112222888899990000DDDD88889999BBBB9999,?C=0`rM*5Z  000000000000000000000000000138A4  CCCC9999BBBBFFFF00003333EEEE44443333000088886666DDDD,@@m%7;ydN   0000000000000000000000000000544A  FFFF7777FFFF555555550000888822223333EEEE222233337777,A7o;(wU:&5  0000000000000000000000000000FD73  FFFF6666DDDDAAAACCCCCCCC11111111AAAA11115555AAAACCCC,B1e EsLHda  0000000000000000000000000001446F  33336666DDDD8888EEEEFFFF4444CCCCAAAAEEEE555599990000,C-o[/EDd x  00000000000000000000000000011D5B  222211113333AAAA5555000077777777BBBBEEEEEEEECCCC4444,D%*Dw1G4G|  0000000000000000000000000000744D  3333BBBB88880000EEEEFFFF222255555555CCCCEEEEFFFFAAAA,D{m&!LLr5/  0000000000000000000000000000B213  CCCC333388887777CCCC11112222000022224444BBBB0000CCCC,Ew9[kC92k[  0000000000000000000000000000E0B5  00005555DDDD9999DDDD222266660000EEEE22224444DDDD2222,FweZe+M?Sl  0000000000000000000000000000F53C  777777771111BBBBCCCCFFFFDDDD111177772222555577775555,Gr,NzN!Biw  0000000000000000000000000000E34E  4444000077771111555500002222555522224444222266663333,Hj((RF@T)a  00000000000000000000000000005B09  0000222299999999CCCCCCCC66663333CCCCCCCCEEEEFFFFEEEE,IhW|N=Kj=0  0000000000000000000000000001718C  77773333AAAA4444DDDD111133333333FFFF33334444EEEE5555,Jct'GH'*Sh  00000000000000000000000000006D1D  7777111144448888DDDD44443333EEEE11119999BBBBAAAAAAAA,K\|0\BqS%8  0000000000000000000000000000B7B0  2222EEEE66660000AAAA6666FFFFAAAA22223333FFFF99991111,LUY)H1<TZ_  0000000000000000000000000000CB34  DDDDFFFF333388885555FFFFBBBB22225555000066669999DDDD,ML%E~5o2>[  0000000000000000000000000000A23C  33337777BBBBEEEE7777FFFF00005555CCCC7777444477775555,NL8} ;bAn)  00000000000000000000000000000E29  9999FFFFAAAA3333EEEE99997777FFFFEEEE3333CCCCDDDDEEEE,OD;CO>L?i@  0000000000000000000000000000EB4B  5555EEEE5555DDDD888855551111EEEEDDDDAAAABBBBDDDD4444,PB#MN19JsW  00000000000000000000000000007839  6666EEEECCCC666600004444EEEEFFFF77771111DDDD4444EEEE,Q>*iCZTa T  0000000000000000000000000000914E  6666BBBB1111FFFF5555FFFFBBBB0000BBBBEEEECCCC66663333,R:?)8aVn;P  0000000000000000000000000000D6CE  EEEEFFFF66660000AAAAFFFF555588886666CCCC4444EEEE3333,S5*0)x(%>c  00000000000000000000000000000864  4444DDDD444477771111BBBB11119999777777775555AAAADDDD,T4T?ASpTl!  00000000000000000000000000005211  8888EEEE5555888811110000AAAA99991111FFFF4444BBBB6666,U/q[jb<*?I  00000000000000000000000000008106  66663333999922228888111177776666EEEEBBBBCCCC8888BBBB,V*jY)Rk \l  000000000000000000000000000070F6  EEEE3333666644444444BBBB6666555599993333DDDD5555BBBB,W'(m%XCGKJ  00000000000000000000000000017899  444455554444CCCCEEEE777799994444AAAAEEEEFFFFEEEEEEEE,X"9I?a5N4f  000000000000000000000000000064BE  4444888855558888DDDD0000DDDD8888EEEE77775555BBBB3333,Xy@O7>|/h[  00000000000000000000000000014973  BBBB9999AAAA22225555888888880000BBBB88889999AAAACCCC,YsuKMLz}yh  000000000000000000000000000080DD  333377773333CCCC0000EEEE9999FFFFFFFF77771111EEEEAAAA,ZnJEMV)EK4  0000000000000000000000000001664E  DDDD88886666EEEE5555222255551111BBBB5555BBBB66663333,[jm^JaD$eS  00000000000000000000000000011324  6666BBBB111111110000CCCC5555777733332222BBBBEEEEDDDD,\d]'x-fclQ  00000000000000000000000000000927  99993333555511114444111155554444BBBB3333777755558888,]`9VFdDZC/  00000000000000000000000000008889  44442222CCCC8888DDDDFFFF33334444BBBB8888DDDD7777EEEE,^[9O\*[7hy  000000000000000000000000000068BC  7777CCCCFFFF0000555599996666DDDDBBBBEEEEBBBBFFFF5555,_[ItVf4d:h  0000000000000000000000000000ED10  6666111199998888BBBB11117777555500003333CCCCBBBB1111,`X?CGI{A!Z  0000000000000000000000000001062D  9999BBBB99993333EEEEFFFF4444BBBB5555DDDD22221111AAAA,aSh,sWZ5t7  00000000000000000000000000003E23  4444EEEE6666FFFF2222BBBBDDDD0000555522225555FFFFCCCC,bGy)hNXHG0  00000000000000000000000000008551  9999000044445555444488888888666611112222333377776666,cA)+dmUj+R  00000000000000000000000000016B76  FFFF8888AAAA22227777BBBB33332222DDDD77774444DDDDBBBB,d7]^T%@'L^  000000000000000000000000000053BC  EEEE99998888BBBB11119999EEEE1111111122224444FFFF5555,e5g/9:g/:;  00000000000000000000000000012202  2222BBBBBBBB9999444477778888333399996666AAAADDDDFFFF,f-PHkbigqO  000000000000000000000000000134FB  EEEEFFFF8888AAAADDDD7777BBBB777744449999555522224444,g+K!_Xh;|h  00000000000000000000000000012742  3333CCCC3333FFFFBBBBEEEEAAAA55552222EEEEAAAA9999FFFF,h&yrg-O@V/  00000000000000000000000000014E41  9999AAAA22226666FFFF8888111100009999FFFF222200006666,i$:Er<I`D-  00000000000000000000000000009471  3333111111111111CCCCDDDDAAAA8888DDDDFFFF999955556666,i~Mh46Dj s  00000000000000000000000000000E2A  BBBBEEEE88882222BBBBCCCC99990000BBBBDDDDBBBBDDDD7777,jzVg}!PChw  0000000000000000000000000000A353  CCCC555533337777DDDD5555AAAAAAAA11115555DDDDCCCCCCCC,kxD8K'2%s7  00000000000000000000000000002865  BBBB888899995555AAAA2222BBBB33331111FFFF5555AAAA2222,ls;q$hp*&B  000000000000000000000000000121FA  CCCC8888EEEE33336666BBBBBBBB8888DDDDEEEEFFFF44447777,mn]idqLDWx  0000000000000000000000000000822D  EEEE7777CCCCAAAA8888666644449999FFFFFFFF66661111AAAA,ni(3qKlQxp  00000000000000000000000000004C73  BBBB66667777888899990000888855555555FFFF6666AAAACCCC,of9m9W2~{#  00000000000000000000000000010F52  FFFF1111DDDD4444AAAAFFFF4444DDDDCCCCBBBB0000CCCCFFFF,p_"St}YfsV  00000000000000000000000000008093  2222EEEEDDDD7777BBBBFFFF3333EEEE0000888844448888CCCC,qYoSwN<3ke  0000000000000000000000000000D11F  99991111CCCC44447777DDDDFFFF33330000EEEE6666EEEE0000,rVp%r@SGr|  0000000000000000000000000001827E  BBBBDDDD9999CCCCCCCC1111DDDD4444CCCC11112222FFFF3333,sRn%CU~q-N  0000000000000000000000000001772B  9999BBBB7777FFFF2222DDDDBBBBFFFFFFFFCCCC1111FFFF4444,tP,Hpc*qkn  00000000000000000000000000002365  DDDDDDDDDDDD8888EEEE000044445555FFFFAAAA2222AAAA2222,uLyq4IYD'%  0000000000000000000000000000EC23  00003333EEEE0000FFFF5555BBBBAAAAAAAA55557777FFFFCCCC,vK"qNMBy(&  0000000000000000000000000000766A  FFFFCCCC11111111EEEEEEEEFFFF33336666CCCCCCCC99997777,wBk)sF',](  00000000000000000000000000018101  4444222244446666CCCC33333333AAAA11111111DDDD44446666,x:&G5c(x"J  00000000000000000000000000011557  FFFFDDDDDDDD44443333777777779999DDDD4444333322228888,y6`?:|\dC0  00000000000000000000000000009153  99995555CCCC666622221111CCCC33335555CCCCFFFFCCCCCCCC,z3oH:#P7"N  00000000000000000000000000001990  3333FFFF4444777733334444DDDD333322221111EEEE33331111,{0|3jm-Fy&  00000000000000000000000000001A07  111177772222DDDD99993333CCCCEEEE11118888AAAA77778888,|,seLgr_aI  00000000000000000000000000004E55  7777222233338888EEEE222211112222FFFF2222AAAA33332222,}'/qq_psz=  00000000000000000000000000001651  7777111111111111999933330000EEEE00003333AAAA77776666,~$klk/T_CW  0000000000000000000000000000554F  11112222AAAA88882222FFFF55553333DDDD33334444BBBB0000
-2020/05/21 18:56:25 Number of S3 keys: 20
-2020/05/21 18:56:25 JOB START:  2020-05-21 18:56:25:.79561
-2020/05/21 18:56:25 10.0.2.113:1234: Starting MapReduce job: srt
-2020/05/21 18:56:25 Map phase duration: 0 ms
-2020/05/21 18:56:25 10.0.2.113:1234: To start the Map phase...
-2020/05/21 18:56:25 Driver: schedule Map
-2020/05/21 18:56:25 Driver: Creating jobs. nTasks: 20
-2020/05/21 18:56:25 Driver: Creating jobs
-2020/05/21 18:56:25 Driver: starting runner
-2020/05/21 18:56:25 Driver: Waiting for tasks to be complete
-2020/05/21 18:56:25 Driver: Job runner waiting for jobs
-2020/05/21 18:56:25 Driver: Job runner got job
-2020/05/21 18:56:25 Driver: enter the worker registration service loop...
-2020/05/21 18:57:29 Driver received worker registration from worker at address: 10.0.2.47:1235
-2020/05/21 18:57:29 Driver: to register new service: srtm_service
-2020/05/21 18:57:29 Driver received worker registration from worker at address: 10.0.2.47:1237
-2020/05/21 18:57:29 Driver: to register new service: srtm_service
-2020/05/21 18:57:29 Driver received worker registration from worker at address: 10.0.2.47:1238
-2020/05/21 18:57:29 Driver: to register new service: srtm_service
-2020/05/21 18:57:29 Driver received worker registration from worker at address: 10.0.2.47:1239
-2020/05/21 18:57:29 Driver: to register new service: srtm_service
-2020/05/21 18:57:29 Driver received worker registration from worker at address: 10.0.2.47:1236
-2020/05/21 18:57:29 Driver: to register new service: srtm_service
-2020/05/21 18:57:29 Successfully registered worker 10.0.2.47:1238
-2020/05/21 18:57:29 Successfully registered worker 10.0.2.47:1237
-2020/05/21 18:57:29 Driver: Job runner got job
-2020/05/21 18:57:29 Driver: Job runner got job
-2020/05/21 18:57:29 Successfully registered worker 10.0.2.47:1236
-2020/05/21 18:57:29 Driver: Job runner got job
-2020/05/21 18:57:29 Successfully registered worker 10.0.2.47:1239
-2020/05/21 18:57:29 Driver: Job runner got job
-2020/05/21 18:57:29 Successfully registered worker 10.0.2.47:1235
-2020/05/21 18:57:29 Driver: Job runner got job
-2020/05/21 18:57:35 Driver received worker registration from worker at address: 10.0.2.238:1239
-2020/05/21 18:57:35 Driver: to register new service: srtm_service
-2020/05/21 18:57:35 Driver received worker registration from worker at address: 10.0.2.238:1236
-2020/05/21 18:57:35 Driver: to register new service: srtm_service
-2020/05/21 18:57:35 Driver received worker registration from worker at address: 10.0.2.238:1235
-2020/05/21 18:57:35 Driver: to register new service: srtm_service
-2020/05/21 18:57:35 Driver received worker registration from worker at address: 10.0.2.238:1238
-2020/05/21 18:57:35 Driver: to register new service: srtm_service
-2020/05/21 18:57:35 Driver received worker registration from worker at address: 10.0.2.238:1237
-2020/05/21 18:57:35 Driver: to register new service: srtm_service
-2020/05/21 18:57:35 Successfully registered worker 10.0.2.238:1238
-2020/05/21 18:57:35 Successfully registered worker 10.0.2.238:1237
-2020/05/21 18:57:35 Driver: Job runner got job
-2020/05/21 18:57:35 Driver: Job runner got job
-2020/05/21 18:57:35 Successfully registered worker 10.0.2.238:1236
-2020/05/21 18:57:35 Successfully registered worker 10.0.2.238:1239
-2020/05/21 18:57:35 Successfully registered worker 10.0.2.238:1235
-2020/05/21 18:57:35 Driver: Job runner got job
-2020/05/21 18:57:35 Driver: Job runner got job
-2020/05/21 18:57:35 Driver: Job runner got job
-2020/05/21 18:57:42 Driver received worker registration from worker at address: 10.0.2.40:1239
-2020/05/21 18:57:42 Driver: to register new service: srtm_service
-2020/05/21 18:57:42 Driver received worker registration from worker at address: 10.0.2.40:1237
-2020/05/21 18:57:42 Driver: to register new service: srtm_service
-2020/05/21 18:57:42 Driver received worker registration from worker at address: 10.0.2.40:1238
-2020/05/21 18:57:42 Driver: to register new service: srtm_service
-2020/05/21 18:57:42 Driver received worker registration from worker at address: 10.0.2.40:1235
-2020/05/21 18:57:42 Driver: to register new service: srtm_service
-2020/05/21 18:57:42 Driver received worker registration from worker at address: 10.0.2.40:1236
-2020/05/21 18:57:42 Driver: to register new service: srtm_service
-2020/05/21 18:57:43 Successfully registered worker 10.0.2.40:1239
-2020/05/21 18:57:43 Successfully registered worker 10.0.2.40:1237
-2020/05/21 18:57:43 Successfully registered worker 10.0.2.40:1238
-2020/05/21 18:57:43 Successfully registered worker 10.0.2.40:1236
-2020/05/21 18:57:43 Driver: Job runner got job
-2020/05/21 18:57:43 Driver: Job runner got job
-2020/05/21 18:57:43 Driver: Job runner got job
-2020/05/21 18:57:43 Driver: Job runner got job
-2020/05/21 18:57:43 Successfully registered worker 10.0.2.40:1235
-2020/05/21 18:57:43 Driver: Job runner got job
-2020/05/21 18:57:44 Driver received worker registration from worker at address: 10.0.2.230:1236
-2020/05/21 18:57:44 Driver: to register new service: srtm_service
-2020/05/21 18:57:44 Driver received worker registration from worker at address: 10.0.2.230:1239
-2020/05/21 18:57:44 Driver: to register new service: srtm_service
-2020/05/21 18:57:44 Driver received worker registration from worker at address: 10.0.2.230:1235
-2020/05/21 18:57:44 Driver: to register new service: srtm_service
-2020/05/21 18:57:44 Driver received worker registration from worker at address: 10.0.2.230:1238
-2020/05/21 18:57:44 Driver: to register new service: srtm_service
-2020/05/21 18:57:44 Driver received worker registration from worker at address: 10.0.2.230:1237
-2020/05/21 18:57:44 Driver: to register new service: srtm_service
-2020/05/21 18:57:45 Successfully registered worker 10.0.2.230:1236
-2020/05/21 18:57:45 Successfully registered worker 10.0.2.230:1235
-2020/05/21 18:57:45 Successfully registered worker 10.0.2.230:1238
-2020/05/21 18:57:45 Successfully registered worker 10.0.2.230:1237
-2020/05/21 18:57:45 Driver: Job runner got job
-2020/05/21 18:57:45 Driver: Job runner got job
-2020/05/21 18:57:45 Driver: Job runner got job
-2020/05/21 18:57:45 Driver: Job runner got job
-2020/05/21 18:57:45 Successfully registered worker 10.0.2.230:1239
-2020/05/21 18:57:50 Driver received worker registration from worker at address: 10.0.2.38:1237
-2020/05/21 18:57:50 Driver: to register new service: srtm_service
-2020/05/21 18:57:50 Driver received worker registration from worker at address: 10.0.2.38:1238
-2020/05/21 18:57:50 Driver: to register new service: srtm_service
-2020/05/21 18:57:50 Driver received worker registration from worker at address: 10.0.2.38:1239
-2020/05/21 18:57:50 Driver: to register new service: srtm_service
-2020/05/21 18:57:50 Driver received worker registration from worker at address: 10.0.2.38:1235
-2020/05/21 18:57:50 Driver: to register new service: srtm_service
-2020/05/21 18:57:50 Driver received worker registration from worker at address: 10.0.2.38:1236
-2020/05/21 18:57:50 Driver: to register new service: srtm_service
-2020/05/21 18:57:51 Successfully registered worker 10.0.2.38:1235
-2020/05/21 18:57:51 Successfully registered worker 10.0.2.38:1236
-2020/05/21 18:57:51 Successfully registered worker 10.0.2.38:1239
-2020/05/21 18:57:51 Successfully registered worker 10.0.2.38:1237
-2020/05/21 18:57:51 Successfully registered worker 10.0.2.38:1238
-2020/05/21 18:57:56 Driver received worker registration from worker at address: 10.0.2.229:1235
-2020/05/21 18:57:56 Driver: to register new service: srtm_service
-2020/05/21 18:57:56 Driver received worker registration from worker at address: 10.0.2.229:1236
-2020/05/21 18:57:56 Driver: to register new service: srtm_service
-2020/05/21 18:57:56 Driver received worker registration from worker at address: 10.0.2.229:1238
-2020/05/21 18:57:56 Driver: to register new service: srtm_service
-2020/05/21 18:57:56 Driver received worker registration from worker at address: 10.0.2.229:1237
-2020/05/21 18:57:56 Driver: to register new service: srtm_service
-2020/05/21 18:57:56 Driver received worker registration from worker at address: 10.0.2.229:1239
-2020/05/21 18:57:56 Driver: to register new service: srtm_service
-2020/05/21 18:57:56 Successfully registered worker 10.0.2.229:1239
-2020/05/21 18:57:56 Successfully registered worker 10.0.2.229:1238
-2020/05/21 18:57:56 Successfully registered worker 10.0.2.229:1237
-2020/05/21 18:57:56 Successfully registered worker 10.0.2.229:1236
-2020/05/21 18:57:56 Successfully registered worker 10.0.2.229:1235
-2020/05/21 18:58:00 Driver received worker registration from worker at address: 10.0.2.100:1238
-2020/05/21 18:58:00 Driver: to register new service: srtm_service
-2020/05/21 18:58:00 Driver received worker registration from worker at address: 10.0.2.100:1237
-2020/05/21 18:58:00 Driver: to register new service: srtm_service
-2020/05/21 18:58:00 Driver received worker registration from worker at address: 10.0.2.100:1235
-2020/05/21 18:58:00 Driver: to register new service: srtm_service
-2020/05/21 18:58:00 Driver received worker registration from worker at address: 10.0.2.100:1239
-2020/05/21 18:58:00 Driver: to register new service: srtm_service
-2020/05/21 18:58:00 Driver received worker registration from worker at address: 10.0.2.100:1236
-2020/05/21 18:58:00 Driver: to register new service: srtm_service
-2020/05/21 18:58:01 Successfully registered worker 10.0.2.100:1236
-2020/05/21 18:58:01 Successfully registered worker 10.0.2.100:1235
-2020/05/21 18:58:01 Successfully registered worker 10.0.2.100:1238
-2020/05/21 18:58:01 Successfully registered worker 10.0.2.100:1237
-2020/05/21 18:58:01 Successfully registered worker 10.0.2.100:1239
-2020/05/21 18:58:05 Driver received worker registration from worker at address: 10.0.2.98:1239
-2020/05/21 18:58:05 Driver: to register new service: srtm_service
-2020/05/21 18:58:05 Driver received worker registration from worker at address: 10.0.2.98:1236
-2020/05/21 18:58:05 Driver: to register new service: srtm_service
-2020/05/21 18:58:05 Driver received worker registration from worker at address: 10.0.2.98:1237
-2020/05/21 18:58:05 Driver: to register new service: srtm_service
-2020/05/21 18:58:05 Driver received worker registration from worker at address: 10.0.2.98:1238
-2020/05/21 18:58:05 Driver: to register new service: srtm_service
-2020/05/21 18:58:05 Driver received worker registration from worker at address: 10.0.2.98:1235
-2020/05/21 18:58:05 Driver: to register new service: srtm_service
-2020/05/21 18:58:06 Successfully registered worker 10.0.2.98:1237
-2020/05/21 18:58:06 Successfully registered worker 10.0.2.98:1238
-2020/05/21 18:58:06 Successfully registered worker 10.0.2.98:1239
-2020/05/21 18:58:06 Successfully registered worker 10.0.2.98:1236
-2020/05/21 18:58:06 Successfully registered worker 10.0.2.98:1235
-2020/05/21 18:58:10 Driver received worker registration from worker at address: 10.0.2.225:1238
-2020/05/21 18:58:10 Driver: to register new service: srtm_service
-2020/05/21 18:58:10 Driver received worker registration from worker at address: 10.0.2.225:1236
-2020/05/21 18:58:10 Driver received worker registration from worker at address: 10.0.2.225:1239
-2020/05/21 18:58:10 Driver: to register new service: srtm_service
-2020/05/21 18:58:10 Driver: to register new service: srtm_service
-2020/05/21 18:58:10 Driver received worker registration from worker at address: 10.0.2.225:1235
-2020/05/21 18:58:10 Driver: to register new service: srtm_service
-2020/05/21 18:58:10 Driver received worker registration from worker at address: 10.0.2.225:1237
-2020/05/21 18:58:10 Driver: to register new service: srtm_service
-2020/05/21 18:58:10 Successfully registered worker 10.0.2.225:1235
-2020/05/21 18:58:10 Successfully registered worker 10.0.2.225:1237
-2020/05/21 18:58:10 Successfully registered worker 10.0.2.225:1238
-2020/05/21 18:58:10 Successfully registered worker 10.0.2.225:1239
-2020/05/21 18:58:10 Successfully registered worker 10.0.2.225:1236
-2020/05/21 18:58:16 Driver received worker registration from worker at address: 10.0.2.156:1237
-2020/05/21 18:58:16 Driver: to register new service: srtm_service
-2020/05/21 18:58:16 Driver received worker registration from worker at address: 10.0.2.156:1236
-2020/05/21 18:58:16 Driver: to register new service: srtm_service
-2020/05/21 18:58:16 Driver received worker registration from worker at address: 10.0.2.156:1238
-2020/05/21 18:58:16 Driver: to register new service: srtm_service
-2020/05/21 18:58:16 Driver received worker registration from worker at address: 10.0.2.156:1235
-2020/05/21 18:58:16 Driver: to register new service: srtm_service
-2020/05/21 18:58:16 Driver received worker registration from worker at address: 10.0.2.156:1239
-2020/05/21 18:58:16 Driver: to register new service: srtm_service
-2020/05/21 18:58:17 Successfully registered worker 10.0.2.156:1235
-2020/05/21 18:58:17 Successfully registered worker 10.0.2.156:1239
-2020/05/21 18:58:17 Successfully registered worker 10.0.2.156:1237
-2020/05/21 18:58:17 Successfully registered worker 10.0.2.156:1238
-2020/05/21 18:58:17 Successfully registered worker 10.0.2.156:1236
-2020/05/21 18:58:22 Driver received worker registration from worker at address: 10.0.2.155:1235
-2020/05/21 18:58:22 Driver: to register new service: srtm_service
-2020/05/21 18:58:22 Driver received worker registration from worker at address: 10.0.2.155:1239
-2020/05/21 18:58:22 Driver: to register new service: srtm_service
-2020/05/21 18:58:22 Driver received worker registration from worker at address: 10.0.2.155:1238
-2020/05/21 18:58:22 Driver: to register new service: srtm_service
-2020/05/21 18:58:22 Driver received worker registration from worker at address: 10.0.2.155:1237
-2020/05/21 18:58:22 Driver: to register new service: srtm_service
-2020/05/21 18:58:22 Driver received worker registration from worker at address: 10.0.2.155:1236
-2020/05/21 18:58:22 Driver: to register new service: srtm_service
-2020/05/21 18:58:22 Successfully registered worker 10.0.2.155:1239
-2020/05/21 18:58:22 Successfully registered worker 10.0.2.155:1238
-2020/05/21 18:58:22 Successfully registered worker 10.0.2.155:1236
-2020/05/21 18:58:22 Successfully registered worker 10.0.2.155:1237
-2020/05/21 18:58:22 Successfully registered worker 10.0.2.155:1235
-2020/05/21 18:58:27 Driver received worker registration from worker at address: 10.0.2.218:1238
-2020/05/21 18:58:27 Driver: to register new service: srtm_service
-2020/05/21 18:58:27 Driver received worker registration from worker at address: 10.0.2.218:1239
-2020/05/21 18:58:27 Driver: to register new service: srtm_service
-2020/05/21 18:58:27 Driver received worker registration from worker at address: 10.0.2.218:1237
-2020/05/21 18:58:27 Driver: to register new service: srtm_service
-2020/05/21 18:58:27 Driver received worker registration from worker at address: 10.0.2.218:1236
-2020/05/21 18:58:27 Driver: to register new service: srtm_service
-2020/05/21 18:58:27 Driver received worker registration from worker at address: 10.0.2.218:1235
-2020/05/21 18:58:27 Driver: to register new service: srtm_service
-2020/05/21 18:58:28 Successfully registered worker 10.0.2.218:1235
-2020/05/21 18:58:28 Successfully registered worker 10.0.2.218:1238
-2020/05/21 18:58:28 Successfully registered worker 10.0.2.218:1237
-2020/05/21 18:58:28 Successfully registered worker 10.0.2.218:1239
-2020/05/21 18:58:28 Successfully registered worker 10.0.2.218:1236
-2020/05/21 18:58:31 Driver received worker registration from worker at address: 10.0.2.84:1237
-2020/05/21 18:58:31 Driver: to register new service: srtm_service
-2020/05/21 18:58:31 Driver received worker registration from worker at address: 10.0.2.84:1239
-2020/05/21 18:58:31 Driver: to register new service: srtm_service
-2020/05/21 18:58:31 Driver received worker registration from worker at address: 10.0.2.84:1236
-2020/05/21 18:58:31 Driver: to register new service: srtm_service
-2020/05/21 18:58:31 Driver received worker registration from worker at address: 10.0.2.84:1235
-2020/05/21 18:58:31 Driver: to register new service: srtm_service
-2020/05/21 18:58:31 Driver received worker registration from worker at address: 10.0.2.84:1238
-2020/05/21 18:58:31 Driver: to register new service: srtm_service
-2020/05/21 18:58:31 Successfully registered worker 10.0.2.84:1238
-2020/05/21 18:58:31 Successfully registered worker 10.0.2.84:1236
-2020/05/21 18:58:31 Successfully registered worker 10.0.2.84:1235
-2020/05/21 18:58:31 Successfully registered worker 10.0.2.84:1239
-2020/05/21 18:58:31 Successfully registered worker 10.0.2.84:1237
-2020/05/21 18:58:36 Driver received worker registration from worker at address: 10.0.2.142:1235
-2020/05/21 18:58:36 Driver: to register new service: srtm_service
-2020/05/21 18:58:37 Driver received worker registration from worker at address: 10.0.2.142:1238
-2020/05/21 18:58:37 Driver: to register new service: srtm_service
-2020/05/21 18:58:37 Driver received worker registration from worker at address: 10.0.2.142:1239
-2020/05/21 18:58:37 Driver: to register new service: srtm_service
-2020/05/21 18:58:37 Driver received worker registration from worker at address: 10.0.2.142:1236
-2020/05/21 18:58:37 Driver: to register new service: srtm_service
-2020/05/21 18:58:37 Driver received worker registration from worker at address: 10.0.2.142:1237
-2020/05/21 18:58:37 Driver: to register new service: srtm_service
-2020/05/21 18:58:37 Successfully registered worker 10.0.2.142:1236
-2020/05/21 18:58:37 Successfully registered worker 10.0.2.142:1235
-2020/05/21 18:58:37 Successfully registered worker 10.0.2.142:1238
-2020/05/21 18:58:37 Successfully registered worker 10.0.2.142:1237
-2020/05/21 18:58:37 Successfully registered worker 10.0.2.142:1239
-2020/05/21 18:58:42 Driver received worker registration from worker at address: 10.0.2.205:1236
-2020/05/21 18:58:42 Driver: to register new service: srtm_service
-2020/05/21 18:58:42 Driver received worker registration from worker at address: 10.0.2.205:1237
-2020/05/21 18:58:42 Driver: to register new service: srtm_service
-2020/05/21 18:58:42 Driver received worker registration from worker at address: 10.0.2.205:1239
-2020/05/21 18:58:42 Driver: to register new service: srtm_service
-2020/05/21 18:58:42 Driver received worker registration from worker at address: 10.0.2.205:1238
-2020/05/21 18:58:42 Driver: to register new service: srtm_service
-2020/05/21 18:58:42 Driver received worker registration from worker at address: 10.0.2.205:1235
-2020/05/21 18:58:42 Driver: to register new service: srtm_service
-2020/05/21 18:58:43 Successfully registered worker 10.0.2.205:1236
-2020/05/21 18:58:43 Successfully registered worker 10.0.2.205:1238
-2020/05/21 18:58:43 Successfully registered worker 10.0.2.205:1239
-2020/05/21 18:58:43 Successfully registered worker 10.0.2.205:1235
-2020/05/21 18:58:43 Successfully registered worker 10.0.2.205:1237
-2020/05/21 18:58:45 Driver received worker registration from worker at address: 10.0.2.69:1235
-2020/05/21 18:58:45 Driver: to register new service: srtm_service
-2020/05/21 18:58:45 Driver received worker registration from worker at address: 10.0.2.69:1238
-2020/05/21 18:58:45 Driver: to register new service: srtm_service
-2020/05/21 18:58:45 Driver received worker registration from worker at address: 10.0.2.69:1237
-2020/05/21 18:58:45 Driver: to register new service: srtm_service
-2020/05/21 18:58:45 Driver received worker registration from worker at address: 10.0.2.69:1236
-2020/05/21 18:58:45 Driver: to register new service: srtm_service
-2020/05/21 18:58:45 Driver received worker registration from worker at address: 10.0.2.69:1239
-2020/05/21 18:58:45 Driver: to register new service: srtm_service
-2020/05/21 18:58:45 Successfully registered worker 10.0.2.69:1235
-2020/05/21 18:58:45 Successfully registered worker 10.0.2.69:1236
-2020/05/21 18:58:45 Successfully registered worker 10.0.2.69:1239
-2020/05/21 18:58:45 Successfully registered worker 10.0.2.69:1238
-2020/05/21 18:58:45 Successfully registered worker 10.0.2.69:1237
-2020/05/21 18:58:51 Driver received worker registration from worker at address: 10.0.2.129:1238
-2020/05/21 18:58:51 Driver: to register new service: srtm_service
-2020/05/21 18:58:51 Driver received worker registration from worker at address: 10.0.2.129:1237
-2020/05/21 18:58:51 Driver: to register new service: srtm_service
-2020/05/21 18:58:51 Driver received worker registration from worker at address: 10.0.2.129:1239
-2020/05/21 18:58:51 Driver: to register new service: srtm_service
-2020/05/21 18:58:51 Driver received worker registration from worker at address: 10.0.2.129:1235
-2020/05/21 18:58:51 Driver received worker registration from worker at address: 10.0.2.129:1236
-2020/05/21 18:58:51 Driver: to register new service: srtm_service
-2020/05/21 18:58:51 Driver: to register new service: srtm_service
-2020/05/21 18:58:52 Successfully registered worker 10.0.2.129:1237
-2020/05/21 18:58:52 Successfully registered worker 10.0.2.129:1238
-2020/05/21 18:58:52 Successfully registered worker 10.0.2.129:1236
-2020/05/21 18:58:52 Successfully registered worker 10.0.2.129:1239
-2020/05/21 18:58:52 Successfully registered worker 10.0.2.129:1235
-2020/05/21 18:58:55 Driver received worker registration from worker at address: 10.0.2.127:1235
-2020/05/21 18:58:55 Driver: to register new service: srtm_service
-2020/05/21 18:58:55 Driver received worker registration from worker at address: 10.0.2.127:1239
-2020/05/21 18:58:55 Driver: to register new service: srtm_service
-2020/05/21 18:58:55 Driver received worker registration from worker at address: 10.0.2.127:1237
-2020/05/21 18:58:55 Driver: to register new service: srtm_service
-2020/05/21 18:58:55 Driver received worker registration from worker at address: 10.0.2.127:1236
-2020/05/21 18:58:55 Driver: to register new service: srtm_service
-2020/05/21 18:58:55 Driver received worker registration from worker at address: 10.0.2.127:1238
-2020/05/21 18:58:55 Driver: to register new service: srtm_service
-2020/05/21 18:58:55 Successfully registered worker 10.0.2.127:1239
-2020/05/21 18:58:55 Successfully registered worker 10.0.2.127:1236
-2020/05/21 18:58:55 Successfully registered worker 10.0.2.127:1237
-2020/05/21 18:58:55 Successfully registered worker 10.0.2.127:1235
-2020/05/21 18:58:55 Successfully registered worker 10.0.2.127:1238
-2020/05/21 18:59:04 Driver received worker registration from worker at address: 10.0.2.200:1239
-2020/05/21 18:59:04 Driver: to register new service: srtm_service
-2020/05/21 18:59:04 Driver received worker registration from worker at address: 10.0.2.200:1235
-2020/05/21 18:59:04 Driver: to register new service: srtm_service
-2020/05/21 18:59:04 Driver received worker registration from worker at address: 10.0.2.200:1236
-2020/05/21 18:59:04 Driver: to register new service: srtm_service
-2020/05/21 18:59:04 Driver received worker registration from worker at address: 10.0.2.200:1238
-2020/05/21 18:59:04 Driver received worker registration from worker at address: 10.0.2.200:1237
-2020/05/21 18:59:04 Driver: to register new service: srtm_service
-2020/05/21 18:59:04 Driver: to register new service: srtm_service
-2020/05/21 18:59:05 Successfully registered worker 10.0.2.200:1237
-2020/05/21 18:59:05 Successfully registered worker 10.0.2.200:1238
-2020/05/21 18:59:05 Successfully registered worker 10.0.2.200:1236
-2020/05/21 18:59:05 Successfully registered worker 10.0.2.200:1235
-2020/05/21 18:59:05 Successfully registered worker 10.0.2.200:1239
