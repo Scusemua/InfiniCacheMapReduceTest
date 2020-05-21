@@ -65,9 +65,9 @@ const debugEnabled = true
 
 func Debug(format string, a ...interface{}) (n int, err error) {
 	if debugEnabled {
-		n, err = log.Printf(format, a...)
+		log.Printf(format, a...)
 	}
-	return
+	return 0, nil
 }
 
 func mergeSort(arr []string) []string {
