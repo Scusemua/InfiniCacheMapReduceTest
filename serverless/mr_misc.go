@@ -8,7 +8,6 @@ import (
 	"github.com/lafikl/consistent"
 	"log"
 	"os"
-	"reflect"
 	"sort"
 	"time"
 )
@@ -85,7 +84,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 					res, err2 := client.Get(p).Result()
 					checkError(err2)
 
-					all_bytes = append(all_bytes, res...)
+					all_bytes = append(all_bytes, []byte(res)...)
 				}
 
 				result = all_bytes
