@@ -278,7 +278,9 @@ func doReduce(
 		host, err := c.Get(fileName)
 		checkError(err)
 		client := clientMap[host]
-		err = client.Set(key, num_chunks, 0).Err()
+		num_chunks_serialized, err3 := json.Marshall(num_chunks)
+		checkError(err3)
+		err = client.Set(key, num_chunks_serialized, 0).Err()
 		checkError(err)
 	} else {
 		start := time.Now()

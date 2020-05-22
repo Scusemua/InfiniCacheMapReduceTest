@@ -60,36 +60,48 @@ func (drv *Driver) merge(redisHostnames []string) {
 		result, err2 := client.Get(p).Result()
 		checkError(err2)
 
-		typeOfResult := reflect.TypeOf(result)
-
-		if typeOfResult == "int" {
-			log.Println("Obtained integer for final result. Result must've been chunked.")
-
-			all_bytes := make([]byte, 0)
-			base_key = p + "-part"
-			for i := 0; i < result; i++ {
-				key := base_key + string(i)
-
-				res, err2 := client.Get(p).Result()
-				checkError(err2)
-
-				all_bytes = append(all_bytes, result...)
-			}
-
-			result = all_bytes
-
-			log.Println("Final size of all chunks combined together:", float64(len(result))/float64(1e6), "MB")
-		}
-		log.Println("Successfully retrieved data from Redis!")
-
-		if err != nil {
-			log.Fatal("Merge: ", err)
-		}
-
+		var res_int int
 		results := make([]KeyValue, 0)
 
 		log.Println("Unmarshalling data retrieved from Redis now...")
-		json.Unmarshal([]byte(result), &results)
+
+		// Try to deserialize into a list of KeyValue. If it breaks, then try to deserialize to an int.
+		// If that works, then eveyrthing was chunked so grab all the pieces and combine them.
+		err = json.Unmarshal([]byte(result), &results)
+
+		if err != nil {
+			err = json.Unmarshal([]byte(result), &res_int)
+
+			if err != nil {
+				panic(err)
+			} else {
+				log.Println("Obtained integer for final result. Result must've been chunked.")
+
+				all_bytes := make([]byte, 0)
+				base_key := p + "-part"
+				for i := 0; i < res_int; i++ {
+					key := base_key + string(i)
+
+					res, err2 := client.Get(p).Result()
+					checkError(err2)
+
+					all_bytes = append(all_bytes, res...)
+				}
+
+				result = all_bytes
+
+				log.Println("Final size of all chunks combined together:", float64(len(result))/float64(1e6), "MB")
+			}
+		}
+
+		log.Println("Successfully retrieved data from Redis!")
+
+		err = json.Unmarshal([]byte(result), &results)
+
+		if err != nil {
+			log.Fatal("Merge: ", err)
+			panic(err)
+		}
 
 		for _, kv := range results {
 			kvs[kv.Key] = kv.Value
