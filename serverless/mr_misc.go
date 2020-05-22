@@ -87,23 +87,25 @@ func (drv *Driver) merge(redisHostnames []string) {
 					all_bytes = append(all_bytes, []byte(res)...)
 				}
 
-				result = all_bytes
+				log.Println("Final size of all chunks combined together:", float64(len(all_bytes))/float64(1e6), "MB")
 
-				log.Println("Final size of all chunks combined together:", float64(len(result))/float64(1e6), "MB")
+				err = json.Unmarshal([]byte(all_bytes), &results)
+
+				if err != nil {
+					log.Fatal("Merge: ", err)
+					panic(err)
+				} else {
+					log.Println("Successfully retrieved data from Redis!")
+					for _, kv := range results {
+						kvs[kv.Key] = kv.Value
+					}
+				}
 			}
-		}
-
-		log.Println("Successfully retrieved data from Redis!")
-
-		err = json.Unmarshal([]byte(result), &results)
-
-		if err != nil {
-			log.Fatal("Merge: ", err)
-			panic(err)
-		}
-
-		for _, kv := range results {
-			kvs[kv.Key] = kv.Value
+		} else {
+			log.Println("Successfully retrieved data from Redis!")
+			for _, kv := range results {
+				kvs[kv.Key] = kv.Value
+			}
 		}
 	}
 	var keys []string
