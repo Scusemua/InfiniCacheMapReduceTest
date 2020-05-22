@@ -35,9 +35,9 @@ def execute_command(
         ssh_redis.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh_redis.connect(hostname = ip, username="ubuntu", pkey = keyfile) 
     
-    count = 1
+    counter = 1
     for IP, ssh_redis_client in ssh_clients:
-        print("Executing command for instance @ {}... ({}/{})".format(IP, count, len(ips)))
+        print("Executing command for instance @ {}... ({}/{})".format(IP, counter, len(ips)))
         print("get_pty:", get_pty)
         ssh_stdin, ssh_stdout, ssh_stderr = ssh_redis_client.exec_command(command, get_pty = get_pty)
         print("Executed command \"{}\"...".format(command))
@@ -60,7 +60,7 @@ def execute_command(
             #    print("Successfully launched Redis server.")
         else:
             print("ssh_stdout.channel.eof_received is still False... skipping...")
-        count += 1
+        counter += 1
 
 def launch_redis_servers(
     connect_and_ping = True,
@@ -154,6 +154,9 @@ def update_redis_hosts(
         key_path = key_path
     )
 
+# kill_go_processes(ips = worker_ips)
+# kill_go_processes(ips = worker_ips + [client_ip])
+# kill_go_processes(ips = [client_ip])
 def kill_go_processes(
     ips = None,
     key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"
@@ -194,13 +197,15 @@ def launch_workers(
 if __name__ == "__main__":
     ips = get_public_ips()
     workers_per_vm = 3
-    redis_ips = ips[0:2]
+    num_redis = 4
+
+    redis_ips = ips[0:num_redis]
     print("Redis IP's: {}".format(redis_ips))
 
-    client_ip = ips[2]
+    client_ip = ips[num_redis]
     print("Client IP: {}".format(client_ip))
 
-    worker_ips = ips[3:]
+    worker_ips = ips[num_redis + 1:]
     print("Worker IP's: {}".format(worker_ips))
 
     launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True)

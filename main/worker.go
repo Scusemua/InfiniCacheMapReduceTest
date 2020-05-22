@@ -197,7 +197,7 @@ loop:
 			break
 		}
 	}
-	serverless.Debug("Worker: %v RPC server exist\n", wk.address)
+	serverless.Debug("Worker: %v RPC server exit\n", wk.address)
 }
 
 // The main entrance of worker.go

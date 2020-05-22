@@ -39,7 +39,7 @@ type RPCArgs struct {
 // if Call() was not able to contact the server. in particular,
 // reply's contents are valid if and only if Call() returned true.
 //
-// Uou should assume that Call() will time out and return an
+// You should assume that Call() will time out and return an
 // error after a while if it doesn't get a reply from the server.
 //
 // please use Call() to send all RPCs, in driver.go, worker.go,
@@ -54,13 +54,14 @@ func Call(srv string, rpcname string, args interface{}, reply interface{}) bool 
 	}
 	defer c.Close()
 
-	log.Printf("Making RPC call for function %s to remote @ %s now...\n", rpcname, srv)
+	log.Printf("Making RPC call for function %s to remote %s now...\n", rpcname, srv)
 	err := c.Call(rpcname, args, reply)
 	if err == nil {
+		log.Printf("RPC call for function %s to remote %s was SUCCESSFUL.\n", rpcname, srv)
 		return true
 	}
 
-	fmt.Printf("RPC call failed: %s\n", err)
+	fmt.Printf("RPC call for function %s to remote %s FAILED: %s\n", rpcname, srv, err)
 	return false
 }
 
