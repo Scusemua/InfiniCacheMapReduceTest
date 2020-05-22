@@ -57,7 +57,7 @@ func getSampleKeys(sampleFileS3Key string, nReduce int) []string {
 	var s3KeyFile *os.File
 	var sampleKeys []string
 
-	if _, err := os.Stat(sampleFileS3Key); err == nil {
+	if _, err := os.Stat("./" + sampleFileS3Key); err == nil {
 		log.Printf("Sample file \"%s\" does not exist locally. Downloading it from S3 now...\n", sampleFileS3Key)
 
 		// The session the S3 Downloader will use
