@@ -207,7 +207,7 @@ func doReduce(
 		client := clientMap[host]
 		fmt.Printf("Retrieving value from Redis %s for reduce task #%d at key \"%s\"...\n", host, reduceTaskNum, redisKey)
 		marshalled_result, err := client.Get(redisKey).Result()
-		fmt.Printf("Successfully retrieved value from Redis @ %s, key = \"%s\", reduce task # = %d. Bytes read: %f MB.\n", host, redisKey, reduceTaskNum, float64(len(marshalled_result))/float(1e6))
+		fmt.Printf("Successfully retrieved value from Redis @ %s, key = \"%s\", reduce task # = %d. Bytes read: %f MB.\n", host, redisKey, reduceTaskNum, float64(len(marshalled_result))/float64(1e6))
 		end := time.Now()
 		checkError(err)
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
@@ -255,10 +255,10 @@ func doReduce(
 	chunk_threshold := 1e6 //512*1e6
 
 	/* Chunk up the final results if necessary. */
-	if len(marshalled_result) > chunk_threshold {
+	if len(marshalled_result) > int(chunk_threshold) {
 		log.Printf("Final result is larger than %dMB. Storing it in pieces...", chunk_threshold/1e6)
 		chunks := split(marshalled_result, chunk_threshold)
-		num_chunks = len(chunks)
+		num_chunks := len(chunks)
 		log.Println("Created", num_chunks, " chunks for final result", fileName)
 		base_key := fileName + "-part"
 		for i, chunk := range chunks {
@@ -278,7 +278,7 @@ func doReduce(
 		host, err := c.Get(fileName)
 		checkError(err)
 		client := clientMap[host]
-		num_chunks_serialized, err3 := json.Marshall(num_chunks)
+		num_chunks_serialized, err3 := json.Marshal(num_chunks)
 		checkError(err3)
 		err = client.Set(key, num_chunks_serialized, 0).Err()
 		checkError(err)
