@@ -206,9 +206,6 @@ func ihash(s string, trie serverless.TrieNode) int {
 	partition := serverless.GetPartition(s, trie)
 	//fmt.Printf("Partition for key \"%s\": %d\n", s, partition)
 	return partition
-	//h := fnv.New32a()
-	//h.Write([]byte(s))
-	//return int(h.Sum32() & 0x7fffffff)
 }
 
 // DON'T MODIFY THIS FUNCTION
