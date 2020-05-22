@@ -252,10 +252,12 @@ func doReduce(
 	checkError(err)
 	log.Println("Writing final result to Redis at key", fileName, ". Size:", float64(len(marshalled_result))/float64(1e6), "MB.")
 
+	chunk_threshold := 1e6 //512*1e6
+
 	/* Chunk up the final results if necessary. */
-	if len(marshalled_result) > (512 * 1e6) {
-		log.Println("Final result is larger than 512MB. Storing it in pieces...")
-		chunks := split(marshalled_result, 512*1e6)
+	if len(marshalled_result) > chunk_threshold {
+		log.Printf("Final result is larger than %dMB. Storing it in pieces...", chunk_threshold/1e6)
+		chunks := split(marshalled_result, chunk_threshold)
 		num_chunks = len(chunks)
 		log.Println("Created", num_chunks, " chunks for final result", fileName)
 		base_key := fileName + "-part"

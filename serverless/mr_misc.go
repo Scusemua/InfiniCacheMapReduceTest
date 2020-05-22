@@ -65,13 +65,20 @@ func (drv *Driver) merge(redisHostnames []string) {
 		if typeOfResult == "int": 
 			log.Println("Obtained integer for final result. Result must've been chunked.")
 
+			all_bytes := make([]byte,0)
 			base_key = p + "-part"
 			for i := 0; i < result; i++ {
 				key := base_key + string(i)
 
 				res, err2 := client.Get(p).Result()
 				checkError(err2)
+
+				all_bytes = append(all_bytes, result...)
 			}
+
+			result = all_bytes
+
+			log.Println("Final size of all chunks combined together:", float64(len(result)) / float64(1e6), "MB")
 
 		log.Println("Successfully retrieved data from Redis!")
 
