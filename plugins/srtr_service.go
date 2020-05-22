@@ -257,7 +257,7 @@ func doReduce(
 	/* Chunk up the final results if necessary. */
 	if len(marshalled_result) > int(chunk_threshold) {
 		log.Printf("Final result is larger than %dMB. Storing it in pieces...", chunk_threshold/1e6)
-		chunks := split(marshalled_result, chunk_threshold)
+		chunks := split(marshalled_result, int(chunk_threshold))
 		num_chunks := len(chunks)
 		log.Println("Created", num_chunks, " chunks for final result", fileName)
 		base_key := fileName + "-part"
@@ -280,7 +280,7 @@ func doReduce(
 		client := clientMap[host]
 		num_chunks_serialized, err3 := json.Marshal(num_chunks)
 		checkError(err3)
-		err = client.Set(key, num_chunks_serialized, 0).Err()
+		err = client.Set(fileName, num_chunks_serialized, 0).Err()
 		checkError(err)
 	} else {
 		start := time.Now()
