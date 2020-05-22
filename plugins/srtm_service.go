@@ -31,7 +31,7 @@ func Debug(format string, a ...interface{}) (n int, err error) {
 	if debugEnabled {
 		log.Printf(format, a...)
 	}
-	return 0, nil 
+	return 0, nil
 }
 
 func checkError(err error) {
@@ -149,12 +149,12 @@ func doMap(
 
 		// Create client.
 		client := redis.NewClient(&redis.Options{
-			Addr:     hostname,
-			Password: "",
-			DB:       0,
-			ReadTimeout: 10 * time.Second,
+			Addr:         hostname,
+			Password:     "",
+			DB:           0,
+			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,
-			MaxRetries: 3
+			MaxRetries:   3,
 		})
 
 		// Store client in map.

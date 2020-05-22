@@ -172,7 +172,7 @@ func doReduce(
 			DB:       0,
 			ReadTimeout: 10 * time.Second,
 			WriteTimeout: 10 * time.Second,
-			MaxRetries: 3
+			MaxRetries: 3,
 		})
 
 		// Store client in map.
