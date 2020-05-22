@@ -265,7 +265,7 @@ if __name__ == "__main__":
     worker_ips = ips[num_redis + 1:]
     print("Worker IP's: {}".format(worker_ips))
 
-    # hostnames = lc.launch_redis_servers(ips = redis_ips, kill_first = False, connect_and_ping = True, shards_per_vm = shards_per_vm)
+    # hostnames = lc.launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
     hostnames = launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
 
     ping_redis(hostnames = hostnames)
