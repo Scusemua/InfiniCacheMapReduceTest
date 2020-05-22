@@ -167,12 +167,12 @@ func doReduce(
 
 		// Create client.
 		client := redis.NewClient(&redis.Options{
-			Addr:     hostname,
-			Password: "",
-			DB:       0,
-			ReadTimeout: 10 * time.Second,
+			Addr:         hostname,
+			Password:     "",
+			DB:           0,
+			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,
-			MaxRetries: 3,
+			MaxRetries:   3,
 		})
 
 		// Store client in map.
@@ -268,7 +268,7 @@ func (s srtrService) DoService(raw []byte) error {
 		log.Printf("Sort: Failed to decode!\n")
 		return err
 	}
-	log.Printf("Hello from sort plugin: %s\n", args.S3Key)
+	log.Printf("REDUCER for S3 Key \"%s\"\n", args.S3Key)
 
 	doReduce(args.JobName, args.RedisEndpoints, args.TaskNum, args.NOthers)
 

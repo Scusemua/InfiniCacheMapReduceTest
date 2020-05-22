@@ -157,11 +157,13 @@ func doMap(
 			MaxRetries:   3,
 		})
 
+		log.Println("Redis client for hostname", hostname, "created successfully.")
+
 		// Store client in map.
 		clientMap[hostname] = client
 	}
 
-	Debug("Reading %s\n", S3Key)
+	Debug("Reading data from S3 key \"%s\"\n", S3Key)
 	b, err = ioutil.ReadFile(S3Key)
 	checkError(err)
 
@@ -220,7 +222,7 @@ func (s srtmService) DoService(raw []byte) error {
 	}
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
 
-	log.Printf("DoService srtm -- args.S3Key: \"%s\"\n", args.S3Key)
+	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
 
 	doMap(args.JobName, args.S3Key, args.RedisEndpoints, args.TaskNum, args.NReduce, trie)
 
