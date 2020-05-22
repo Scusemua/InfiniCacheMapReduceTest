@@ -145,6 +145,34 @@ def wondershape(
     command = "sudo wondershaper -a eth0 -u {} -d {}".format(upload_bytes, download_bytes)
     execute_command(command = command, count_limit = 1, get_pty = True, ips = ips)
 
+def ping_redis(
+    ips = None,
+    hostnames = None
+):
+    if hostnames is not None:
+        count = 1
+        for hostname in hostnames:
+            _split = hostname.split(":")
+            redis_client = redis.Redis(host = _split[0], port = _split[1], db = 0)
+            print("Pinging Redis instance @ {} now... ({}/{})".format(hostname, count, len(hostnames)))
+            res = redis_client.ping()
+            if res is False:
+                raise Exception("ERROR: Redis instance @ {} did not start correctly!".format(ip))
+            else:
+                print("True")   
+            count += 1
+    else:
+        count = 1
+        for ip in ips:
+            redis_client = redis.Redis(host = ip, port = 6379, db = 0)
+            print("Pinging Redis instance @ {}:6379 now... ({}/{})".format(ip, count, len(ips)))
+            res = redis_client.ping()
+            if res is False:
+                raise Exception("ERROR: Redis instance @ {} did not start correctly!".format(ip))
+            else:
+                print("True")
+            count += 1
+
 def update_redis_hosts(
     hostnames = None,
     ips = None,
@@ -226,7 +254,7 @@ if __name__ == "__main__":
     ips = get_public_ips()
     workers_per_vm = 5
     shards_per_vm = 3
-    num_redis = 9
+    num_redis = 2
 
     redis_ips = ips[0:num_redis]
     print("Redis IP's: {}".format(redis_ips))
@@ -240,14 +268,7 @@ if __name__ == "__main__":
     # hostnames = lc.launch_redis_servers(ips = redis_ips, kill_first = False, connect_and_ping = True, shards_per_vm = shards_per_vm)
     hostnames = launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
 
-    for ip in redis_ips:
-        redis_client = redis.Redis(host = ip, port = 6379, db = 0)
-        print("Pinging Redis instance @ {}:6379 now...".format(ip))
-        res = redis_client.ping()
-        if res is False:
-            raise Exception("ERROR: Redis instance @ {} did not start correctly!".format(ip))
-        else:
-            print("True")
+    ping_redis(hostnames = hostnames)
 
     update_redis_hosts(ips = [client_ip], redis_ips = redis_ips, hostnames = hostnames)
 
@@ -255,6 +276,6 @@ if __name__ == "__main__":
 
     nReducers = workers_per_vm * len(worker_ips) * 3
     print("nReducers = {}".format(nReducers))
-    launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/20GB_S3Keys.txt")
+    launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
 
     launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips, workers_per_vm = workers_per_vm)

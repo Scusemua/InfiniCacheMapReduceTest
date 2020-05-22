@@ -167,6 +167,7 @@ func doMap(
 	b, err = ioutil.ReadFile(S3Key)
 	checkError(err)
 
+	log.Println("Performing map function/operations now...")
 	results := make(map[string][]KeyValue)
 	for _, result := range mapF(S3Key, string(b)) {
 		reducerNum := ihash(result.Key, trie) % nReduce
@@ -185,10 +186,10 @@ func doMap(
 		host, err := c.Get(k)
 		checkError(err)
 		client := clientMap[host]
-		log.Printf("Storing result for key %s in Redis.\n", k)
+		log.Printf("Storing result for key %s in Redis @ %s.\n", k, host)
 		err = client.Set(k, marshalled_result, 0).Err()
 		checkError(err)
-		log.Printf("Successfully stored result for key %s in Redis.\n", k)
+		log.Printf("Successfully stored result for key %s in Redis @ %s.\n", k, host)
 		end := time.Now()
 		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)

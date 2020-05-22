@@ -163,7 +163,7 @@ func doReduce(
 		// Add hostname to hash ring.
 		c.Add(hostname)
 
-		log.Println("Creating Redis client for Redis listening at", hostname)
+		log.Println("Creating Redis client for Redis @", hostname)
 
 		// Create client.
 		client := redis.NewClient(&redis.Options{
@@ -174,6 +174,8 @@ func doReduce(
 			WriteTimeout: 10 * time.Second,
 			MaxRetries:   3,
 		})
+
+		log.Println("Successfully created Redis client for Redis @", hostname)
 
 		// Store client in map.
 		clientMap[hostname] = client
@@ -190,8 +192,9 @@ func doReduce(
 		host, err := c.Get(redisKey)
 		checkError(err)
 		client := clientMap[host]
-		//fmt.Printf("Retrieving value from Redis from Reducer #%d at key \"%s\"...\n", reduceTaskNum, redisKey)
+		fmt.Printf("Retrieving value from Redis %s for reduce task #%d at key \"%s\"...\n", host, reduceTaskNum, redisKey)
 		marshalled_result, err := client.Get(redisKey).Result()
+		fmt.Printf("Successfully retrieved value from Redis @ %s, key = \"%s\", reduce task # = %d", host, redisKey, reduceTaskNum)
 		end := time.Now()
 		checkError(err)
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
