@@ -85,7 +85,7 @@ func getSampleKeys(sampleFileS3Key string, nReduce int) []string {
 
 		log.Printf("File %s downloaded, %d bytes, time elapsed = %d ms\n", sampleFileS3Key, n, downloadDuration/1e6)
 	} else {
-		log.Printf("Sample file \"%s\" DOES exist locally.")
+		log.Printf("Sample file \"%s\" DOES exist locally.", sampleFileS3Key)
 		s3KeyFile, err = os.Open(sampleFileS3Key)
 		checkError(err)
 	}
