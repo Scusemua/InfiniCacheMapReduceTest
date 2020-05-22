@@ -81,7 +81,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 				for i := 0; i < res_int; i++ {
 					key := base_key + string(i)
 
-					res, err2 := client.Get(p).Result()
+					res, err2 := client.Get(key).Result()
 					checkError(err2)
 
 					all_bytes = append(all_bytes, []byte(res)...)
