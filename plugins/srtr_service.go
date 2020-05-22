@@ -237,7 +237,7 @@ func doReduce(
 
 	marshalled_result, err := json.Marshal(results)
 	checkError(err)
-	log.Println("Writing final result to Redis at key", fileName, ". Size:", len(marshalled_result), "bytes.")
+	log.Println("Writing final result to Redis at key", fileName, ". Size:", len(marshalled_result)/1e6, "MB.")
 	start := time.Now()
 	host, err := c.Get(fileName)
 	checkError(err)
