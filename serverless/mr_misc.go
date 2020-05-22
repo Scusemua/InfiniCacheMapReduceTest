@@ -33,12 +33,12 @@ func (drv *Driver) merge(redisHostnames []string) {
 
 		// Create client.
 		client := redis.NewClient(&redis.Options{
-			Addr:     hostname,
-			Password: "",
-			DB:       0,
-			ReadTimeout: 10 * time.Second,
-			WriteTimeout: 10 * time.Second,
-			MaxRetries: 3,
+			Addr:         hostname,
+			Password:     "",
+			DB:           0,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 30 * time.Second,
+			MaxRetries:   3,
 		})
 
 		// Store client in map.
