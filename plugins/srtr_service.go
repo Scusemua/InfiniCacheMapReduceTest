@@ -182,11 +182,11 @@ func doReduce(
 	}
 	ioRecords := make([]IORecord, 0)
 
+	log.Println("Retrieving input data for reduce task #", reduceTaskNum)
 	inputs := make([]KeyValue, 0)
 	for i := 0; i < nMap; i++ {
 		redisKey := serverless.ReduceName(jobName, i, reduceTaskNum)
 
-		//for {
 		var kvs []KeyValue
 		start := time.Now()
 		host, err := c.Get(redisKey)
@@ -200,12 +200,9 @@ func doReduce(
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 		json.Unmarshal([]byte(marshalled_result), &kvs)
-		//fmt.Printf("Retrieved list of %d KeyValue structs from Redis.\n", len(kvs))
 		for _, kv := range kvs {
-			//fmt.Printf("%+v\n", kv)
 			inputs = append(inputs, kv)
 		}
-		//}
 	}
 	//fmt.Println("inputs =")
 	//fmt.Println(inputs)
@@ -271,7 +268,7 @@ func (s srtrService) DoService(raw []byte) error {
 		log.Printf("Sort: Failed to decode!\n")
 		return err
 	}
-	log.Printf("REDUCER for S3 Key \"%s\"\n", args.S3Key)
+	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
 
 	doReduce(args.JobName, args.RedisEndpoints, args.TaskNum, args.NOthers)
 
