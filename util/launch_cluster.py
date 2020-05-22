@@ -197,7 +197,7 @@ def launch_workers(
 if __name__ == "__main__":
     ips = get_public_ips()
     workers_per_vm = 3
-    num_redis = 2
+    num_redis = 5
 
     redis_ips = ips[0:num_redis]
     print("Redis IP's: {}".format(redis_ips))
@@ -225,6 +225,6 @@ if __name__ == "__main__":
 
     nReducers = workers_per_vm * len(worker_ips) * 3
     print("nReducers = {}".format(nReducers))
-    launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
+    launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
 
     launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips, workers_per_vm = workers_per_vm)
