@@ -57,30 +57,39 @@ func getSampleKeys(sampleFileS3Key string, nReduce int) []string {
 	var s3KeyFile *os.File
 	var sampleKeys []string
 
-	// The session the S3 Downloader will use
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String("us-east-1")},
-	))
+	if _, err := os.Stat(sampleFileS3Key); err == nil {
+		log.Printf("Sample file \"%s\" does not exist locally. Downloading it from S3 now...\n", sampleFileS3Key)
 
-	// Create a downloader with the session and default options
-	downloader := s3manager.NewDownloader(sess)
+		// The session the S3 Downloader will use
+		sess := session.Must(session.NewSession(&aws.Config{
+			Region: aws.String("us-east-1")},
+		))
 
-	// Create a file to write the S3 Object contents to.
-	s3KeyFile, err = os.Create(sampleFileS3Key)
-	checkError(err)
+		// Create a downloader with the session and default options
+		downloader := s3manager.NewDownloader(sess)
 
-	now := time.Now()
+		// Create a file to write the S3 Object contents to.
+		s3KeyFile, err = os.Create(sampleFileS3Key)
+		checkError(err)
 
-	// Write the contents of S3 Object to the file
-	n, err := downloader.Download(s3KeyFile, &s3.GetObjectInput{
-		Bucket: aws.String("infinistore-mapreduce"),
-		Key:    aws.String(sampleFileS3Key),
-	})
-	checkError(err)
+		now := time.Now()
 
-	downloadDuration := time.Since(now)
+		// Write the contents of S3 Object to the file
+		n, err := downloader.Download(s3KeyFile, &s3.GetObjectInput{
+			Bucket: aws.String("infinistore-mapreduce"),
+			Key:    aws.String(sampleFileS3Key),
+		})
+		checkError(err)
 
-	log.Printf("File %s downloaded, %d bytes, time elapsed = %d ms\n", sampleFileS3Key, n, downloadDuration/1e6)
+		downloadDuration := time.Since(now)
+
+		log.Printf("File %s downloaded, %d bytes, time elapsed = %d ms\n", sampleFileS3Key, n, downloadDuration/1e6)
+	}
+	else {
+		log.Printf("Sample file \"%s\" DOES exist locally.")
+		s3KeyFile, err = os.Open(sampleFileS3Key)
+		checkError(err)
+	}
 
 	log.Println("Driver is generating sample keys now...")
 	log.Println("Driver is reading data from file", sampleFileS3Key, "to generate the sample keys.")
