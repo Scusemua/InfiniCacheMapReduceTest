@@ -163,7 +163,7 @@ func doMap(
 		clientMap[hostname] = client
 	}
 
-	Debug("Reading data from S3 key \"%s\"\n", S3Key)
+	Debug("Reading data for S3 key \"%s\" from downloaded file now...\n", S3Key)
 	b, err = ioutil.ReadFile(S3Key)
 	checkError(err)
 
@@ -176,6 +176,8 @@ func doMap(
 
 	ioRecords := make([]IORecord, 0)
 
+	log.Println("Storing results in Redis now...")
+
 	for k, v := range results {
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
@@ -183,11 +185,13 @@ func doMap(
 		host, err := c.Get(k)
 		checkError(err)
 		client := clientMap[host]
+		log.Printf("Storing result for key %s in Redis.\n", k)
 		err = client.Set(k, marshalled_result, 0).Err()
+		checkError(err)
+		log.Printf("Successfully stored result for key %s in Redis.\n", k)
 		end := time.Now()
 		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
-		checkError(err)
 	}
 
 	Debug("Writing metric data to file now...\n")

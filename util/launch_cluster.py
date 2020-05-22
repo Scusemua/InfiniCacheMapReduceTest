@@ -201,7 +201,7 @@ def launch_workers(
     worker_ips = None
 ):
     print("Key path = {}".format(key_path))
-    update_redis_hosts(ips = [client_ip] + worker_ips, redis_ips = redis_ips)
+    #update_redis_hosts(ips = [client_ip] + worker_ips, redis_ips = redis_ips)
 
     pre_command = """
     . ~/.profile;
@@ -224,9 +224,9 @@ def launch_workers(
 
 if __name__ == "__main__":
     ips = get_public_ips()
-    workers_per_vm = 3
+    workers_per_vm = 5
     shards_per_vm = 3
-    num_redis = 2
+    num_redis = 9
 
     redis_ips = ips[0:num_redis]
     print("Redis IP's: {}".format(redis_ips))
@@ -237,7 +237,7 @@ if __name__ == "__main__":
     worker_ips = ips[num_redis + 1:]
     print("Worker IP's: {}".format(worker_ips))
 
-    # hostnames = lc.launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
+    # hostnames = lc.launch_redis_servers(ips = redis_ips, kill_first = False, connect_and_ping = True, shards_per_vm = shards_per_vm)
     hostnames = launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
 
     for ip in redis_ips:
@@ -255,6 +255,6 @@ if __name__ == "__main__":
 
     nReducers = workers_per_vm * len(worker_ips) * 3
     print("nReducers = {}".format(nReducers))
-    launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
+    launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/20GB_S3Keys.txt")
 
     launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips, workers_per_vm = workers_per_vm)
