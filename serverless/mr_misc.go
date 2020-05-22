@@ -81,6 +81,11 @@ func (drv *Driver) merge(redisHostnames []string) {
 				for i := 0; i < res_int; i++ {
 					key := base_key + string(i)
 
+					host, err5 := c.Get(key)
+					checkError(err5)
+					client := clientMap[host]
+
+					log.Printf("Attempting to read data from Redis @ %s, key: %s\n", host, key)
 					res, err2 := client.Get(key).Result()
 					checkError(err2)
 
