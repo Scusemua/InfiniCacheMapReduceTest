@@ -2,6 +2,7 @@ main/data.txt
 main/part*
 main/*.dat
 main/o.txt
+main/redis_hosts.txt
 *.so 
 plugins/*.so
 *.out

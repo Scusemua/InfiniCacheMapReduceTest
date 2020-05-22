@@ -197,7 +197,7 @@ def launch_workers(
 if __name__ == "__main__":
     ips = get_public_ips()
     workers_per_vm = 3
-    num_redis = 4
+    num_redis = 2
 
     redis_ips = ips[0:num_redis]
     print("Redis IP's: {}".format(redis_ips))
