@@ -123,7 +123,7 @@ def wondershape(
     upload_bytes = 1024000,
     download_bytes = 1024000
 ):
-    command = "sudo wondershaper eth0 {} {}".format(upload_bytes, download_bytes)
+    command = "sudo wondershaper -a eth0 -u {} -d {}".format(upload_bytes, download_bytes)
     execute_command(command = command, count_limit = 1, get_pty = True, ips = ips)
 
 def update_redis_hosts(
