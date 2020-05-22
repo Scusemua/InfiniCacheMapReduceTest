@@ -186,10 +186,10 @@ func doMap(
 		host, err := c.Get(k)
 		checkError(err)
 		client := clientMap[host]
-		log.Printf("Storing result for key %s in Redis @ %s. (size: %d MB.)\n", k, host, len(marshalled_result)/1e6)
+		log.Printf("Storing result for key %s in Redis @ %s. (size: %f MB.)\n", k, host, float(len(marshalled_result))/float(1e6))
 		err = client.Set(k, marshalled_result, 0).Err()
 		checkError(err)
-		log.Printf("Successfully stored result for key %s in Redis @ %s. (size: %d MB.)\n", k, host, len(marshalled_result)/1e6)
+		log.Printf("Successfully stored result for key %s in Redis @ %s. (size: %f MB.)\n", k, host, float(len(marshalled_result))/float(1e6))
 		end := time.Now()
 		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
