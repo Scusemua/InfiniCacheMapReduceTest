@@ -194,7 +194,7 @@ func doReduce(
 		client := clientMap[host]
 		fmt.Printf("Retrieving value from Redis %s for reduce task #%d at key \"%s\"...\n", host, reduceTaskNum, redisKey)
 		marshalled_result, err := client.Get(redisKey).Result()
-		fmt.Printf("Successfully retrieved value from Redis @ %s, key = \"%s\", reduce task # = %d", host, redisKey, reduceTaskNum)
+		fmt.Printf("Successfully retrieved value from Redis @ %s, key = \"%s\", reduce task # = %d\n", host, redisKey, reduceTaskNum)
 		end := time.Now()
 		checkError(err)
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
