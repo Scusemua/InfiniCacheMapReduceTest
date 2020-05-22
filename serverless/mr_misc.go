@@ -8,6 +8,7 @@ import (
 	"github.com/lafikl/consistent"
 	"log"
 	"os"
+	"reflect"
 	"sort"
 	"time"
 )
@@ -56,11 +57,23 @@ func (drv *Driver) merge(redisHostnames []string) {
 		host, err := c.Get(p)
 		checkError(err)
 		client := clientMap[host]
-		marshalled_result, err2 := client.Get(p).Result()
+		result, err2 := client.Get(p).Result()
+		checkError(err2)
+
+		typeOfResult := reflect.TypeOf(result)
+
+		if typeOfResult == "int": 
+			log.Println("Obtained integer for final result. Result must've been chunked.")
+
+			base_key = p + "-part"
+			for i := 0; i < result; i++ {
+				key := base_key + string(i)
+
+				res, err2 := client.Get(p).Result()
+				checkError(err2)
+			}
 
 		log.Println("Successfully retrieved data from Redis!")
-
-		checkError(err2)
 
 		if err != nil {
 			log.Fatal("Merge: ", err)
@@ -69,7 +82,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 		results := make([]KeyValue, 0)
 
 		log.Println("Unmarshalling data retrieved from Redis now...")
-		json.Unmarshal([]byte(marshalled_result), &results)
+		json.Unmarshal([]byte(result), &results)
 
 		for _, kv := range results {
 			kvs[kv.Key] = kv.Value

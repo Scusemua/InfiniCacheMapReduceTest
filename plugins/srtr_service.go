@@ -140,6 +140,19 @@ func reduceF(key string, values []string) string {
 	//return sorted //fmt.Sprintf("%s", strings.Join(sorted, ","))
 }
 
+func split(buf []byte, lim int) [][]byte {
+	var chunk []byte
+	chunks := make([][]byte, 0, len(buf)/lim+1)
+	for len(buf) >= lim {
+		chunk, buf = buf[:lim], buf[lim:]
+		chunks = append(chunks, chunk)
+	}
+	if len(buf) > 0 {
+		chunks = append(chunks, buf[:len(buf)])
+	}
+	return chunks
+}
+
 // doReduce does the job of a reduce worker: it reads the
 // intermediate key/value pairs (produced by the map phase) for this
 // task, sorts the intermediate key/value pairs by key, calls the
@@ -238,16 +251,45 @@ func doReduce(
 	marshalled_result, err := json.Marshal(results)
 	checkError(err)
 	log.Println("Writing final result to Redis at key", fileName, ". Size:", float64(len(marshalled_result))/float64(1e6), "MB.")
-	start := time.Now()
-	host, err := c.Get(fileName)
-	checkError(err)
-	client := clientMap[host]
-	err = client.Set(fileName, marshalled_result, 0).Err()
-	checkError(err)
-	end := time.Now()
 
-	rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
-	ioRecords = append(ioRecords, rec)
+	/* Chunk up the final results if necessary. */
+	if len(marshalled_result) > (512 * 1e6) {
+		log.Println("Final result is larger than 512MB. Storing it in pieces...")
+		chunks := split(marshalled_result, 512*1e6)
+		num_chunks = len(chunks)
+		log.Println("Created", num_chunks, " chunks for final result", fileName)
+		base_key := fileName + "-part"
+		for i, chunk := range chunks {
+			key := base_key + string(i)
+			log.Printf("Storing chunk #%d in Redis at key %s now. Chunk size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
+			host, err := c.Get(key)
+			checkError(err)
+			client := clientMap[host]
+			start := time.Now()
+			err = client.Set(key, chunk, 0).Err()
+			end := time.Now()
+			checkError(err)
+
+			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
+			ioRecords = append(ioRecords, rec)
+		}
+		host, err := c.Get(fileName)
+		checkError(err)
+		client := clientMap[host]
+		err = client.Set(key, num_chunks, 0).Err()
+		checkError(err)
+	} else {
+		start := time.Now()
+		host, err := c.Get(fileName)
+		checkError(err)
+		client := clientMap[host]
+		err = client.Set(fileName, marshalled_result, 0).Err()
+		checkError(err)
+		end := time.Now()
+
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
+		ioRecords = append(ioRecords, rec)
+	}
 
 	f2, err2 := os.Create("IOData/reduce_io_data_" + jobName + strconv.Itoa(reduceTaskNum) + ".dat")
 	checkError(err2)
