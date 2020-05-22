@@ -254,7 +254,7 @@ if __name__ == "__main__":
     ips = get_public_ips()
     workers_per_vm = 5
     shards_per_vm = 4
-    num_redis = 5
+    num_redis = 2
 
     redis_ips = ips[0:num_redis]
     print("Redis IP's: {}".format(redis_ips))
