@@ -1,7 +1,6 @@
 package serverless
 
 import (
-	"fmt"
 	"log"
 	"net/rpc"
 )
