@@ -294,7 +294,7 @@ func (drv *Driver) run(
 	endOfMap := time.Now()
 	mapPhaseDuration := time.Since(jobStartTime)
 
-	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration.Nanoseconds()/1e6)
+	log.Printf("Map phase duration: %d ms\n", float64(mapPhaseDuration.Nanoseconds()/1e6))
 
 	// E.g., for word count, the name of the reduce plugin service
 	// module would be 'wcr_service'; for inverted indexing, the name
@@ -305,15 +305,15 @@ func (drv *Driver) run(
 	reducePhaseDuration := time.Since(endOfMap)
 	mapReduceDuration := time.Since(jobStartTime)
 
-	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration.Nanoseconds()/1e6)
-	log.Printf("Reduce phase duration: %f ms", reducePhaseDuration.Nanoseconds()/1e6)
-	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %f ms", mapReduceDuration.Nanoseconds()/1e6)
+	log.Printf("Map phase duration: %d ms\n", float64(mapPhaseDuration.Nanoseconds()/1e6))
+	log.Printf("Reduce phase duration: %f ms", float64(reducePhaseDuration.Nanoseconds()/1e6))
+	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %f ms", float64(mapReduceDuration.Nanoseconds()/1e6))
 
 	finish()
 
-	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration.Nanoseconds()/1e6)
-	log.Printf("Reduce phase duration: %f ms", reducePhaseDuration.Nanoseconds()/1e6)
-	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %f ms", mapReduceDuration.Nanoseconds()/1e6)
+	log.Printf("Map phase duration: %d ms\n", float64(mapPhaseDuration.Nanoseconds()/1e6))
+	log.Printf("Reduce phase duration: %f ms", float64(reducePhaseDuration.Nanoseconds()/1e6))
+	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %f ms", float64(mapReduceDuration.Nanoseconds()/1e6))
 
 	drv.merge(redisHostnames)
 
