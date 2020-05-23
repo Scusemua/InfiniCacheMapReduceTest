@@ -85,12 +85,8 @@ func mapF(document string, value string) (res []KeyValue) {
 		}
 		return false
 	}) {
-		//arr = append(arr, s)
 		res = append(res, KeyValue{s[0:10], s})
 	}
-	//Debug("\narr:\n%s\n", strings.Join(arr, ","))
-	//res = append(res, KeyValue{document, arr})
-	//Debug("\nRes:\n%s\n", res)
 	return res
 }
 

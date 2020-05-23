@@ -28,13 +28,11 @@ def execute_command(
     keyfile = paramiko.RSAKey.from_private_key_file(key_path)
     ssh_clients = list()
     print(" ")
-
     for ip in ips:
         ssh_redis = paramiko.SSHClient()
         ssh_clients.append((ip, ssh_redis))
         ssh_redis.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh_redis.connect(hostname = ip, username="ubuntu", pkey = keyfile) 
-    
     counter = 1
     for IP, ssh_redis_client in ssh_clients:
         print("Executing command for instance @ {}... ({}/{})".format(IP, counter, len(ips)))
@@ -64,6 +62,7 @@ def execute_command(
 
 def launch_redis_servers(
     connect_and_ping = True,
+    count_limit = 3,
     ips = None,
     key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem",
     kill_first = False ,
@@ -80,25 +79,23 @@ def launch_redis_servers(
         kill_command = "sudo pkill -9 redis-server"
         execute_command(
             command = kill_command,
+            count_limit = 1,
             ips = ips,
             key_path = key_path
         )
-    
     print("Shards per VM: {}".format(shards_per_vm))
     for i in range(0, shards_per_vm):
         port = starting_port + i
         redis_command = "sudo redis-server --protected-mode no --bind 0.0.0.0 --port {} --appendonly no --save \"\"".format(port)
-        
         current_batch = ["{}:{}".format(ip, port) for ip in ips]
         hostnames.extend(current_batch)
-
         print("Launching Redis instances for port {}".format(port))
         execute_command(
             command = redis_command,
+            count_limit = 1,
             ips = ips,
             key_path = key_path
         )
-
     # Connect to the servers and ping them to verify that they were actually setup properly.
     if connect_and_ping:
         count = 1
@@ -112,7 +109,6 @@ def launch_redis_servers(
             else:
                 print("True")   
             count += 1
-    
     return hostnames
 
 def launch_client(
@@ -210,9 +206,9 @@ def update_redis_hosts(
         key_path = key_path
     )
 
-# kill_go_processes(ips = worker_ips)
-# kill_go_processes(ips = worker_ips + [client_ip])
-# kill_go_processes(ips = [client_ip])
+# lc.kill_go_processes(ips = worker_ips)
+# lc.kill_go_processes(ips = worker_ips + [client_ip])
+# lc.kill_go_processes(ips = [client_ip])
 def kill_go_processes(
     ips = None,
     key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"
@@ -220,6 +216,7 @@ def kill_go_processes(
     kill_command = "sudo ps aux | grep go | awk '{print $2}' | xargs kill -9 $1"
     execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
 
+# lc.clear_redis_instances(flushall = True, hostnames = hostnames)
 def clear_redis_instances(
     flushall = False,
     hostnames = None
@@ -233,6 +230,20 @@ def clear_redis_instances(
         else:
             print("Flushing DB on Redis @ {}".format(hostname))
             rc.flushdb()
+
+# lc.clean_workers(worker_ips = worker_ips)
+def clean_workers(
+    key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem",
+    worker_ips = None
+):
+    command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;sudo rm WorkerLog*; sudo rm *.dat"
+    execute_command(
+        command = command,
+        count_limit = 2,
+        ips = worker_ips,
+        key_path = key_path,
+        get_pty = True 
+    )     
 
 def launch_workers(
     client_ip = None,
@@ -268,19 +279,19 @@ if __name__ == "__main__":
     ips = get_public_ips()
     workers_per_vm = 5
     shards_per_vm = 4
-    num_redis = 2
+    num_redis = 7
 
     redis_ips = ips[0:num_redis]
-    print("Redis IP's: {}".format(redis_ips))
+    print("Redis IP's ({}): {}".format(len(redis_ips), redis_ips))
 
     client_ip = ips[num_redis]
     print("Client IP: {}".format(client_ip))
 
     worker_ips = ips[num_redis + 1:]
-    print("Worker IP's: {}".format(worker_ips))
+    print("Worker IP's ({}): {}".format(len(worker_ips), worker_ips))
 
-    # hostnames = lc.launch_redis_servers(ips = redis_ips, kill_first = False, connect_and_ping = True, shards_per_vm = shards_per_vm)
-    # hostnames = lc.launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
+    # hostnames = lc.launch_redis_servers(ips = redis_ips, count_limit = 1, kill_first = False, connect_and_ping = True, shards_per_vm = shards_per_vm)
+    # hostnames = lc.launch_redis_servers(ips = redis_ips, count_limit = 1, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
     hostnames = launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
 
     ping_redis(hostnames = hostnames)
@@ -291,6 +302,11 @@ if __name__ == "__main__":
 
     nReducers = workers_per_vm * len(worker_ips) * 9
     print("nReducers = {}".format(nReducers))
+
+    # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt
+    # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
+    # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/20GB_S3Keys.txt
+    # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt
     launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/20GB_S3Keys.txt")
 
     launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips, workers_per_vm = workers_per_vm)

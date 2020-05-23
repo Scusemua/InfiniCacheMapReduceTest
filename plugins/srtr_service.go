@@ -209,7 +209,9 @@ func doReduce(
 		marshalled_result, err := client.Get(redisKey).Result()
 		if err != nil {
 			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", host, redisKey)
-			log.Fatal(err)
+
+			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
+			continue
 		}
 		fmt.Printf("Successfully retrieved value from Redis @ %s, key = \"%s\", reduce task # = %d. Bytes read: %f MB.\n", host, redisKey, reduceTaskNum, float64(len(marshalled_result))/float64(1e6))
 		end := time.Now()
