@@ -32,6 +32,8 @@ func (drv *Driver) merge(redisHostnames []string) {
 		log.Println("Creating Redis client for Redis listening at", hostname)
 
 		// Create client.
+		// TODO: If still getting errors with workers not finding data in Redis, we could
+		// try sorting the list of redis endpoints before placing them into consistent hash ring.
 		client := redis.NewClient(&redis.Options{
 			Addr:         hostname,
 			Password:     "",

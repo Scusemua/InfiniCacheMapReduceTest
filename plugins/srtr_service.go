@@ -179,6 +179,8 @@ func doReduce(
 		log.Println("Creating Redis client for Redis @", hostname)
 
 		// Create client.
+		// TODO: If still getting errors with workers not finding data in Redis, we could
+		// try sorting the list of redis endpoints before placing them into consistent hash ring.
 		client := redis.NewClient(&redis.Options{
 			Addr:         hostname,
 			Password:     "",
@@ -209,7 +211,7 @@ func doReduce(
 		marshalled_result, err := client.Get(redisKey).Result()
 		if err != nil {
 			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", host, redisKey)
-
+			log.Printf("ERROR: Just skipping the key \"%s\"...", redisKey)
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			continue
 		}
@@ -268,14 +270,17 @@ func doReduce(
 		base_key := fileName + "-part"
 		for i, chunk := range chunks {
 			key := base_key + string(i)
-			log.Printf("Storing chunk #%d in Redis at key %s now. Chunk size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
+			log.Printf("REDIS WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
 			host, err := c.Get(key)
 			checkError(err)
 			client := clientMap[host]
 			start := time.Now()
 			err = client.Set(key, chunk, 0).Err()
 			end := time.Now()
+			writeEnd := time.Since(start)
 			checkError(err)
+
+			log.Printf("REDIS WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Redis Hostname: %s, Size: %f, Time: %v ms \n", i, key, host, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
@@ -288,13 +293,18 @@ func doReduce(
 		err = client.Set(fileName, num_chunks_serialized, 0).Err()
 		checkError(err)
 	} else {
-		start := time.Now()
 		host, err := c.Get(fileName)
 		checkError(err)
 		client := clientMap[host]
+
+		log.Printf("REDIS WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
+		start := time.Now()
 		err = client.Set(fileName, marshalled_result, 0).Err()
 		checkError(err)
 		end := time.Now()
+		writeEnd := time.Since(start)
+
+		log.Printf("REDIS WRITE END. Key: %s, Redis Hostname: %s, Size: %f, Time: %d ms \n", fileName, host, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)

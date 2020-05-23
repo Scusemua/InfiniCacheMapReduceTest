@@ -144,6 +144,8 @@ func doMap(
 		log.Println("Creating Redis client for Redis listening at", hostname)
 
 		// Create client.
+		// TODO: If still getting errors with workers not finding data in Redis, we could
+		// try sorting the list of redis endpoints before placing them into consistent hash ring.
 		client := redis.NewClient(&redis.Options{
 			Addr:         hostname,
 			Password:     "",
@@ -182,10 +184,12 @@ func doMap(
 		host, err := c.Get(k)
 		checkError(err)
 		client := clientMap[host]
-		log.Printf("Storing result for key %s in Redis @ %s. (size: %f MB.)\n", k, host, float64(len(marshalled_result))/float64(1e6))
+		log.Printf("REDIS WRITE START. Key: %s, Redis Hostname: %s, Size: %f \n", k, host, float64(len(marshalled_result))/float64(1e6))
+		writeStart := time.Now()
 		err = client.Set(k, marshalled_result, 0).Err()
+		writeEnd := time.Since(writeStart)
 		checkError(err)
-		log.Printf("Successfully stored result for key %s in Redis @ %s. (size: %f MB.)\n", k, host, float64(len(marshalled_result))/float64(1e6))
+		log.Printf("REDIS WRITE END. Key: %s, Redis Hostname: %s, Size: %f, Time: %d ms \n", k, host, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 		end := time.Now()
 		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
