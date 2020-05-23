@@ -207,9 +207,12 @@ func doReduce(
 		client := clientMap[host]
 		fmt.Printf("Retrieving value from Redis %s for reduce task #%d at key \"%s\"...\n", host, reduceTaskNum, redisKey)
 		marshalled_result, err := client.Get(redisKey).Result()
+		if err != nil {
+			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", host, redisKey)
+			log.Fatal(err)
+		}
 		fmt.Printf("Successfully retrieved value from Redis @ %s, key = \"%s\", reduce task # = %d. Bytes read: %f MB.\n", host, redisKey, reduceTaskNum, float64(len(marshalled_result))/float64(1e6))
 		end := time.Now()
-		checkError(err)
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 		json.Unmarshal([]byte(marshalled_result), &kvs)
