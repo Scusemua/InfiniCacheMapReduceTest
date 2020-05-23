@@ -252,7 +252,7 @@ func doReduce(
 	checkError(err)
 	log.Println("Writing final result to Redis at key", fileName, ". Size:", float64(len(marshalled_result))/float64(1e6), "MB.")
 
-	chunk_threshold := 1e6 //512*1e6
+	chunk_threshold := 512 * 1e6
 
 	/* Chunk up the final results if necessary. */
 	if len(marshalled_result) > int(chunk_threshold) {
