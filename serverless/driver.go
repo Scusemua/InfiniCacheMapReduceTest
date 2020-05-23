@@ -294,19 +294,19 @@ func (drv *Driver) run(
 	endOfMap := time.Now()
 	mapPhaseDuration := time.Since(jobStartTime)
 
-	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration/1000000)
+	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration/1e6)
 
 	// E.g., for word count, the name of the reduce plugin service
 	// module would be 'wcr_service'; for inverted indexing, the name
 	// would be 'iir_service'.
-	log.Printf("%s: To start he Reduce phase...\n", drv.address)
+	log.Printf("%s: To start the Reduce phase...\n", drv.address)
 	schedule(reducePhase, jobName)
 
 	reducePhaseDuration := time.Since(endOfMap)
 	mapReduceDuration := time.Since(jobStartTime)
 
-	log.Println("Reduce phase duration:", reducePhaseDuration/1000000, "ms")
-	log.Println("DURATION OF MAP PHASE + REDUCE PHASE:", mapReduceDuration/1000000, "ms")
+	log.Printf("Reduce phase duration: %f ms", reducePhaseDuration/1e6)
+	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %f ms", mapReduceDuration/1e6)
 
 	finish()
 	drv.merge(redisHostnames)
