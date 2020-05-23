@@ -220,6 +220,20 @@ def kill_go_processes(
     kill_command = "sudo ps aux | grep go | awk '{print $2}' | xargs kill -9 $1"
     execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
 
+def clear_redis_instances(
+    flushall = False,
+    hostnames = None
+):
+    for hostname in hostnames:
+        _split = hostname.split(":")
+        rc = redis.Redis(host = _split[0], port = int(_split[1]), db = 0)
+        if flushall:
+            print("Flushing all on Redis @ {}".format(hostname))
+            rc.flushall()
+        else:
+            print("Flushing DB on Redis @ {}".format(hostname))
+            rc.flushdb()
+
 def launch_workers(
     client_ip = None,
     count_limit = 5,
