@@ -217,7 +217,7 @@ func doReduce(
 		}
 		end := time.Now()
 		readDuration := time.Since(start)
-		log.Printf("REDIS READ END. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d, Bytes read: %f, Time: %d", redisKey, host, reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/ 1e6)
+		log.Printf("REDIS READ END. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d, Bytes read: %f, Time: %d ms", redisKey, host, reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/ 1e6)
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 		json.Unmarshal([]byte(marshalled_result), &kvs)

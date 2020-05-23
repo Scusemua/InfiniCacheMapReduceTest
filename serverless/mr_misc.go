@@ -104,7 +104,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 					}
 					checkError(err2)
 
-					log.Printf("REDIS READ CHUNK END. Key: \"%s\", Redis Hostname: %s, Chunk #: %d, Bytes read: %f, Time: %d", key, host, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
+					log.Printf("REDIS READ CHUNK END. Key: \"%s\", Redis Hostname: %s, Chunk #: %d, Bytes read: %f, Time: %d ms", key, host, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
 
 					all_bytes = append(all_bytes, []byte(res)...)
 				}
@@ -124,7 +124,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 				}
 			}
 		} else {
-			log.Printf("REDIS READ END. Key: \"%s\", Redis Hostname: %s, Bytes read: %f, Time: %d", p, host, float64(len(result))/float64(1e6), firstReadDuration.Nanoseconds()/1e6)
+			log.Printf("REDIS READ END. Key: \"%s\", Redis Hostname: %s, Bytes read: %f, Time: %d ms", p, host, float64(len(result))/float64(1e6), firstReadDuration.Nanoseconds()/1e6)
 			for _, kv := range results {
 				kvs[kv.Key] = kv.Value
 			}
