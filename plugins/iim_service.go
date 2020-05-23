@@ -48,13 +48,13 @@ type iimService string
 
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
-	JobName    		string
-	S3Key      		string
-	TaskNum    		int
-	NReduce    		int
-	NOthers    		int
-	SampleKeys 		[]string
-	RedisEndpoints 	[]string 
+	JobName        string
+	S3Key          string
+	TaskNum        int
+	NReduce        int
+	NOthers        int
+	SampleKeys     []string
+	RedisEndpoints []string
 }
 
 type KeyValue struct {
@@ -140,10 +140,10 @@ func (s iimService) DoService(raw []byte) error {
 	dec := gob.NewDecoder(buf)
 	err := dec.Decode(&args)
 	if err != nil {
-		fmt.Printf("Inverted Indexing Service: Failed to decode!\n")
+		log.Printf("Inverted Indexing Service: Failed to decode!\n")
 		return err
 	}
-	fmt.Printf("Hello from inverted indexing service plugin: %s\n", args.S3Key)
+	log.Printf("Hello from inverted indexing service plugin: %s\n", args.S3Key)
 
 	doMap(args.JobName, args.S3Key, args.TaskNum, args.NReduce)
 

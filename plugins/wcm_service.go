@@ -133,10 +133,10 @@ func (s wcmService) DoService(raw []byte) error {
 	dec := gob.NewDecoder(buf)
 	err := dec.Decode(&args)
 	if err != nil {
-		fmt.Printf("Word Count Service: Failed to decode!\n")
+		log.Printf("Word Count Service: Failed to decode!\n")
 		return err
 	}
-	fmt.Printf("Hello from wordCountService plugin: %s\n", args.S3Key)
+	log.Printf("Hello from wordCountService plugin: %s\n", args.S3Key)
 
 	doMap(args.JobName, args.S3Key, args.TaskNum, args.NReduce)
 

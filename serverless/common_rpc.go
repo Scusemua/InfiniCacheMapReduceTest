@@ -61,7 +61,7 @@ func Call(srv string, rpcname string, args interface{}, reply interface{}) bool 
 		return true
 	}
 
-	fmt.Printf("RPC call for function %s to remote %s FAILED: %s\n", rpcname, srv, err)
+	log.Printf("RPC call for function %s to remote %s FAILED: %s\n", rpcname, srv, err)
 	return false
 }
 

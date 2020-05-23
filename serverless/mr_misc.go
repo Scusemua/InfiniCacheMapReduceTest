@@ -58,7 +58,11 @@ func (drv *Driver) merge(redisHostnames []string) {
 		host, err := c.Get(p)
 		checkError(err)
 		client := clientMap[host]
+
+		log.Printf("REDIS READ START. Key: \"%s\", Redis Hostname: %s.", p, host)
+		start := time.Now()
 		result, err2 := client.Get(p).Result()
+		firstReadDuration := time.Since(start)
 		if err2 != nil {
 			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", host, p)
 			log.Fatal(err2)
@@ -90,13 +94,17 @@ func (drv *Driver) merge(redisHostnames []string) {
 					checkError(err5)
 					client := clientMap[host]
 
-					log.Printf("Attempting to read chunk #%d from Redis @ %s, key: %s\n", i, host, key)
+					log.Printf("REDIS READ CHUNK START. Key: \"%s\", Redis Hostname: %s, Chunk #: %d.", key, host, i)
+					chunkStart := time.Now()
 					res, err2 := client.Get(key).Result()
+					readDuration := time.Since(chunkStart)
 					if err2 != nil {
 						log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\". This occurred while retrieving chunks...", host, key)
 						log.Fatal(err2)
 					}
 					checkError(err2)
+
+					log.Printf("REDIS READ CHUNK END. Key: \"%s\", Redis Hostname: %s, Chunk #: %d, Bytes read: %f, Time: %d", key, host, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
 
 					all_bytes = append(all_bytes, []byte(res)...)
 				}
@@ -116,7 +124,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 				}
 			}
 		} else {
-			log.Println("Successfully retrieved data from Redis!")
+			log.Printf("REDIS READ END. Key: \"%s\", Redis Hostname: %s, Bytes read: %f, Time: %d", redisKey, host, float64(len(marshalled_result))/float64(1e6), firstReadDuration.Nanoseconds()/1e6)
 			for _, kv := range results {
 				kvs[kv.Key] = kv.Value
 			}

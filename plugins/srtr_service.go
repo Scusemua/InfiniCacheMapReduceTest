@@ -207,7 +207,7 @@ func doReduce(
 		host, err := c.Get(redisKey)
 		checkError(err)
 		client := clientMap[host]
-		fmt.Printf("Retrieving value from Redis %s for reduce task #%d at key \"%s\"...\n", host, reduceTaskNum, redisKey)
+		log.Printf("REDIS READ START. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d.", redisKey, host, reduceTaskNum)
 		marshalled_result, err := client.Get(redisKey).Result()
 		if err != nil {
 			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", host, redisKey)
@@ -215,8 +215,9 @@ func doReduce(
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			continue
 		}
-		fmt.Printf("Successfully retrieved value from Redis @ %s, key = \"%s\", reduce task # = %d. Bytes read: %f MB.\n", host, redisKey, reduceTaskNum, float64(len(marshalled_result))/float64(1e6))
 		end := time.Now()
+		readDuration := time.Since(start)
+		log.Printf("REDIS READ END. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d, Bytes read: %f, Time: %d", redisKey, host, reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/ 1e6)
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 		json.Unmarshal([]byte(marshalled_result), &kvs)
