@@ -88,7 +88,9 @@ func (drv *Driver) schedule(
 	invokeService := func(worker string, args *MapReduceArgs) {
 		var buf bytes.Buffer
 
-		log.Println("Schedule: scheduling task", args.TaskNum, "on worker", worker, "now...")
+		log.Printf("Schedule: scheduling %s task #%d onto worker %s now...", jobPhase, args.TaskNum, worker)
+
+		//log.Println("Schedule: scheduling task", args.TaskNum, "on worker", worker, "now...")
 
 		enc := gob.NewEncoder(&buf)
 		err := enc.Encode(args)
@@ -108,11 +110,11 @@ func (drv *Driver) schedule(
 			// Notify scheduler that this task is complete.
 			completeChan <- true
 
-			log.Printf("Schedule: task %d executed successfully on worker %v.\n", args.TaskNum, worker)
+			log.Printf("Schedule: %s task #%d executed successfully on worker %v.\n", args.TaskNum, worker)
 		} else {
 			// Job failed, so put job back in queue to be executed
 			jobChan <- args
-			log.Printf("Schedule: task failed to execute by %v: %v\n", worker, args.TaskNum)
+			log.Printf("Schedule: %s task #%d failed to execute by %v: task #%v\n", worker, args.TaskNum)
 		}
 	}
 
