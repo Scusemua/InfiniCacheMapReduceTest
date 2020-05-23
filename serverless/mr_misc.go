@@ -58,7 +58,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 		client := clientMap[host]
 		result, err2 := client.Get(p).Result()
 		if err2 != nil {
-			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", host, redisKey)
+			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", host, p)
 			log.Fatal(err2)
 		}
 
@@ -91,7 +91,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 					log.Printf("Attempting to read chunk #%d from Redis @ %s, key: %s\n", i, host, key)
 					res, err2 := client.Get(key).Result()
 					if err2 != nil {
-						log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\". This occurred while retrieving chunks...", host, redisKey)
+						log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\". This occurred while retrieving chunks...", host, key)
 						log.Fatal(err2)
 					}
 					checkError(err2)
