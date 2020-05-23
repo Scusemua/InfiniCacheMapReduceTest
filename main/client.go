@@ -14,7 +14,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"io"
 	"log"
