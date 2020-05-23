@@ -259,7 +259,7 @@ func doReduce(
 
 	/* Chunk up the final results if necessary. */
 	if len(marshalled_result) > int(chunk_threshold) {
-		log.Printf("Final result is larger than %dMB. Storing it in pieces...", chunk_threshold/1e6)
+		log.Printf("Final result is larger than %dMB. Storing it in pieces...", int(chunk_threshold/1e6))
 		chunks := split(marshalled_result, int(chunk_threshold))
 		num_chunks := len(chunks)
 		log.Println("Created", num_chunks, " chunks for final result", fileName)
