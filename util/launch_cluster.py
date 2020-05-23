@@ -268,7 +268,7 @@ if __name__ == "__main__":
     ips = get_public_ips()
     workers_per_vm = 5
     shards_per_vm = 4
-    num_redis = 4
+    num_redis = 2
 
     redis_ips = ips[0:num_redis]
     print("Redis IP's: {}".format(redis_ips))
@@ -279,6 +279,7 @@ if __name__ == "__main__":
     worker_ips = ips[num_redis + 1:]
     print("Worker IP's: {}".format(worker_ips))
 
+    # hostnames = lc.launch_redis_servers(ips = redis_ips, kill_first = False, connect_and_ping = True, shards_per_vm = shards_per_vm)
     # hostnames = lc.launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
     hostnames = launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
 
