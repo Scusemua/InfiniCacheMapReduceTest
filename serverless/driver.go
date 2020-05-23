@@ -305,15 +305,15 @@ func (drv *Driver) run(
 	reducePhaseDuration := time.Since(endOfMap)
 	mapReduceDuration := time.Since(jobStartTime)
 
-	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration.Nanoseconds()/1e6))
-	log.Printf("Reduce phase duration: %d ms", reducePhaseDuration.Nanoseconds()/1e6))
-	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %d ms", mapReduceDuration.Nanoseconds()/1e6))
+	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration.Nanoseconds()/1e6)
+	log.Printf("Reduce phase duration: %d ms", reducePhaseDuration.Nanoseconds()/1e6)
+	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %d ms", mapReduceDuration.Nanoseconds()/1e6)
 
 	finish()
 
-	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration.Nanoseconds()/1e6))
-	log.Printf("Reduce phase duration: %d ms", reducePhaseDuration.Nanoseconds()/1e6))
-	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %d ms", mapReduceDuration.Nanoseconds()/1e6))
+	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration.Nanoseconds()/1e6)
+	log.Printf("Reduce phase duration: %d ms", reducePhaseDuration.Nanoseconds()/1e6)
+	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %d ms", mapReduceDuration.Nanoseconds()/1e6)
 
 	drv.merge(redisHostnames)
 
