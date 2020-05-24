@@ -141,7 +141,7 @@ func doMap(
 	// Create the Redis clients and store them in the map.
 	for _, hostname := range redisEndpoints {
 		// Add hostname to hash ring.
-		c.Add(hostname)
+		//c.Add(hostname)
 
 		log.Println("Creating Redis client for Redis listening at", hostname)
 
@@ -200,8 +200,9 @@ func doMap(
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
 		start := time.Now()
-		host, err := c.Get(k)
-		checkError(err)
+		//host, err := c.Get(k)
+		//checkError(err)
+		host, _ := ring.GetNode(k)
 		client := clientMap[host]
 		log.Printf("REDIS WRITE START. Key: %s, Redis Hostname: %s, Size: %f \n", k, host, float64(len(marshalled_result))/float64(1e6))
 		writeStart := time.Now()
