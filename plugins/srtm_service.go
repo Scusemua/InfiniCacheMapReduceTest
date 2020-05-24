@@ -16,7 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/go-redis/redis/v7"
-	"github.com/lafikl/consistent"
+	"github.com/serialx/hashring"
 	"io/ioutil"
 	"log"
 	"os"
@@ -130,7 +130,8 @@ func doMap(
 
 	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
-	c := consistent.New()
+	ring := hashring.New(redisEndpoints)
+	//c := consistent.New()
 	clientMap := make(map[string]*redis.Client)
 	clientList := make([]*redis.Client, 0)
 
@@ -180,15 +181,15 @@ func doMap(
 	log.Println("Storing results in Redis now...")
 
 	for k, v := range results {
-		For debugging purposes.
-		num_entries := int64(len(v))
+		// For debugging purposes.
+		// num_entries := int64(len(v))
 
-		// Split the key so we can extract the Task # and Reducer # for this key.
-		split_key := strings.Split(k, "-")
-		mapTask := split_key[1]
-		reduceTask := split_key[2]
+		// // Split the key so we can extract the Task # and Reducer # for this key.
+		// split_key := strings.Split(k, "-")
+		// mapTask := split_key[1]
+		// reduceTask := split_key[2]
 
-		metric_key := mapTask + "-" + reduceTask
+		// metric_key := mapTask + "-" + reduceTask
 
 		log.Printf("Incrementing metric key for MapTask #%v --> Reducer #%v by %d now...\n", mapTask, reduceTask, num_entries)
 

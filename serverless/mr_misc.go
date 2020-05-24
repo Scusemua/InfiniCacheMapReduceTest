@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v7"
-	"github.com/lafikl/consistent"
+	"github.com/serialx/hashring"
 	"log"
 	"os"
 	"sort"
@@ -18,7 +18,8 @@ func (drv *Driver) merge(redisHostnames []string) {
 	Debug("Merge phase\n")
 	now := time.Now()
 
-	c := consistent.New()
+	ring := hashring.New(redisHostnames)
+	//c := consistent.New()
 	clientMap := make(map[string]*redis.Client)
 
 	log.Println("Populating hash ring and Redis client map now...")
@@ -27,7 +28,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 	// Create the Redis clients and store them in the map.
 	for _, hostname := range redisHostnames {
 		// Add hostname to hash ring.
-		c.Add(hostname)
+		//c.Add(hostname)
 
 		log.Println("Creating Redis client for Redis listening at", hostname)
 
@@ -55,8 +56,9 @@ func (drv *Driver) merge(redisHostnames []string) {
 
 		// Read result from Redis.
 		// Previously, we would be reading the result from a file on-disk.
-		host, err := c.Get(p)
-		checkError(err)
+		//host, err := c.Get(p)
+		//checkError(err)
+		host, _ := ring.GetNode(p)
 		client := clientMap[host]
 
 		log.Printf("REDIS READ START. Key: \"%s\", Redis Hostname: %s.", p, host)
@@ -90,8 +92,9 @@ func (drv *Driver) merge(redisHostnames []string) {
 				for i := 0; i < res_int; i++ {
 					key := base_key + string(i)
 
-					host, err5 := c.Get(key)
-					checkError(err5)
+					//host, err5 := c.Get(key)
+					host, _ := ring.GetNode(key)
+					//checkError(err5)
 					client := clientMap[host]
 
 					log.Printf("REDIS READ CHUNK START. Key: \"%s\", Redis Hostname: %s, Chunk #: %d.", key, host, i)
