@@ -114,7 +114,7 @@ func (drv *Driver) schedule(
 		} else {
 			// Job failed, so put job back in queue to be executed
 			jobChan <- args
-			log.Printf("Schedule: %s task #%d FAILED to execute by %v: task #%v\n", phase, args.TaskNum, worker, args.TaskNum)
+			log.Printf("Schedule: %s task #%d FAILED to execute by %v: %s task #%v\n", phase, args.TaskNum, worker, phase, args.TaskNum)
 		}
 	}
 

@@ -321,6 +321,11 @@ func doReduce(
 		_, err2 := f2.WriteString(fmt.Sprintf("%v\n", rec))
 		checkError(err2)
 	}
+
+	// Close all of the Redis clients now that we're done.
+	for _, redis_client := range clientMap {
+		redis_client.Close()
+	}
 }
 
 // DON'T MODIFY THIS FUNCTION

@@ -180,21 +180,21 @@ func doMap(
 	log.Println("Storing results in Redis now...")
 
 	for k, v := range results {
-		// For debugging purposes.
-		// num_entries := int64(len(v))
+		For debugging purposes.
+		num_entries := int64(len(v))
 
-		// // Split the key so we can extract the Task # and Reducer # for this key.
-		// split_key := strings.Split(k, "-")
-		// mapTask := split_key[1]
-		// reduceTask := split_key[2]
+		// Split the key so we can extract the Task # and Reducer # for this key.
+		split_key := strings.Split(k, "-")
+		mapTask := split_key[1]
+		reduceTask := split_key[2]
 
-		// metric_key := mapTask + "-" + reduceTask
+		metric_key := mapTask + "-" + reduceTask
 
-		// log.Printf("Incrementing metric key for MapTask #%v --> Reducer #%v by %d now...\n", mapTask, reduceTask, num_entries)
+		log.Printf("Incrementing metric key for MapTask #%v --> Reducer #%v by %d now...\n", mapTask, reduceTask, num_entries)
 
-		// // Increment this value to indicate how many entries were mapped for this Map Task to the respective Reducer.
-		// err = clientList[0].IncrBy(metric_key, num_entries).Err()
-		// checkError(err)
+		// Increment this value to indicate how many entries were mapped for this Map Task to the respective Reducer.
+		err = clientList[0].IncrBy(metric_key, num_entries).Err()
+		checkError(err)
 
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
@@ -220,6 +220,10 @@ func doMap(
 	for _, rec := range ioRecords {
 		_, err := ioData.WriteString(fmt.Sprintf("%v\n", rec))
 		checkError(err)
+	}
+
+	for _, redis_client := range clientList {
+		redis_client.Close()
 	}
 }
 
