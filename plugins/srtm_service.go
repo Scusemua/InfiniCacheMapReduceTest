@@ -181,14 +181,14 @@ func doMap(
 
 	for k, v := range results {
 		// For debugging purposes.
-		num_entries := len(v)
+		num_entries := int64(len(v))
 
 		// Split the key so we can extract the Task # and Reducer # for this key.
 		split_key := strings.Split(k, "-")
 		mapTask := split_key[1]
 		reduceTask := split_key[2]
 
-		metric_key = mapTask + "-" + reduceTask
+		metric_key := mapTask + "-" + reduceTask
 
 		log.Printf("Incrementing metric key for MapTask #%v --> Reducer #%v by %d now...\n", mapTask, reduceTask, num_entries)
 
