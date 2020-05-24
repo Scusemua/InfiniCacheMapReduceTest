@@ -132,6 +132,7 @@ func doMap(
 
 	c := consistent.New()
 	clientMap := make(map[string]*redis.Client)
+	clientList := make([]*redis.Client, 0)
 
 	log.Println("Populating hash ring and client map now...")
 
@@ -159,6 +160,7 @@ func doMap(
 
 		// Store client in map.
 		clientMap[hostname] = client
+		clientList = append(clientList, client)
 	}
 
 	Debug("Reading data for S3 key \"%s\" from downloaded file now...\n", S3Key)
@@ -178,6 +180,22 @@ func doMap(
 	log.Println("Storing results in Redis now...")
 
 	for k, v := range results {
+		// For debugging purposes.
+		num_entries := len(v)
+
+		// Split the key so we can extract the Task # and Reducer # for this key.
+		split_key := strings.Split(k, "-")
+		mapTask := split_key[1]
+		reduceTask := split_key[2]
+
+		metric_key = mapTask + "-" + reduceTask
+
+		log.Printf("Incrementing metric key for MapTask #%v --> Reducer #%v by %d now...\n", mapTask, reduceTask, num_entries)
+
+		// Increment this value to indicate how many entries were mapped for this Map Task to the respective Reducer.
+		err = clientList[0].IncrBy(metric_key, num_entries).Err()
+		checkError(err)
+
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
 		start := time.Now()

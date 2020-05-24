@@ -280,12 +280,12 @@ def launch_workers(
 if __name__ == "__main__":
     ips = get_public_ips()
     workers_per_vm = 5
-    shards_per_vm = 4
-    num_redis = 2
+    shards_per_vm = 5
+    num_redis = 10
 
     redis_ips = ips[0:num_redis]
-    worker_ips = ips[num_redis + 1:]    
     client_ip = ips[num_redis]
+    worker_ips = ips[num_redis + 1:] #worker_ips = ips[num_redis:]
 
     print("Redis IP's ({}): {}".format(len(redis_ips), redis_ips))
     print("Client IP: {}".format(client_ip))

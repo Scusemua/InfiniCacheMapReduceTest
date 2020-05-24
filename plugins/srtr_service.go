@@ -200,6 +200,9 @@ func doReduce(
 	log.Println("Retrieving input data for reduce task #", reduceTaskNum)
 	inputs := make([]KeyValue, 0)
 	for i := 0; i < nMap; i++ {
+		// nMap is the number of Map tasks (i.e., the number of S3 keys or # of initial data partitions).
+		// So the variable i here refers to the associated Map task/initial data partition, or where
+		// the data we're processing came from, essentially.
 		redisKey := serverless.ReduceName(jobName, i, reduceTaskNum)
 
 		var kvs []KeyValue
@@ -217,7 +220,7 @@ func doReduce(
 		}
 		end := time.Now()
 		readDuration := time.Since(start)
-		log.Printf("REDIS READ END. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d, Bytes read: %f, Time: %d ms", redisKey, host, reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/ 1e6)
+		log.Printf("REDIS READ END. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d, Bytes read: %f, Time: %d ms", redisKey, host, reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 		json.Unmarshal([]byte(marshalled_result), &kvs)
