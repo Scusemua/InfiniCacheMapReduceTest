@@ -191,11 +191,11 @@ func doMap(
 
 		// metric_key := mapTask + "-" + reduceTask
 
-		log.Printf("Incrementing metric key for MapTask #%v --> Reducer #%v by %d now...\n", mapTask, reduceTask, num_entries)
+		//log.Printf("Incrementing metric key for MapTask #%v --> Reducer #%v by %d now...\n", mapTask, reduceTask, num_entries)
 
 		// Increment this value to indicate how many entries were mapped for this Map Task to the respective Reducer.
-		err = clientList[0].IncrBy(metric_key, num_entries).Err()
-		checkError(err)
+		//err = clientList[0].IncrBy(metric_key, num_entries).Err()
+		//checkError(err)
 
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
