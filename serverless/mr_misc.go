@@ -77,7 +77,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 
 		// Try to deserialize into a list of KeyValue. If it breaks, then try to deserialize to an int.
 		// If that works, then eveyrthing was chunked so grab all the pieces and combine them.
-		err = json.Unmarshal([]byte(result), &results)
+		err := json.Unmarshal([]byte(result), &results)
 
 		if err != nil {
 			err = json.Unmarshal([]byte(result), &res_int)
