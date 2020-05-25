@@ -354,7 +354,8 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 	// ======================================
 	// Get list of Redis endpoints from file.
 	// ======================================
-	file2, err2 := os.Open("/home/ubuntu/project/src/InfiniCacheMapReduceTest/main/redis_hosts.txt")
+	//file2, err2 := os.Open("/home/ubuntu/project/src/InfiniCacheMapReduceTest/main/redis_hosts.txt")
+	file2, err2 := os.Open("/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main/redis_hosts.txt")
 	checkError(err2)
 
 	defer file2.Close()

@@ -115,7 +115,8 @@ def launch_client(
     client_ip = None,
     key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem",
     nReducers = 10,
-    s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt"
+    #s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt"
+    s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt"
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
 ):
     pre_command = """
@@ -123,7 +124,8 @@ def launch_client(
     . ~/.bashrc;
     """
 
-    post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-client.sh {} {}".format(nReducers, s3_key_file)
+    #post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-client.sh {} {}".format(nReducers, s3_key_file)
+    post_command = "cd /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main;./start-client.sh {} {}".format(nReducers, s3_key_file)
 
     command = pre_command + post_command
 
@@ -196,7 +198,8 @@ def update_redis_hosts(
             else:
                 create_redis_file_command = create_redis_file_command + redis_ip + ":6379" + "\n"
     
-    create_redis_file_command = create_redis_file_command + " > /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/redis_hosts.txt"
+    #create_redis_file_command = create_redis_file_command + " > /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/redis_hosts.txt"
+    create_redis_file_command = create_redis_file_command + " > /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main/redis_hosts.txt"
     
     print("create_redis_file_command = \"{}\"".format(create_redis_file_command))
 
@@ -236,7 +239,8 @@ def clean_workers(
     key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem",
     worker_ips = None
 ):
-    command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;sudo rm WorkerLog*; sudo rm *.dat"
+    #command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;sudo rm WorkerLog*; sudo rm *.dat"
+    command = "cd /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main/;sudo rm WorkerLog*; sudo rm *.dat"
     execute_command(
         command = command,
         count_limit = 2,
@@ -261,7 +265,8 @@ def launch_workers(
     . ~/.bashrc;
     """
 
-    post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234 {}".format(client_ip, workers_per_vm)
+    #post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234 {}".format(client_ip, workers_per_vm)
+    post_command = "cd /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main/;./start-workers.sh {}:1234 {}".format(client_ip, workers_per_vm)
 
     command = pre_command + post_command
 
@@ -275,16 +280,18 @@ def launch_workers(
         get_pty = True 
     )    
 
+# lc.clear_redis_instances(flushall = True, hostnames = hostnames)
 # lc.clean_workers(worker_ips = worker_ips)
 # lc.kill_go_processes(ips = worker_ips + [client_ip])
 if __name__ == "__main__":
     ips = get_public_ips()
     workers_per_vm = 5
     shards_per_vm = 5
-    num_redis = 10
+    num_redis = 2
 
-    redis_ips = ips[0:num_redis]
-    client_ip = ips[num_redis]
+    client_ip = ips[0]
+    redis_ips = ips[1:num_redis+1]
+    #client_ip = ips[num_redis]
     worker_ips = ips[num_redis + 1:] #worker_ips = ips[num_redis:]
 
     print("Redis IP's ({}): {}".format(len(redis_ips), redis_ips))
@@ -308,6 +315,11 @@ if __name__ == "__main__":
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/20GB_S3Keys.txt
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt
-    launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt")
+    # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt
+    # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
+    # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/20GB_S3Keys.txt
+    # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt    
+    #launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
+    launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
 
     launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/go-redis/redis/v7"
+	infinicache "github.com/mason-leap-lab/infinicache/client"
 	"github.com/serialx/hashring"
 	//"io"
 	"log"
