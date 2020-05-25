@@ -275,13 +275,14 @@ def launch_workers(
         get_pty = True 
     )    
 
+# lc.clear_redis_instances(flushall = True, hostnames = hostnames)
 # lc.clean_workers(worker_ips = worker_ips)
 # lc.kill_go_processes(ips = worker_ips + [client_ip])
 if __name__ == "__main__":
     ips = get_public_ips()
     workers_per_vm = 5
     shards_per_vm = 5
-    num_redis = 10
+    num_redis = 5
 
     redis_ips = ips[0:num_redis]
     client_ip = ips[num_redis]
