@@ -286,8 +286,8 @@ def launch_workers(
 if __name__ == "__main__":
     ips = get_public_ips()
     workers_per_vm = 5
-    shards_per_vm = 5
-    num_redis = 2
+    shards_per_vm = 1
+    num_redis = 0
 
     client_ip = ips[0]
     redis_ips = ips[1:num_redis+1]
@@ -302,9 +302,9 @@ if __name__ == "__main__":
     # hostnames = lc.launch_redis_servers(ips = redis_ips, count_limit = 1, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
     hostnames = launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
 
-    ping_redis(hostnames = hostnames)
+    lc.ping_redis(hostnames = hostnames)
 
-    update_redis_hosts(ips = [client_ip], redis_ips = redis_ips, hostnames = hostnames)
+    lc.update_redis_hosts(ips = [client_ip], redis_ips = redis_ips, hostnames = hostnames)
 
     wondershape(ips = [client_ip] + worker_ips + redis_ips)
 
@@ -320,6 +320,6 @@ if __name__ == "__main__":
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/20GB_S3Keys.txt
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt    
     #launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
-    launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
+    lc.launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
 
-    launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
+    lc.launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
