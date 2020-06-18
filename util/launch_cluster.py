@@ -284,6 +284,7 @@ def launch_workers(
 # lc.clean_workers(worker_ips = worker_ips)
 # lc.kill_go_processes(ips = worker_ips + [client_ip])
 if __name__ == "__main__":
+    get_public_ips = lc.get_public_ips
     ips = get_public_ips()
     workers_per_vm = 5
     shards_per_vm = 1
@@ -308,6 +309,7 @@ if __name__ == "__main__":
 
     wondershape(ips = [client_ip] + worker_ips + redis_ips)
 
+    # NUM_WORKERS_PER_VM * NUM_VMs * NUM_CORES_PER_WORKER
     nReducers = workers_per_vm * len(worker_ips) * 9
     print("nReducers = {}".format(nReducers))
 
