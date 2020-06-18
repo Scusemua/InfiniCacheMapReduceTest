@@ -1,6 +1,7 @@
 import boto3   
 import time 
 import paramiko
+import datetime
 import redis 
 
 def get_private_ips(region_name="us-east-1"):
@@ -17,6 +18,26 @@ def get_private_ips(region_name="us-east-1"):
         print(ip)
     print("Retrieved {} IPs in total.".format(len(private_ips)))
     return private_ips
+
+def get_ips(region_name="us-east-1"):
+    print("Getting public and private IPs now...")
+    ec2client = boto3.client('ec2', region_name = region_name)
+    response = ec2client.describe_instances()
+    public_ips = list()
+    private_ips = list()
+    for reservation in response["Reservations"]:
+        for instance in reservation["Instances"]:
+            if instance["State"]["Name"] == "running":
+                public_ips.append(instance["PublicIpAddress"])
+                private_ips.append(instance["PrivateIpAddress"])
+    print("Retrieved the following public IP addresses:")
+    for ip in public_ips:
+        print(ip)
+    print("Retrieved the following private IP addresses:")
+    for ip in private_ips:
+        print(ip)        
+    print("Retrieved {} IPs in total.".format(len(public_ips) + len(private_ips)))
+    return public_ips, private_ips
 
 def get_public_ips(region_name="us-east-1"):
     print("Getting public IPs now...")
@@ -36,7 +57,7 @@ def get_public_ips(region_name="us-east-1"):
 def execute_command(
     command = None,
     count_limit = 3,
-    get_pty = False,
+    get_pty = True,
     ips = None,
     key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"
 ):
@@ -234,8 +255,15 @@ def pull_from_github(ips, reset_first = False, key_path = "G:\\Documents\\School
     command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; git pull"
     execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
 
-def launch_go_proxies(ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
-    command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; make start-server"
+def launch_infinistore_proxies(ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
+    # command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; echo GOPATH=$GOPATH; make start-server"
+    # command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export GOPATH=/home/ubuntu/project; make start-server"
+    prefix = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M')
+    command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; go run $PWD/../proxy/proxy.go -debug=true -prefix={} -disable-color".format(prefix)
+    execute_command(command, 1, get_pty = True, ips = ips, key_path = key_path)
+
+def stop_infinistore_proxies(ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
+    command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; make stop-server"
     execute_command(command, 1, get_pty = True, ips = ips, key_path = key_path)
 
 # lc.kill_go_processes(ips = worker_ips)
@@ -282,12 +310,10 @@ def launch_workers(
     client_ip = None,
     count_limit = 5,
     key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem",
-    redis_ips = None,
     workers_per_vm = 5,
     worker_ips = None
 ):
     print("Key path = {}".format(key_path))
-    #update_redis_hosts(ips = [client_ip] + worker_ips, redis_ips = redis_ips)
 
     pre_command = """
     . ~/.profile;
@@ -307,45 +333,61 @@ def launch_workers(
         ips = worker_ips,
         key_path = key_path,
         get_pty = True 
-    )    
+    )
+
+def format_proxy_config(proxy_ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
+    num_proxies = len(proxy_ips)
+    code_line = "var ProxyList [{}]string = [{}]string".format(num_proxies, num_proxies)
+    code_line = code_line + "{"
+    
+    for i in range(0, num_proxies):
+        ip = proxy_ips[i]
+
+        if i == (num_proxies - 1):
+            code_line = code_line + "\"{}:6378\"".format(ip)
+        else:
+            code_line = code_line + "\"{}:6378\", ".format(ip)
+
+    code_line = code_line + "}"
+    return code_line
 
 # 52.55.211.171, 3.84.164.176
 # lc.clear_redis_instances(flushall = True, hostnames = hostnames)
 # lc.clean_workers(worker_ips = worker_ips)
 # lc.kill_go_processes(ips = worker_ips + [client_ip])
 # lc.pull_from_github(worker_ips)
-# lc.launch_go_proxies(worker_ips)
+# lc.launch_infinistore_proxies(worker_ips)
 if __name__ == "__main__":
     get_private_ips = lc.get_private_ips
     get_public_ips = lc.get_public_ips
-    private_ips = get_private_ips()
-    ips = get_public_ips()
+    get_ips = lc.get_ips
+    public_ips, private_ips = get_ips()
+    all_ips = public_ips + private_ips
     workers_per_vm = 5
     shards_per_vm = 1
     num_redis = 0
 
-    client_ip = ips[0]
-    redis_ips = ips[1:num_redis+1]
-    #client_ip = ips[num_redis]
-    worker_ips = ips[num_redis + 1:] #worker_ips = ips[num_redis:]
+    client_ip = public_ips[0]
+    client_ip_private = private_ips[0]
+    worker_ips = public_ips[1:]
+    worker_private_ips = private_ips[1:]
 
-    print("Redis IP's ({}): {}".format(len(redis_ips), redis_ips))
+    code_line = lc.format_proxy_config([client_ip_private] + worker_private_ips)
+
     print("Client IP: {}".format(client_ip))
+    print("Client private IP: {}".format(client_ip_private))
     print("Worker IP's ({}): {}".format(len(worker_ips), worker_ips))
+    print("Worker private IP's ({}): {}".format(len(worker_private_ips), worker_private_ips))
+    print(code_line)
 
-    # hostnames = lc.launch_redis_servers(ips = redis_ips, count_limit = 1, kill_first = False, connect_and_ping = True, shards_per_vm = shards_per_vm)
-    # hostnames = lc.launch_redis_servers(ips = redis_ips, count_limit = 1, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
-    hostnames = launch_redis_servers(ips = redis_ips, kill_first = True, connect_and_ping = True, shards_per_vm = shards_per_vm)
-
-    lc.ping_redis(hostnames = hostnames)
-
-    lc.update_redis_hosts(ips = [client_ip], redis_ips = redis_ips, hostnames = hostnames)
-
-    wondershape(ips = [client_ip] + worker_ips + redis_ips)
+    wondershape(ips = [client_ip] + worker_ips)
 
     # NUM_WORKERS_PER_VM * NUM_VMs * NUM_CORES_PER_WORKER
     nReducers = workers_per_vm * len(worker_ips) * 9
     print("nReducers = {}".format(nReducers))
+
+    lc.pull_from_github(worker_ips)
+    lc.launch_infinistore_proxies(worker_ips + [client_ip])
 
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
@@ -358,4 +400,4 @@ if __name__ == "__main__":
     #launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
     lc.launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
 
-    lc.launch_workers(client_ip = client_ip, redis_ips = redis_ips, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
+    lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
