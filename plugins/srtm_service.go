@@ -130,39 +130,17 @@ func doMap(
 
 	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
-	ring := hashring.New(redisEndpoints)
-	//c := consistent.New()
-	clientMap := make(map[string]*redis.Client)
-	clientList := make([]*redis.Client, 0)
+	log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
+	redis_client := redis.NewClient(&redis.Options{
+		Addr:         127.0.0.1:6378,
+		Password:     "",
+		DB:           0,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		MaxRetries:   3,
+	})
 
-	log.Println("Populating hash ring and client map now...")
-
-	// Add the IP addresses of the Reds instances to the ring.
-	// Create the Redis clients and store them in the map.
-	for _, hostname := range redisEndpoints {
-		// Add hostname to hash ring.
-		//c.Add(hostname)
-
-		log.Println("Creating Redis client for Redis listening at", hostname)
-
-		// Create client.
-		// TODO: If still getting errors with workers not finding data in Redis, we could
-		// try sorting the list of redis endpoints before placing them into consistent hash ring.
-		client := redis.NewClient(&redis.Options{
-			Addr:         hostname,
-			Password:     "",
-			DB:           0,
-			ReadTimeout:  30 * time.Second,
-			WriteTimeout: 30 * time.Second,
-			MaxRetries:   3,
-		})
-
-		log.Println("Redis client for hostname", hostname, "created successfully.")
-
-		// Store client in map.
-		clientMap[hostname] = client
-		clientList = append(clientList, client)
-	}
+	log.Println("Successfully created Redis client for Redis @ 127.0.0.1:6378")
 
 	Debug("Reading data for S3 key \"%s\" from downloaded file now...\n", S3Key)
 	b, err = ioutil.ReadFile(S3Key)
@@ -181,32 +159,12 @@ func doMap(
 	log.Println("Storing results in Redis now...")
 
 	for k, v := range results {
-		// For debugging purposes.
-		// num_entries := int64(len(v))
-
-		// // Split the key so we can extract the Task # and Reducer # for this key.
-		// split_key := strings.Split(k, "-")
-		// mapTask := split_key[1]
-		// reduceTask := split_key[2]
-
-		// metric_key := mapTask + "-" + reduceTask
-
-		//log.Printf("Incrementing metric key for MapTask #%v --> Reducer #%v by %d now...\n", mapTask, reduceTask, num_entries)
-
-		// Increment this value to indicate how many entries were mapped for this Map Task to the respective Reducer.
-		//err = clientList[0].IncrBy(metric_key, num_entries).Err()
-		//checkError(err)
-
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
 		start := time.Now()
-		//host, err := c.Get(k)
-		//checkError(err)
-		host, _ := ring.GetNode(k)
-		client := clientMap[host]
 		log.Printf("REDIS WRITE START. Key: %s, Redis Hostname: %s, Size: %f \n", k, host, float64(len(marshalled_result))/float64(1e6))
 		writeStart := time.Now()
-		err = client.Set(k, marshalled_result, 0).Err()
+		err = redis_client.Set(k, marshalled_result, 0).Err()
 		writeEnd := time.Since(writeStart)
 		checkError(err)
 		log.Printf("REDIS WRITE END. Key: %s, Redis Hostname: %s, Size: %f, Time: %d ms \n", k, host, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)

@@ -166,37 +166,18 @@ func doReduce(
 	reduceTaskNum int,
 	nMap int,
 ) {
-	ring := hashring.New(redisEndpoints)
-	//c := consistent.New()
-	clientMap := make(map[string]*redis.Client)
+	log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
+	redis_client := redis.NewClient(&redis.Options{
+		Addr:         127.0.0.1:6378,
+		Password:     "",
+		DB:           0,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		MaxRetries:   3,
+	})
 
-	log.Println("Populating hash ring and client map now...")
+	log.Println("Successfully created Redis client for Redis @ 127.0.0.1:6378")
 
-	// Add the IP addresses of the Reds instances to the ring.
-	// Create the Redis clients and store them in the map.
-	for _, hostname := range redisEndpoints {
-		// Add hostname to hash ring.
-		//c.Add(hostname)
-
-		log.Println("Creating Redis client for Redis @", hostname)
-
-		// Create client.
-		// TODO: If still getting errors with workers not finding data in Redis, we could
-		// try sorting the list of redis endpoints before placing them into consistent hash ring.
-		client := redis.NewClient(&redis.Options{
-			Addr:         hostname,
-			Password:     "",
-			DB:           0,
-			ReadTimeout:  30 * time.Second,
-			WriteTimeout: 30 * time.Second,
-			MaxRetries:   3,
-		})
-
-		log.Println("Successfully created Redis client for Redis @", hostname)
-
-		// Store client in map.
-		clientMap[hostname] = client
-	}
 	ioRecords := make([]IORecord, 0)
 
 	log.Println("Retrieving input data for reduce task #", reduceTaskNum)
@@ -209,12 +190,8 @@ func doReduce(
 
 		var kvs []KeyValue
 		start := time.Now()
-		//host, err := c.Get(redisKey)
-		host, _ := ring.GetNode(redisKey)
-		//checkError(err)
-		client := clientMap[host]
 		log.Printf("REDIS READ START. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d.", redisKey, host, reduceTaskNum)
-		marshalled_result, err := client.Get(redisKey).Result()
+		marshalled_result, err := redis_client.Get(redisKey).Result()
 		if err != nil {
 			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", host, redisKey)
 			log.Printf("ERROR: Just skipping the key \"%s\"...", redisKey)
@@ -278,12 +255,8 @@ func doReduce(
 		for i, chunk := range chunks {
 			key := base_key + string(i)
 			log.Printf("REDIS WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
-			//host, err := c.Get(key)
-			host, _ := ring.GetNode(key)
-			//checkError(err)
-			client := clientMap[host]
 			start := time.Now()
-			err := client.Set(key, chunk, 0).Err()
+			err := redis_client.Set(key, chunk, 0).Err()
 			end := time.Now()
 			writeEnd := time.Since(start)
 			checkError(err)
@@ -293,23 +266,14 @@ func doReduce(
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
 		}
-		//host, err := c.Get(fileName)
-		//checkError(err)
-		host, _ := ring.GetNode(fileName)
-		client := clientMap[host]
 		num_chunks_serialized, err3 := json.Marshal(num_chunks)
 		checkError(err3)
-		err := client.Set(fileName, num_chunks_serialized, 0).Err()
+		err := redis_client.Set(fileName, num_chunks_serialized, 0).Err()
 		checkError(err)
 	} else {
-		//host, err := c.Get(fileName)
-		host, _ := ring.GetNode(fileName)
-		//checkError(err)
-		client := clientMap[host]
-
 		log.Printf("REDIS WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
 		start := time.Now()
-		err := client.Set(fileName, marshalled_result, 0).Err()
+		err := redis_client.Set(fileName, marshalled_result, 0).Err()
 		checkError(err)
 		end := time.Now()
 		writeEnd := time.Since(start)
@@ -329,9 +293,7 @@ func doReduce(
 	}
 
 	// Close all of the Redis clients now that we're
-	for _, redis_client := range clientMap {
-		redis_client.Close()
-	}
+	redis_client.Close()
 }
 
 // DON'T MODIFY THIS FUNCTION

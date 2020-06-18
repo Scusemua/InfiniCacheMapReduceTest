@@ -18,52 +18,23 @@ func (drv *Driver) merge(redisHostnames []string) {
 	Debug("Merge phase\n")
 	now := time.Now()
 
-	ring := hashring.New(redisHostnames)
-	//c := consistent.New()
-	clientMap := make(map[string]*redis.Client)
-
-	log.Println("Populating hash ring and Redis client map now...")
-
-	// Add the IP addresses of the Reds instances to the ring.
-	// Create the Redis clients and store them in the map.
-	for _, hostname := range redisHostnames {
-		// Add hostname to hash ring.
-		//c.Add(hostname)
-
-		log.Println("Creating Redis client for Redis listening at", hostname)
-
-		// Create client.
-		// TODO: If still getting errors with workers not finding data in Redis, we could
-		// try sorting the list of redis endpoints before placing them into consistent hash ring.
-		client := redis.NewClient(&redis.Options{
-			Addr:         hostname,
-			Password:     "",
-			DB:           0,
-			ReadTimeout:  30 * time.Second,
-			WriteTimeout: 30 * time.Second,
-			MaxRetries:   3,
-		})
-
-		// Store client in map.
-		clientMap[hostname] = client
-	}
+	redis_client := redis.NewClient(&redis.Options{
+		Addr:         127.0.0.1:6378,
+		Password:     "",
+		DB:           0,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		MaxRetries:   3,
+	})
 
 	kvs := make(map[string]string)
 	for i := 0; i < drv.nReduce; i++ {
 		p := MergeName(drv.jobName, i)
 		log.Printf("Merge: reading from Redis: %s\n", p)
-		//file, err := os.Open(p)
-
-		// Read result from Redis.
-		// Previously, we would be reading the result from a file on-disk.
-		//host, err := c.Get(p)
-		//checkError(err)
-		host, _ := ring.GetNode(p)
-		client := clientMap[host]
 
 		log.Printf("REDIS READ START. Key: \"%s\", Redis Hostname: %s.", p, host)
 		start := time.Now()
-		result, err2 := client.Get(p).Result()
+		result, err2 := redis_client.Get(p).Result()
 		firstReadDuration := time.Since(start)
 		if err2 != nil {
 			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", host, p)
@@ -92,14 +63,9 @@ func (drv *Driver) merge(redisHostnames []string) {
 				for i := 0; i < res_int; i++ {
 					key := base_key + string(i)
 
-					//host, err5 := c.Get(key)
-					host, _ := ring.GetNode(key)
-					//checkError(err5)
-					client := clientMap[host]
-
 					log.Printf("REDIS READ CHUNK START. Key: \"%s\", Redis Hostname: %s, Chunk #: %d.", key, host, i)
 					chunkStart := time.Now()
-					res, err2 := client.Get(key).Result()
+					res, err2 := redis_client.Get(key).Result()
 					readDuration := time.Since(chunkStart)
 					if err2 != nil {
 						log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\". This occurred while retrieving chunks...", host, key)

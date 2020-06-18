@@ -3,6 +3,21 @@ import time
 import paramiko
 import redis 
 
+def get_private_ips(region_name="us-east-1"):
+    print("Getting public IPs now...")
+    ec2client = boto3.client('ec2', region_name = region_name)
+    response = ec2client.describe_instances()
+    private_ips = list()
+    for reservation in response["Reservations"]:
+        for instance in reservation["Instances"]:
+            if instance["State"]["Name"] == "running":
+                private_ips.append(instance["PrivateIpAddress"])
+    print("Retrieved the following private IP addresses:")
+    for ip in private_ips:
+        print(ip)
+    print("Retrieved {} IPs in total.".format(len(private_ips)))
+    return private_ips
+
 def get_public_ips(region_name="us-east-1"):
     print("Getting public IPs now...")
     ec2client = boto3.client('ec2', region_name = region_name)
@@ -209,6 +224,20 @@ def update_redis_hosts(
         key_path = key_path
     )
 
+def pull_from_github(ips, reset_first = False, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
+    if reset_first:
+        print("Resetting first...")
+        command_reset = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; git reset --hard origin/config_ben"
+        execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
+    
+    print("Now pulling...")
+    command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; git pull"
+    execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
+
+def launch_go_proxies(ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
+    command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; make start-server"
+    execute_command(command, 1, get_pty = True, ips = ips, key_path = key_path)
+
 # lc.kill_go_processes(ips = worker_ips)
 # lc.kill_go_processes(ips = worker_ips + [client_ip])
 # lc.kill_go_processes(ips = [client_ip])
@@ -280,11 +309,16 @@ def launch_workers(
         get_pty = True 
     )    
 
+# 52.55.211.171, 3.84.164.176
 # lc.clear_redis_instances(flushall = True, hostnames = hostnames)
 # lc.clean_workers(worker_ips = worker_ips)
 # lc.kill_go_processes(ips = worker_ips + [client_ip])
+# lc.pull_from_github(worker_ips)
+# lc.launch_go_proxies(worker_ips)
 if __name__ == "__main__":
+    get_private_ips = lc.get_private_ips
     get_public_ips = lc.get_public_ips
+    private_ips = get_private_ips()
     ips = get_public_ips()
     workers_per_vm = 5
     shards_per_vm = 1
