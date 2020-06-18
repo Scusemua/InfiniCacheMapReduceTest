@@ -189,17 +189,17 @@ func doReduce(
 
 		var kvs []KeyValue
 		start := time.Now()
-		log.Printf("REDIS READ START. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d.", redisKey, host, reduceTaskNum)
+		log.Printf("REDIS READ START. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d.", redisKey, "127.0.0.1:6378", reduceTaskNum)
 		marshalled_result, err := redis_client.Get(redisKey).Result()
 		if err != nil {
-			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", host, redisKey)
+			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", "127.0.0.1:6378", redisKey)
 			log.Printf("ERROR: Just skipping the key \"%s\"...", redisKey)
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			continue
 		}
 		end := time.Now()
 		readDuration := time.Since(start)
-		log.Printf("REDIS READ END. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d, Bytes read: %f, Time: %d ms", redisKey, host, reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
+		log.Printf("REDIS READ END. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d, Bytes read: %f, Time: %d ms", redisKey, "127.0.0.1:6378", reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 		json.Unmarshal([]byte(marshalled_result), &kvs)
@@ -260,7 +260,7 @@ func doReduce(
 			writeEnd := time.Since(start)
 			checkError(err)
 
-			log.Printf("REDIS WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Redis Hostname: %s, Size: %f, Time: %v ms \n", i, key, host, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+			log.Printf("REDIS WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Redis Hostname: %s, Size: %f, Time: %v ms \n", i, key, "127.0.0.1:6378", float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
@@ -277,7 +277,7 @@ func doReduce(
 		end := time.Now()
 		writeEnd := time.Since(start)
 
-		log.Printf("REDIS WRITE END. Key: %s, Redis Hostname: %s, Size: %f, Time: %d ms \n", fileName, host, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+		log.Printf("REDIS WRITE END. Key: %s, Redis Hostname: %s, Size: %f, Time: %d ms \n", fileName, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
