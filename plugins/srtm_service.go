@@ -16,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/go-redis/redis/v7"
-	"github.com/serialx/hashring"
 	"io/ioutil"
 	"log"
 	"os"
