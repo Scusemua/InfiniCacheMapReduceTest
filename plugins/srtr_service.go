@@ -168,7 +168,7 @@ func doReduce(
 ) {
 	log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	redis_client := redis.NewClient(&redis.Options{
-		Addr:         127.0.0.1:6378,
+		Addr:         "127.0.0.1:6378",
 		Password:     "",
 		DB:           0,
 		ReadTimeout:  30 * time.Second,
