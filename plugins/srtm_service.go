@@ -181,9 +181,7 @@ func doMap(
 		checkError(err)
 	}
 
-	for _, redis_client := range clientList {
-		redis_client.Close()
-	}
+	redis_client.Close()
 }
 
 // We supply you an ihash function to help with mapping of a given
