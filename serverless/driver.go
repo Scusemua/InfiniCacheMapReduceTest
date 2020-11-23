@@ -271,6 +271,9 @@ func (drv *Driver) run(
 	redisHostnames []string,
 	nReduce int,
 	sampleKeys []string,
+	dataShards int,
+	parityShards int,
+	maxGoRoutines int,
 	schedule func(phase jobPhase, serviceName string),
 	finish func(),
 ) {
@@ -315,7 +318,7 @@ func (drv *Driver) run(
 	log.Printf("Reduce phase duration: %d ms", reducePhaseDuration.Nanoseconds()/1e6)
 	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %d ms", mapReduceDuration.Nanoseconds()/1e6)
 
-	drv.merge(redisHostnames)
+	drv.merge(redisHostnames, dataShards, parityShards, maxGoRoutines)
 
 	jobEndTime := time.Now()
 	jobDuration := time.Since(jobStartTime)
@@ -329,7 +332,7 @@ func (drv *Driver) run(
 // Run is a function exposed to client.
 // Run calls the internal call `run` to register plugin services and
 // schedule tasks with workers over RPC.
-func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string, nReduce int) {
+func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string, nReduce int, dataShards int, parityShards int, maxGoRoutines int) {
 	Debug("%s: Starting driver RPC server\n", drv.address)
 	drv.startRPCServer()
 
@@ -382,11 +385,11 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 
 	log.Printf("Number of S3 keys: %d\n", len(s3Keys))
 
-	go drv.run(jobName, s3Keys, redisHostnames, nReduce, sampleKeys,
+	go drv.run(jobName, s3Keys, redisHostnames, nReduce, sampleKeys, dataShards, parityShards, maxGoRoutines
 		func(phase jobPhase, serviceName string) { // func schedule()
 			registerChan := make(chan string)
 			go drv.prepareService(registerChan, ServiceName(serviceName, phase))
-			drv.schedule(phase, serviceName, registerChan)
+			drv.schedule(phase, serviceName, registerChan, dataShards, parityShards, maxGoRoutines)
 		},
 		func() { // func finish()
 			drv.killWorkers()

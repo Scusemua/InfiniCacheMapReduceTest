@@ -52,7 +52,20 @@ func main() {
 	sampleDataKey := os.Args[4] // The S3 key of the sample data to use for generating sample keys and building the trie.
 	s3KeyFile := os.Args[5]     // File which contains the S3 keys of the input data partitions.
 
-	go drv.Run(jobName, s3KeyFile, sampleDataKey, nReduce)
+	dataShards, err := strconv.Atoi(os.Args[6])
+	if err != nil {
+		log.Fatal(err)
+	}
+	parityShards, err := strconv.Atoi(os.Args[7])
+	if err != nil {
+		log.Fatal(err)
+	}
+	maxGoRoutines, err := strconv.Atoi(os.Args[8])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	go drv.Run(jobName, s3KeyFile, sampleDataKey, nReduce, dataShards, parityShards, maxGoRoutines)
 
 	drv.Wait()
 }

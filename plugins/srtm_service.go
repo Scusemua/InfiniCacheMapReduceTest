@@ -56,6 +56,9 @@ type MapReduceArgs struct {
 	NOthers        int
 	SampleKeys     []string
 	RedisEndpoints []string
+	DataShards     int
+	ParityShards   int
+	MaxGoroutines  int
 }
 
 type KeyValue struct {
@@ -100,6 +103,9 @@ func doMap(
 	redisEndpoints []string,
 	taskNum int,
 	nReduce int,
+	dataShards int,
+	parityShards int,
+	maxGoRoutines int,
 	trie serverless.TrieNode,
 ) {
 	var err error
@@ -131,7 +137,7 @@ func doMap(
 	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
 	log.Println("Creating InfiniStore client for Redis @ 127.0.0.1:6378")
-	cli := client.NewClient(10, 2, 32)
+	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
 	cli.Dial("127.0.0.1:6378")
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
@@ -214,7 +220,7 @@ func (s srtmService) DoService(raw []byte) error {
 
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
 
-	doMap(args.JobName, args.S3Key, args.RedisEndpoints, args.TaskNum, args.NReduce, trie)
+	doMap(args.JobName, args.S3Key, args.RedisEndpoints, args.TaskNum, args.NReduce, args.DataShards, args.ParityShards, args.MaxGoroutines, trie)
 
 	return nil
 }

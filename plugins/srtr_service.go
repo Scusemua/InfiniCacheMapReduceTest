@@ -41,6 +41,9 @@ type MapReduceArgs struct {
 	NOthers        int
 	SampleKeys     []string
 	RedisEndpoints []string
+	DataShards 	   int 
+	ParityShards   int 
+	MaxGoroutines  int 
 }
 
 type KeyValue struct {
@@ -328,7 +331,7 @@ func (s srtrService) DoService(raw []byte) error {
 	}
 	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
 
-	doReduce(args.JobName, args.RedisEndpoints, args.TaskNum, args.NOthers)
+	doReduce(args.JobName, args.RedisEndpoints, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines)
 
 	return nil
 }
