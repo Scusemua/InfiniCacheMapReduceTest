@@ -1,3 +1,9 @@
+# MapReduce Framework
+
+This is a MapReduce framework. The scripts for remotely orchestrating benchmarks are in util/launch_cluster.py. 
+
+In this branch, the benchmarks use ECClient instead of the Redis protocol.
+
 # CS 675 Lab 2: Distributed and Fault-tolerant MapReduce
 
 ## Important Dates and Stuff
