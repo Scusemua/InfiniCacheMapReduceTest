@@ -268,12 +268,12 @@ func doReduce(
 			log.Printf("InfiniStore WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
 			start := time.Now()
 			//err := redis_client.Set(key, chunk, 0).Err()
-			_, ok = cli.EcSet(key, chunk)
+			_, ok := cli.EcSet(key, chunk)
 			end := time.Now()
 			writeEnd := time.Since(start)
 			//checkError(err)
 			if !ok {
-				log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", k)
+				log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", key)
 			}
 			log.Printf("InfiniStore WRITE CHUNK END. Chunk #: %d, Key: \"%s\", InfiniStore Hostname: %s, Size: %f, Time: %v ms \n", i, key, "127.0.0.1:6378", float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
@@ -283,18 +283,18 @@ func doReduce(
 		num_chunks_serialized, err3 := json.Marshal(num_chunks)
 		checkError(err3)
 		//err := redis_client.Set(fileName, num_chunks_serialized, 0).Err()
-		_, ok = cli.EcSet(fileName, num_chunks_serialized)
+		_, ok := cli.EcSet(fileName, num_chunks_serialized)
 		if !ok {
-			log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", k)
+			log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", fileName)
 		}
 		checkError(err)
 	} else {
 		log.Printf("InfiniStore WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
 		start := time.Now()
 		//err := redis_client.Set(fileName, marshalled_result, 0).Err()
-		_, ok = cli.EcSet(fileName, marshalled_result)
+		_, ok := cli.EcSet(fileName, marshalled_result)
 		if !ok {
-			log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", k)
+			log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", fileName)
 		}
 		//checkError(err)
 		end := time.Now()
