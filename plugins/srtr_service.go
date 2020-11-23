@@ -183,6 +183,9 @@ func doReduce(
 	// })
 	log.Println("Creating InfiniStore client for InfiniStore @ 127.0.0.1:6378")
 	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
+	var addrList = "127.0.0.1:6378"
+	addrArr := strings.Split(addrList, ",")
+	cli.Dial(addrArr)
 
 	log.Println("Successfully created InfiniStore client for InfiniStore @ 127.0.0.1:6378")
 
