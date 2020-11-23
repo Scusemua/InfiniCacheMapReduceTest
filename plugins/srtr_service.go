@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
-	"github.com/go-redis/redis/v7"
+	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
 	//infinicache "github.com/mason-leap-lab/infinicache/client"
 	//"io"
@@ -74,17 +74,17 @@ func Debug(format string, a ...interface{}) (n int, err error) {
 	return 0, nil
 }
 
-func mergeSort(arr []string) []string {
-	var arr_length = len(arr)
+// func mergeSort(arr []string) []string {
+// 	var arr_length = len(arr)
 
-	if arr_length == 1 {
-		return arr
-	}
+// 	if arr_length == 1 {
+// 		return arr
+// 	}
 
-	midpoint := int(arr_length / 2)
+// 	midpoint := int(arr_length / 2)
 
-	return merge(mergeSort(arr[:midpoint]), mergeSort(arr[midpoint:]))
-}
+// 	return merge(mergeSort(arr[:midpoint]), mergeSort(arr[midpoint:]))
+// }
 
 func merge(left []string, right []string) (merged []string) {
 	// Store merged values in here.
