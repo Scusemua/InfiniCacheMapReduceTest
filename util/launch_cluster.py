@@ -1,6 +1,7 @@
 import boto3   
 import time 
 import paramiko
+import random
 import datetime
 import redis 
 
@@ -245,6 +246,11 @@ def update_redis_hosts(
         key_path = key_path
     )
 
+def git_status(ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
+    print("Checking status now...")
+    command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/; git status"
+    execute_command(command, 3, get_pty = True, ips = ips, key_path = key_path)
+
 def pull_from_github(ips, reset_first = False, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
     if reset_first:
         print("Resetting first...")
@@ -256,11 +262,21 @@ def pull_from_github(ips, reset_first = False, key_path = "G:\\Documents\\School
     execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
 
 def launch_infinistore_proxies(ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
-    # command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; echo GOPATH=$GOPATH; make start-server"
+    # command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; export GOPATH=/home/ubuntu/project; make start-server"
     # command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export GOPATH=/home/ubuntu/project; make start-server"
+    #command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; export GOPATH=/home/ubuntu/project; ./server.sh >./log 2>&1 &"
     prefix = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M')
-    command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; go run $PWD/../proxy/proxy.go -debug=true -prefix={} -disable-color".format(prefix)
-    execute_command(command, 1, get_pty = True, ips = ips, key_path = key_path)
+    
+    # This starts the proxies successfully, but I get failures almost immediately during workload. May be entirely unrelated.
+    command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; go run $PWD/../proxy/proxy.go -debug=true -prefix={} -disable-color >./log 2>&1".format(prefix)
+
+    # This does NOT work.
+    #command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; make start-server; cat log; cat log"
+    execute_command(command, 3, get_pty = True, ips = ips, key_path = key_path)
+
+def export_cloudwatch_logs(ips, prefix, start, end, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
+    command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation/cloudwatch; ./export_ubuntu.sh %s %s %s;" % (prefix, str(start), str(end))
+    execute_command(command, 3, get_pty = True, ips = ips, key_path = key_path)
 
 def stop_infinistore_proxies(ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
     command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; make stop-server"
@@ -335,10 +351,21 @@ def launch_workers(
         get_pty = True 
     )
 
+def update_lambdas(ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
+    command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {}".format(random.randint(600, 900))
+    print("Full command: {}".format(command))
+    execute_command(
+        command = command,
+        count_limit = 3,
+        ips = ips,
+        key_path = key_path,
+        get_pty = True 
+    )    
+
 def format_proxy_config(proxy_ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
     num_proxies = len(proxy_ips)
-    code_line = "var ProxyList [{}]string = [{}]string".format(num_proxies, num_proxies)
-    code_line = code_line + "{"
+    #code_line = "var ProxyList [{}]string = [{}]string".format(num_proxies, num_proxies)
+    code_line = "var ProxyList []string = []string{"
     
     for i in range(0, num_proxies):
         ip = proxy_ips[i]
@@ -356,7 +383,9 @@ def format_proxy_config(proxy_ips, key_path = "G:\\Documents\\School\\College\\J
 # lc.clean_workers(worker_ips = worker_ips)
 # lc.kill_go_processes(ips = worker_ips + [client_ip])
 # lc.pull_from_github(worker_ips)
-# lc.launch_infinistore_proxies(worker_ips)
+# lc.launch_infinistore_proxies(worker_ips + [client_ip])
+# lc.launch_infinistore_proxies([client_ip])
+# lc.update_lambdas(worker_ips + [client_ip])
 if __name__ == "__main__":
     get_private_ips = lc.get_private_ips
     get_public_ips = lc.get_public_ips
@@ -372,6 +401,9 @@ if __name__ == "__main__":
     worker_ips = public_ips[1:]
     worker_private_ips = private_ips[1:]
 
+    subset_workers = worker_ips[0:2]
+    code_line2 = lc.format_proxy_config([client_ip_private] + subset_workers)
+
     code_line = lc.format_proxy_config([client_ip_private] + worker_private_ips)
 
     print("Client IP: {}".format(client_ip))
@@ -379,6 +411,19 @@ if __name__ == "__main__":
     print("Worker IP's ({}): {}".format(len(worker_ips), worker_ips))
     print("Worker private IP's ({}): {}".format(len(worker_private_ips), worker_private_ips))
     print(code_line)
+
+make stop-server
+
+cd ../evaluation
+make start-server 
+tail -f log
+
+vim ../proxy/config/config.go
+
+vim ../deploy/update_function.sh
+
+cd ../deploy
+./update_function.sh 607
 
     wondershape(ips = [client_ip] + worker_ips)
 
@@ -401,3 +446,5 @@ if __name__ == "__main__":
     lc.launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
 
     lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
+
+    #lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips[0:2], workers_per_vm = workers_per_vm, count_limit = 1)
