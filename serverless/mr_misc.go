@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis/v7"
+	"github.com/mason-leap-lab/infinicache/client"
 	"log"
 	"os"
 	"sort"
@@ -17,33 +18,48 @@ func (drv *Driver) merge(redisHostnames []string) {
 	Debug("Merge phase\n")
 	now := time.Now()
 
-	redis_client := redis.NewClient(&redis.Options{
-		Addr:         "127.0.0.1:6378",
-		Password:     "",
-		DB:           0,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		MaxRetries:   3,
-	})
+	// redis_client := redis.NewClient(&redis.Options{
+	// 	Addr:         "127.0.0.1:6378",
+	// 	Password:     "",
+	// 	DB:           0,
+	// 	ReadTimeout:  30 * time.Second,
+	// 	WriteTimeout: 30 * time.Second,
+	// 	MaxRetries:   3,
+	// })
+
+	// Create new InfiniStore client.
+	cli := client.NewClient(10, 2, 32)
+	cli.Dial("127.0.0.1:6378")
 
 	kvs := make(map[string]string)
 	for i := 0; i < drv.nReduce; i++ {
 		p := MergeName(drv.jobName, i)
-		log.Printf("Merge: reading from Redis: %s\n", p)
+		log.Printf("Merge: reading from InfiniStore: %s\n", p)
 
-		log.Printf("REDIS READ START. Key: \"%s\", Redis Hostname: %s.", p, "127.0.0.1:6378")
+		log.Printf("InfiniStore READ START. Key: \"%s\", InfiniStore Hostname: %s.", p, "127.0.0.1:6378")
 		start := time.Now()
-		result, err2 := redis_client.Get(p).Result()
-		firstReadDuration := time.Since(start)
-		if err2 != nil {
-			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", "127.0.0.1:6378", p)
+		//result, err2 := redis_client.Get(p).Result()
+		reader, ok := cli.Get(p)
+		result, err2 := reader.ReadAll()
+		reader.Close()
+
+		//if err2 != nil {
+		if !ok {
+			log.Printf("ERROR: InfiniStore @ %s encountered exception for key \"%s\"...", "127.0.0.1:6378", p)
+			//log.Fatal(err2)
+		}
+
+		if err != nil {
+			log.Printf("ERROR: InfiniStore @ %s encountered exception when calling ReadAll for key \"%s\"...", "127.0.0.1:6378", p)
 			log.Fatal(err2)
 		}
+
+		firstReadDuration := time.Since(start)
 
 		var res_int int
 		results := make([]KeyValue, 0)
 
-		log.Println("Unmarshalling data retrieved from Redis now...")
+		log.Println("Unmarshalling data retrieved from InfiniStore now...")
 
 		// Try to deserialize into a list of KeyValue. If it breaks, then try to deserialize to an int.
 		// If that works, then eveyrthing was chunked so grab all the pieces and combine them.
@@ -62,17 +78,23 @@ func (drv *Driver) merge(redisHostnames []string) {
 				for i := 0; i < res_int; i++ {
 					key := base_key + string(i)
 
-					log.Printf("REDIS READ CHUNK START. Key: \"%s\", Redis Hostname: %s, Chunk #: %d.", key, "127.0.0.1:6378", i)
+					log.Printf("InfiniStore READ CHUNK START. Key: \"%s\", InfiniStore Hostname: %s, Chunk #: %d.", key, "127.0.0.1:6378", i)
 					chunkStart := time.Now()
-					res, err2 := redis_client.Get(key).Result()
+					//res, err2 := redis_client.Get(key).Result()
+					reader, ok := cli.Get(key)
+					if !ok {
+						log.Printf("ERROR: InfiniStore @ %s encountered exception for key \"%s\". This occurred while retrieving chunks...", "127.0.0.1:6378", key)
+					}
+					res, err2 := reader.ReadAll()
+					reader.Close()
 					readDuration := time.Since(chunkStart)
 					if err2 != nil {
-						log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\". This occurred while retrieving chunks...", "127.0.0.1:6378", key)
+						log.Printf("ERROR: InfiniStore @ %s encountered exception for key \"%s\". This occurred while calling ReadAll...", "127.0.0.1:6378", key)
 						log.Fatal(err2)
 					}
 					checkError(err2)
 
-					log.Printf("REDIS READ CHUNK END. Key: \"%s\", Redis Hostname: %s, Chunk #: %d, Bytes read: %f, Time: %d ms", key, "127.0.0.1:6378", i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
+					log.Printf("InfiniStore READ CHUNK END. Key: \"%s\", InfiniStore Hostname: %s, Chunk #: %d, Bytes read: %f, Time: %d ms", key, "127.0.0.1:6378", i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
 
 					all_bytes = append(all_bytes, []byte(res)...)
 				}
@@ -85,14 +107,14 @@ func (drv *Driver) merge(redisHostnames []string) {
 					log.Fatal("Merge: ", err)
 					panic(err)
 				} else {
-					log.Println("Successfully retrieved data from Redis!")
+					log.Println("Successfully retrieved data from InfiniStore!")
 					for _, kv := range results {
 						kvs[kv.Key] = kv.Value
 					}
 				}
 			}
 		} else {
-			log.Printf("REDIS READ END. Key: \"%s\", Redis Hostname: %s, Bytes read: %f, Time: %d ms", p, "127.0.0.1:6378", float64(len(result))/float64(1e6), firstReadDuration.Nanoseconds()/1e6)
+			log.Printf("InfiniStore READ END. Key: \"%s\", InfiniStore Hostname: %s, Bytes read: %f, Time: %d ms", p, "127.0.0.1:6378", float64(len(result))/float64(1e6), firstReadDuration.Nanoseconds()/1e6)
 			for _, kv := range results {
 				kvs[kv.Key] = kv.Value
 			}
@@ -102,7 +124,7 @@ func (drv *Driver) merge(redisHostnames []string) {
 	for k := range kvs {
 		keys = append(keys, k)
 	}
-	log.Println("There are", len(keys), "keys in the data retrieved from Redis.")
+	log.Println("There are", len(keys), "keys in the data retrieved from InfiniStore.")
 	sort.Strings(keys)
 
 	file, err := os.Create("mr-final." + drv.jobName + ".out")

@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/go-redis/redis/v7"
+	"github.com/mason-leap-lab/infinicache/client"
 	"io/ioutil"
 	"log"
 	"os"
@@ -129,17 +130,20 @@ func doMap(
 
 	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
-	log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
-	redis_client := redis.NewClient(&redis.Options{
-		Addr:         "127.0.0.1:6378",
-		Password:     "",
-		DB:           0,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		MaxRetries:   3,
-	})
+	log.Println("Creating InfiniStore client for Redis @ 127.0.0.1:6378")
+	cli := client.NewClient(10, 2, 32)
+	cli.Dial("127.0.0.1:6378")
+	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
+	// redis_client := redis.NewClient(&redis.Options{
+	// 	Addr:         "127.0.0.1:6378",
+	// 	Password:     "",
+	// 	DB:           0,
+	// 	ReadTimeout:  30 * time.Second,
+	// 	WriteTimeout: 30 * time.Second,
+	// 	MaxRetries:   3,
+	// })
 
-	log.Println("Successfully created Redis client for Redis @ 127.0.0.1:6378")
+	log.Println("Successfully created InfiniStore client for InfiniStore @ 127.0.0.1:6378")
 
 	Debug("Reading data for S3 key \"%s\" from downloaded file now...\n", S3Key)
 	b, err = ioutil.ReadFile(S3Key)
@@ -155,18 +159,22 @@ func doMap(
 
 	ioRecords := make([]IORecord, 0)
 
-	log.Println("Storing results in Redis now...")
+	log.Println("Storing results in InfiniStore now...")
 
 	for k, v := range results {
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
 		start := time.Now()
-		log.Printf("REDIS WRITE START. Key: %s, Redis Hostname: %s, Size: %f \n", k, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6))
+		log.Printf("InfiniStore WRITE START. Key: %s, InfiniStore Hostname: %s, Size: %f \n", k, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6))
 		writeStart := time.Now()
-		err = redis_client.Set(k, marshalled_result, 0).Err()
+		//err = redis_client.Set(k, marshalled_result, 0).Err()
+		_, ok = cli.EcSet(k, marshalled_result)
 		writeEnd := time.Since(writeStart)
-		checkError(err)
-		log.Printf("REDIS WRITE END. Key: %s, Redis Hostname: %s, Size: %f, Time: %d ms \n", k, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+		//checkError(err)
+		if !ok {
+			log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", k)
+		}
+		log.Printf("InfiniStore WRITE END. Key: %s, InfiniStore Hostname: %s, Size: %f, Time: %d ms \n", k, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 		end := time.Now()
 		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
@@ -181,7 +189,8 @@ func doMap(
 		checkError(err)
 	}
 
-	redis_client.Close()
+	//redis_client.Close()
+	cli.Close()
 }
 
 // We supply you an ihash function to help with mapping of a given

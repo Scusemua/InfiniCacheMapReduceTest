@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/go-redis/redis/v7"
+	"github.com/mason-leap-lab/infinicache/client"
 	//infinicache "github.com/mason-leap-lab/infinicache/client"
 	//"io"
 	"log"
@@ -164,18 +165,23 @@ func doReduce(
 	redisEndpoints []string,
 	reduceTaskNum int,
 	nMap int,
+	dataShards int, 
+	parityShards int,
+	maxEcGoroutines int
 ) {
-	log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
-	redis_client := redis.NewClient(&redis.Options{
-		Addr:         "127.0.0.1:6378",
-		Password:     "",
-		DB:           0,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		MaxRetries:   3,
-	})
+	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
+	// redis_client := redis.NewClient(&redis.Options{
+	// 	Addr:         "127.0.0.1:6378",
+	// 	Password:     "",
+	// 	DB:           0,
+	// 	ReadTimeout:  30 * time.Second,
+	// 	WriteTimeout: 30 * time.Second,
+	// 	MaxRetries:   3,
+	// })
+	log.Println("Creating InfiniStore client for InfiniStore @ 127.0.0.1:6378")
+	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
 
-	log.Println("Successfully created Redis client for Redis @ 127.0.0.1:6378")
+	log.Println("Successfully created InfiniStore client for InfiniStore @ 127.0.0.1:6378")
 
 	ioRecords := make([]IORecord, 0)
 
@@ -189,17 +195,20 @@ func doReduce(
 
 		var kvs []KeyValue
 		start := time.Now()
-		log.Printf("REDIS READ START. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d.", redisKey, "127.0.0.1:6378", reduceTaskNum)
-		marshalled_result, err := redis_client.Get(redisKey).Result()
-		if err != nil {
-			log.Printf("ERROR: Redis @ %s encountered exception for key \"%s\"...", "127.0.0.1:6378", redisKey)
+		log.Printf("InfiniStore READ START. Key: \"%s\", InfiniStore Hostname: %s, Reduce Task #: %d.", redisKey, "127.0.0.1:6378", reduceTaskNum)
+		//marshalled_result, err := redis_client.Get(redisKey).Result()
+		reader, ok := cli.Get(redisKey)
+		marshalled_result, err := reader.ReadAll()
+		reader.Close()
+		if ((err != nil) || (!ok)) {
+			log.Printf("ERROR: InfiniStore @ %s encountered exception for key \"%s\"...", "127.0.0.1:6378", redisKey)
 			log.Printf("ERROR: Just skipping the key \"%s\"...", redisKey)
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			continue
 		}
 		end := time.Now()
 		readDuration := time.Since(start)
-		log.Printf("REDIS READ END. Key: \"%s\", Redis Hostname: %s, Reduce Task #: %d, Bytes read: %f, Time: %d ms", redisKey, "127.0.0.1:6378", reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
+		log.Printf("InfiniStore READ END. Key: \"%s\", InfiniStore Hostname: %s, Reduce Task #: %d, Bytes read: %f, Time: %d ms", redisKey, "127.0.0.1:6378", reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 		json.Unmarshal([]byte(marshalled_result), &kvs)
@@ -253,31 +262,42 @@ func doReduce(
 		base_key := fileName + "-part"
 		for i, chunk := range chunks {
 			key := base_key + string(i)
-			log.Printf("REDIS WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
+			log.Printf("InfiniStore WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
 			start := time.Now()
-			err := redis_client.Set(key, chunk, 0).Err()
+			//err := redis_client.Set(key, chunk, 0).Err()
+			_, ok = cli.EcSet(key, chunk)
 			end := time.Now()
 			writeEnd := time.Since(start)
-			checkError(err)
-
-			log.Printf("REDIS WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Redis Hostname: %s, Size: %f, Time: %v ms \n", i, key, "127.0.0.1:6378", float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+			//checkError(err)
+			if !ok {
+				log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", k)
+			}
+			log.Printf("InfiniStore WRITE CHUNK END. Chunk #: %d, Key: \"%s\", InfiniStore Hostname: %s, Size: %f, Time: %v ms \n", i, key, "127.0.0.1:6378", float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
 		}
 		num_chunks_serialized, err3 := json.Marshal(num_chunks)
 		checkError(err3)
-		err := redis_client.Set(fileName, num_chunks_serialized, 0).Err()
+		//err := redis_client.Set(fileName, num_chunks_serialized, 0).Err()
+		_, ok = cli.EcSet(fileName, num_chunks_serialized)
+		if !ok {
+			log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", k)
+		}
 		checkError(err)
 	} else {
-		log.Printf("REDIS WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
+		log.Printf("InfiniStore WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
 		start := time.Now()
-		err := redis_client.Set(fileName, marshalled_result, 0).Err()
-		checkError(err)
+		//err := redis_client.Set(fileName, marshalled_result, 0).Err()
+		_, ok = cli.EcSet(fileName, marshalled_result)
+		if !ok {
+			log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", k)
+		}		
+		//checkError(err)
 		end := time.Now()
 		writeEnd := time.Since(start)
 
-		log.Printf("REDIS WRITE END. Key: %s, Redis Hostname: %s, Size: %f, Time: %d ms \n", fileName, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+		log.Printf("InfiniStore WRITE END. Key: %s, InfiniStore Hostname: %s, Size: %f, Time: %d ms \n", fileName, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
@@ -292,7 +312,8 @@ func doReduce(
 	}
 
 	// Close all of the Redis clients now that we're
-	redis_client.Close()
+	//redis_client.Close()
+	cli.Close()
 }
 
 // DON'T MODIFY THIS FUNCTION
