@@ -176,7 +176,7 @@ func doMap(
 		log.Printf("InfiniStore WRITE START. Key: %s, InfiniStore Hostname: %s, Size: %f \n", k, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6))
 		writeStart := time.Now()
 		//err = redis_client.Set(k, marshalled_result, 0).Err()
-		_, ok = cli.EcSet(k, marshalled_result)
+		_, ok := cli.EcSet(k, marshalled_result)
 		writeEnd := time.Since(writeStart)
 		//checkError(err)
 		if !ok {

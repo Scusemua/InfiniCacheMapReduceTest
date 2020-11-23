@@ -41,9 +41,9 @@ type MapReduceArgs struct {
 	NOthers        int
 	SampleKeys     []string
 	RedisEndpoints []string
-	DataShards 	   int 
-	ParityShards   int 
-	MaxGoroutines  int 
+	DataShards     int
+	ParityShards   int
+	MaxGoroutines  int
 }
 
 type KeyValue struct {
@@ -168,9 +168,9 @@ func doReduce(
 	redisEndpoints []string,
 	reduceTaskNum int,
 	nMap int,
-	dataShards int, 
+	dataShards int,
 	parityShards int,
-	maxEcGoroutines int
+	maxEcGoroutines int,
 ) {
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
@@ -203,7 +203,7 @@ func doReduce(
 		reader, ok := cli.Get(redisKey)
 		marshalled_result, err := reader.ReadAll()
 		reader.Close()
-		if ((err != nil) || (!ok)) {
+		if (err != nil) || (!ok) {
 			log.Printf("ERROR: InfiniStore @ %s encountered exception for key \"%s\"...", "127.0.0.1:6378", redisKey)
 			log.Printf("ERROR: Just skipping the key \"%s\"...", redisKey)
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
@@ -295,7 +295,7 @@ func doReduce(
 		_, ok = cli.EcSet(fileName, marshalled_result)
 		if !ok {
 			log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", k)
-		}		
+		}
 		//checkError(err)
 		end := time.Now()
 		writeEnd := time.Since(start)
