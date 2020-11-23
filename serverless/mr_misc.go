@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -51,7 +52,7 @@ func (drv *Driver) merge(redisHostnames []string, dataShards int, parityShards i
 			//log.Fatal(err2)
 		}
 
-		if err != nil {
+		if err2 != nil {
 			log.Printf("ERROR: InfiniStore @ %s encountered exception when calling ReadAll for key \"%s\"...", "127.0.0.1:6378", p)
 			log.Fatal(err2)
 		}
