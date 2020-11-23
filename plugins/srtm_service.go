@@ -138,7 +138,9 @@ func doMap(
 
 	log.Println("Creating InfiniStore client for Redis @ 127.0.0.1:6378")
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
-	cli.Dial("127.0.0.1:6378")
+	var addrList = "127.0.0.1:6378"
+	addrArr := strings.Split(addrList, ",")
+	cli.Dial(addrArr)
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
 	// 	Addr:         "127.0.0.1:6378",

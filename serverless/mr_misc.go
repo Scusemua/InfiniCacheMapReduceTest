@@ -29,7 +29,9 @@ func (drv *Driver) merge(redisHostnames []string, dataShards int, parityShards i
 
 	// Create new InfiniStore client.
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
-	cli.Dial("127.0.0.1:6378")
+	var addrList = "127.0.0.1:6378"
+	addrArr := strings.Split(addrList, ",")
+	cli.Dial(addrArr)
 
 	kvs := make(map[string]string)
 	for i := 0; i < drv.nReduce; i++ {

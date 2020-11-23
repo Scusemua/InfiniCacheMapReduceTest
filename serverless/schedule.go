@@ -62,9 +62,9 @@ func (drv *Driver) schedule(
 			arg.RedisEndpoints = drv.redisHostnames
 			arg.NReduce = drv.nReduce
 			arg.SampleKeys = drv.sampleKeys
-			args.DataShards = dataShards
-			args.ParityShards = parityShards
-			args.MaxGoroutines = maxGoRoutines
+			arg.DataShards = dataShards
+			arg.ParityShards = parityShards
+			arg.MaxGoroutines = maxGoRoutines
 			jobChan <- arg
 		}
 	} else {
@@ -78,9 +78,9 @@ func (drv *Driver) schedule(
 			arg.RedisEndpoints = drv.redisHostnames
 			arg.NOthers = len(drv.s3Keys)
 			arg.SampleKeys = drv.sampleKeys
-			args.DataShards = dataShards
-			args.ParityShards = parityShards
-			args.MaxGoroutines = maxGoRoutines
+			arg.DataShards = dataShards
+			arg.ParityShards = parityShards
+			arg.MaxGoroutines = maxGoRoutines
 			jobChan <- arg
 		}
 	}
