@@ -385,7 +385,7 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 
 	log.Printf("Number of S3 keys: %d\n", len(s3Keys))
 
-	go drv.run(jobName, s3Keys, redisHostnames, nReduce, sampleKeys, dataShards, parityShards, maxGoRoutines
+	go drv.run(jobName, s3Keys, redisHostnames, nReduce, sampleKeys, dataShards, parityShards, maxGoRoutines,
 		func(phase jobPhase, serviceName string) { // func schedule()
 			registerChan := make(chan string)
 			go drv.prepareService(registerChan, ServiceName(serviceName, phase))
