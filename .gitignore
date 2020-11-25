@@ -6,3 +6,4 @@ main/redis_hosts.txt
 *.so 
 plugins/*.so
 *.out
+infinistore_logs/
