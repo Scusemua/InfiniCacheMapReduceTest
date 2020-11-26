@@ -1,5 +1,7 @@
 #!/bin/bash
-startTime=$(date -d "$start" +%s)000
+DATE=`date "+%Y%m%d%H%M"`
+
+START=`date +"%Y-%m-%d %H:%M:%S"`
 
 go run client.go localhost:1234 srt 10 sample_data.dat /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt 10 2 32 &
 pids[0]=$!
@@ -38,7 +40,7 @@ done
 # clean up generated intermediate and output files
 rm mrtmp.* mr.srt-res* #mr-final.srt.out
 
-endTime=$(date -d "$end" +%s)000
+END=`date +"%Y-%m-%d %H:%M:%S"`
 
-echo "Start time: $startTime"
-echo "End time: $endTime"
+echo "Start time: $START"
+echo "End time: $END"
