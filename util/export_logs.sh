@@ -22,7 +22,7 @@ if [ "$5" != "" ] ; then
 fi
 
 # Get the number of individual Lambda deployments for which we need to export logs.
-NUM_DEPLOYMENTS = $6
+NUM_DEPLOYMENTS=$6
 
 # Wait for the end the last task
 for j in {0..15}
@@ -54,7 +54,7 @@ do
   fi
 done
 
-for (( x=0; x < $NUM_DEPLOYMENTS; x++))
+for (( x=0; x <$NUM_DEPLOYMENTS; x++))
 do
     echo "Exporting logs for deployment #$x"
     for (( i=$FROM; i<=$TO; i++ ))
