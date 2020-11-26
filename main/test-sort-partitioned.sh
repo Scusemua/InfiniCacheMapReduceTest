@@ -1,7 +1,7 @@
 #!/bin/bash
 startTime=$(date -d "$start" +%s)000
 
-go run client.go localhost:1234 srt 10 sample_data.dat /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt &
+go run client.go localhost:1234 srt 10 sample_data.dat /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt 10 2 32 &
 pids[0]=$!
 
 go run worker.go localhost:1235 localhost:1234 999999 & 
