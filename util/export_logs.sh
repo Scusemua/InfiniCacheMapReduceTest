@@ -67,7 +67,7 @@ do
         # Try 3 times.
         for k in {0..2}
         do
-            echo "Exporting $LAMBDA$LOG_PREFIX$i"
+            echo "Exporting $LAMBDA$LOG_PREFIX$x-$i"
             aws logs create-export-task --log-group-name $LAMBDA$LOG_PREFIX$x-$i --from ${startTime} --to ${endTime} --destination "tianium.default" --destination-prefix $FILE$PREFIX$LOG_PREFIX$x-$i
             sleep 2s
 
