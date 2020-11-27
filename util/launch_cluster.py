@@ -3,6 +3,7 @@ import time
 import paramiko
 import random
 import datetime
+from datetime import datetime
 import redis 
 
 def get_private_ips(region_name="us-east-1"):
@@ -268,11 +269,19 @@ def launch_infinistore_proxies(ips, key_path = "G:\\Documents\\School\\College\\
     prefix = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M')
     
     # This starts the proxies successfully, but I get failures almost immediately during workload. May be entirely unrelated.
-    command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; go run $PWD/../proxy/proxy.go -debug=true -prefix={} -disable-color >./log 2>&1".format(prefix)
+
+    # Each proxy needs a slightly different command as each proxy uses different Lambdas.
+    for i in range(0, len(ips)):
+        ip = ips[i]
+        lambda_prefix = "CacheNode%d-" % i 
+        print("Assigning lambda prefix \"%s\" to proxy at ip %s." % (lambda_prefix, ip))
+        command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; go run $PWD/../proxy/proxy.go -debug=true -prefix={} -disable-color >./log 2>&1".format(prefix)
+        execute_command(command, 3, get_pty = True, ips = [ip], key_path = key_path)
 
     # This does NOT work.
     #command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; make start-server; cat log; cat log"
-    execute_command(command, 3, get_pty = True, ips = ips, key_path = key_path)
+
+    return prefix
 
 def export_cloudwatch_logs(ips, prefix, start, end, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
     command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation/cloudwatch; ./export_ubuntu.sh %s %s %s;" % (prefix, str(start), str(end))
@@ -378,13 +387,20 @@ def format_proxy_config(proxy_ips, key_path = "G:\\Documents\\School\\College\\J
     code_line = code_line + "}"
     return code_line
 
+def print_time():
+    now = datetime.now()
+    date_time = now.strftime("%Y-%m-%d %H:%M:%S")
+    print(date_time)
+    return date_time
+
 # 52.55.211.171, 3.84.164.176
 # lc.clear_redis_instances(flushall = True, hostnames = hostnames)
 # lc.clean_workers(worker_ips = worker_ips)
 # lc.kill_go_processes(ips = worker_ips + [client_ip])
 # lc.pull_from_github(worker_ips)
-# lc.launch_infinistore_proxies(worker_ips + [client_ip])
-# lc.launch_infinistore_proxies([client_ip])
+# experiment_prefix = lc.launch_infinistore_proxies(worker_ips + [client_ip])
+# experiment_prefix = lc.launch_infinistore_proxies([client_ip])
+# print("experiment_prefix = " + str(experiment_prefix))
 # lc.update_lambdas(worker_ips + [client_ip])
 if __name__ == "__main__":
     get_private_ips = lc.get_private_ips
@@ -412,19 +428,6 @@ if __name__ == "__main__":
     print("Worker private IP's ({}): {}".format(len(worker_private_ips), worker_private_ips))
     print(code_line)
 
-make stop-server
-
-cd ../evaluation
-make start-server 
-tail -f log
-
-vim ../proxy/config/config.go
-
-vim ../deploy/update_function.sh
-
-cd ../deploy
-./update_function.sh 607
-
     wondershape(ips = [client_ip] + worker_ips)
 
     # NUM_WORKERS_PER_VM * NUM_VMs * NUM_CORES_PER_WORKER
@@ -432,7 +435,9 @@ cd ../deploy
     print("nReducers = {}".format(nReducers))
 
     lc.pull_from_github(worker_ips)
-    lc.launch_infinistore_proxies(worker_ips + [client_ip])
+    start_time = print_time()
+    experiment_prefix = lc.launch_infinistore_proxies(worker_ips + [client_ip])
+    print("experiment_prefix = " + str(experiment_prefix))
 
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
@@ -448,3 +453,17 @@ cd ../deploy
     lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
 
     #lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips[0:2], workers_per_vm = workers_per_vm, count_limit = 1)
+    end_time = print_time()
+
+make stop-server
+
+cd ../evaluation
+make start-server 
+tail -f log
+
+vim ../proxy/config/config.go
+
+vim ../deploy/update_function.sh
+
+cd ../deploy
+./update_function.sh 607
