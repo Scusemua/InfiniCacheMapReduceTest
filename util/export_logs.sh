@@ -24,10 +24,12 @@ fi
 # Get the number of individual Lambda deployments for which we need to export logs.
 NUM_DEPLOYMENTS=$6
 
+echo ("Waiting for the last task to end.")
 # Wait for the end the last task
 for j in {0..15}
 do
   RUNNING=`aws logs describe-export-tasks --status-code "RUNNING" | grep taskId | awk -F \" '{ print $4 }'`
+  echo "RUNNING = $RUNNING"
   if [ "$RUNNING" != "" ]; then
     sleep 2s
   else
@@ -42,10 +44,12 @@ if [ "$RUNNING" != "" ]; then
 
 fi
 
+echo "Waiting another 30 seconds for the abandon procedure"
 # Wait another 30 seconds for the abandon procedure
 for j in {0..15}
 do
   RUNNING=`aws logs describe-export-tasks --status-code "RUNNING" | grep taskId | awk -F \" '{ print $4 }'`
+  echo "RUNNING = $RUNNING"
   if [ "$RUNNING" != "" ]; then
     sleep 2s
   else
@@ -54,6 +58,7 @@ do
   fi
 done
 
+echo "Time to export the logs."
 for (( x=0; x <$NUM_DEPLOYMENTS; x++))
 do
     echo "Exporting logs for deployment #$x"
