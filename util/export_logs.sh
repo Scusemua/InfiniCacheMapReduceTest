@@ -24,7 +24,7 @@ fi
 # Get the number of individual Lambda deployments for which we need to export logs.
 NUM_DEPLOYMENTS=$6
 
-echo ("Waiting for the last task to end.")
+echo "Waiting for the last task to end."
 # Wait for the end the last task
 for j in {0..15}
 do
