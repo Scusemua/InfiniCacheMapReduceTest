@@ -2,9 +2,9 @@ import boto3
 import time 
 import paramiko
 import random
-import datetime
 from datetime import datetime
 import redis 
+import launch_cluster as lc
 
 def get_private_ips(region_name="us-east-1"):
     print("Getting public IPs now...")
@@ -266,7 +266,7 @@ def launch_infinistore_proxies(ips, key_path = "G:\\Documents\\School\\College\\
     # command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; export GOPATH=/home/ubuntu/project; make start-server"
     # command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export GOPATH=/home/ubuntu/project; make start-server"
     #command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; export GOPATH=/home/ubuntu/project; ./server.sh >./log 2>&1 &"
-    prefix = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M')
+    prefix = datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M')
     
     # This starts the proxies successfully, but I get failures almost immediately during workload. May be entirely unrelated.
 
@@ -408,7 +408,8 @@ if __name__ == "__main__":
     get_ips = lc.get_ips
     public_ips, private_ips = get_ips()
     all_ips = public_ips + private_ips
-    workers_per_vm = 5
+    workers_per_vm = 4
+    NUM_CORES_PER_WORKER = 2
     shards_per_vm = 1
     num_redis = 0
 
@@ -431,11 +432,11 @@ if __name__ == "__main__":
     wondershape(ips = [client_ip] + worker_ips)
 
     # NUM_WORKERS_PER_VM * NUM_VMs * NUM_CORES_PER_WORKER
-    nReducers = workers_per_vm * len(worker_ips) * 9
+    nReducers = workers_per_vm * len(worker_ips) * NUM_CORES_PER_WORKER
     print("nReducers = {}".format(nReducers))
 
     lc.pull_from_github(worker_ips)
-    start_time = print_time()
+    start_time = lc.print_time()
     experiment_prefix = lc.launch_infinistore_proxies(worker_ips + [client_ip])
     print("experiment_prefix = " + str(experiment_prefix))
 
@@ -455,15 +456,15 @@ if __name__ == "__main__":
     #lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips[0:2], workers_per_vm = workers_per_vm, count_limit = 1)
     end_time = print_time()
 
-make stop-server
+# make stop-server
 
-cd ../evaluation
-make start-server 
-tail -f log
+# cd ../evaluation
+# make start-server 
+# tail -f log
 
-vim ../proxy/config/config.go
+# vim ../proxy/config/config.go
 
-vim ../deploy/update_function.sh
+# vim ../deploy/update_function.sh
 
-cd ../deploy
-./update_function.sh 607
+# cd ../deploy
+# ./update_function.sh 607
