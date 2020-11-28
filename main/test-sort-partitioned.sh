@@ -11,11 +11,11 @@ pids[0]=$!
 go run worker.go localhost:1235 localhost:1234 999999 & 
 pids[1]=$!
 
-# go run worker.go localhost:1236 localhost:1234 999999 & 
-# pids[2]=$!
+go run worker.go localhost:1236 localhost:1234 999999 & 
+pids[2]=$!
 
-# go run worker.go localhost:1237 localhost:1234 999999 & 
-# pids[3]=$!
+go run worker.go localhost:1237 localhost:1234 999999 & 
+pids[3]=$!
 
 # go run worker.go localhost:1238 localhost:1234 999999 & 
 # pids[4]=$!
