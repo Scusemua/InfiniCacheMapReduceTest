@@ -42,7 +42,7 @@ func main() {
 	log.Println("os.Args =", os.Args)
 
 	// Get command-line arguments.
-	drv := flag.String("drv", "127.0.0.1:1234", "The driver hostname and IP address.")
+	driverHostname := flag.String("driverHostname", "127.0.0.1:1234", "The driver hostname and IP address.")
 	jobName := flag.String("job-name", "srt", "The name of the MapReduce job.")
 	nReduce := flag.Int("nReduce", 10, "Number of MapReduce reducers.")
 	sampleDataKey := flag.String("sampleDataKey", "sample_data.dat", "The S3 key of the sample data to use for generating sample keys and building the trie.")
@@ -53,7 +53,7 @@ func main() {
 	flag.Var(&myFlags, "storage-ips", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
 	flag.Parse()
 
-	drv := serverless.NewDriver(drv) // the 1st cmd-line argument: driver hostname and ip addr
+	drv := serverless.NewDriver(driverHostname) // the 1st cmd-line argument: driver hostname and ip addr
 	//jobName := os.Args[2]                   // the 2nd cmd-line argument: MapReduce job name
 	//nReduce, err := strconv.Atoi(os.Args[3])
 

@@ -22,7 +22,7 @@ DRIVER_HOST="$IP:1234"
 # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt
 # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
 
-go run client.go -drv $DRIVER_HOST -jobName $1 -nReduce $2 -sampleDataKey $3 -s3KeyFile $4 -dataShards $5 -parityShards $6 -maxGoRoutines $7
+go run client.go -driverHostname $DRIVER_HOST -jobName $1 -nReduce $2 -sampleDataKey $3 -s3KeyFile $4 -dataShards $5 -parityShards $6 -maxGoRoutines $7
 
 go run client.go $DRIVER_HOST srt $1 sample_data.dat $2 10 2 32 &
 #go run client.go $DRIVER_HOST:1234 srt 10 sample_data.dat /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt 10 2 32 &
