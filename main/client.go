@@ -19,10 +19,12 @@ import (
 	"io"
 	"log"
 	"os"
-	"strconv"
+	//"strconv"
 )
 
 type arrayFlags []string
+
+var myFlags arrayFlags
 
 func (i *arrayFlags) Set(value string) error {
 	*i = append(*i, value)
@@ -48,10 +50,10 @@ func main() {
 	dataShards := flag.Int("dataShards", 10, "InfiniStore proxy data shards parameter.")
 	parityShards := flag.Int("dataShards", 2, "InfiniStore proxy parity shards parameter.")
 	maxGoRoutines := flag.Int("dataShards", 32, "InfiniStore proxy max goroutines parameter.")
-	flag.Var(&myFlags, "storage-ips", "127.0.0.1:6378", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
+	flag.Var(&myFlags, "storage-ips", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
 	flag.Parse()
 
-	//drv := serverless.NewDriver(os.Args[1]) // the 1st cmd-line argument: driver hostname and ip addr
+	drv := serverless.NewDriver(drv) // the 1st cmd-line argument: driver hostname and ip addr
 	//jobName := os.Args[2]                   // the 2nd cmd-line argument: MapReduce job name
 	//nReduce, err := strconv.Atoi(os.Args[3])
 
@@ -60,7 +62,7 @@ func main() {
 	//}
 
 	//f, err := os.OpenFile("Client-"+string(os.Args[1])+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	f, err := os.OpenFile("Client-"+drv+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile("Client-"+string(drv)+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
