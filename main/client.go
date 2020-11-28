@@ -48,7 +48,7 @@ func main() {
 	dataShards := flag.Int("dataShards", 10, "InfiniStore proxy data shards parameter.")
 	parityShards := flag.Int("dataShards", 2, "InfiniStore proxy parity shards parameter.")
 	maxGoRoutines := flag.Int("dataShards", 32, "InfiniStore proxy max goroutines parameter.")
-	flag.Var(&myFlags, "storage-ips", "127.0.0.1:6378" "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
+	flag.Var(&myFlags, "storage-ips", "127.0.0.1:6378", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
 	flag.Parse()
 
 	//drv := serverless.NewDriver(os.Args[1]) // the 1st cmd-line argument: driver hostname and ip addr
