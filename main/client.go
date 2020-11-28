@@ -55,7 +55,7 @@ func main() {
 	dataShards := flag.Int("dataShards", 10, "InfiniStore proxy data shards parameter.")
 	parityShards := flag.Int("parityShards", 2, "InfiniStore proxy parity shards parameter.")
 	maxGoRoutines := flag.Int("maxGoRoutines", 32, "InfiniStore proxy max goroutines parameter.")
-	flag.Var(&myFlags, "storage-ips", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
+	flag.Var(&myFlags, "storageIps", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
 	flag.Parse()
 
 	drv := serverless.NewDriver(*driverHostname) // the 1st cmd-line argument: driver hostname and ip addr
@@ -76,7 +76,7 @@ func main() {
 	mw := io.MultiWriter(os.Stdout, f)
 	log.SetOutput(mw)
 
-	serverless.Debug("jobName: %s, nReduce: %d\n", jobName, nReduce)
+	serverless.Debug("jobName: %s, nReduce: %d\n", *jobName, nReduce)
 
 	//sampleDataKey := os.Args[4] // The S3 key of the sample data to use for generating sample keys and building the trie.
 	//s3KeyFile := os.Args[5]     // File which contains the S3 keys of the input data partitions.
