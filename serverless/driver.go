@@ -344,7 +344,7 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 	drv.startRPCServer()
 
 	// ======================================
-	// Get the list of S3 keys from the file.
+	// Get the list of S3 Akeys from the file.
 	// ======================================
 	file, err := os.Open(s3KeyFile)
 	checkError(err)
