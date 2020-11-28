@@ -235,7 +235,9 @@ func (drv *Driver) prepareService(ch chan string, serviceName string) {
 	log.Printf("Driver: enter the worker registration service loop...\n")
 	i := 0
 	for {
+		log.Printf("Acquiring lock in worker registration service loop.")
 		drv.Lock()
+		log.Printf("Acquired lock in worker registration service loop.")
 		if len(drv.workers) > i {
 			w := drv.workers[i]
 			go drv.registerService(w, serviceName, ch)
@@ -243,7 +245,9 @@ func (drv *Driver) prepareService(ch chan string, serviceName string) {
 		} else {
 			drv.newCond.Wait()
 		}
+		log.Printf("Releasing lock in worker registration service loop.")
 		drv.Unlock()
+		log.Printf("Released lock in worker registration service loop.")
 	}
 }
 
