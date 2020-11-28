@@ -48,7 +48,7 @@ func main() {
 
 	// Get command-line arguments.
 	driverHostname := flag.String("driverHostname", "127.0.0.1:1234", "The driver hostname and IP address.")
-	jobName := flag.String("job-name", "srt", "The name of the MapReduce job.")
+	jobName := flag.String("jobName", "srt", "The name of the MapReduce job.")
 	nReduce := flag.Int("nReduce", 10, "Number of MapReduce reducers.")
 	sampleDataKey := flag.String("sampleDataKey", "sample_data.dat", "The S3 key of the sample data to use for generating sample keys and building the trie.")
 	s3KeyFile := flag.String("s3KeyFile", "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt", "File which contains the S3 keys of the input data partitions.")
