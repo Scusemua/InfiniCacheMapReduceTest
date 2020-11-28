@@ -76,7 +76,7 @@ func (drv *Driver) schedule(
 			arg.TaskNum = i
 			arg.JobName = serviceName
 			arg.NReduce = drv.nReduce
-			arg.RedisEndpoints = drv.redisHostnames
+			//arg.RedisEndpoints = drv.redisHostnames
 			arg.NOthers = len(drv.s3Keys)
 			arg.StorageIPs = drv.storageIps
 			arg.SampleKeys = drv.sampleKeys
