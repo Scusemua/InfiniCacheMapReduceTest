@@ -140,7 +140,7 @@ func doMap(
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
 	// var addrList = "127.0.0.1:6378"
 	// addrArr := strings.Split(addrList, ",")
-	cli.Dial(storageIps)
+	cli.Dial(storageIPs)
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
 	// 	Addr:         "127.0.0.1:6378",
