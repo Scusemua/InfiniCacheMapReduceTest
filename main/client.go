@@ -19,12 +19,17 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	//"strconv"
 )
 
 type arrayFlags []string
 
 var myFlags arrayFlags
+
+func (i *arrayFlags) String() string {
+	return strings.Join(*i, ", ")
+}
 
 func (i *arrayFlags) Set(value string) error {
 	*i = append(*i, value)
@@ -53,7 +58,7 @@ func main() {
 	flag.Var(&myFlags, "storage-ips", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
 	flag.Parse()
 
-	drv := serverless.NewDriver(driverHostname) // the 1st cmd-line argument: driver hostname and ip addr
+	drv := serverless.NewDriver(*driverHostname) // the 1st cmd-line argument: driver hostname and ip addr
 	//jobName := os.Args[2]                   // the 2nd cmd-line argument: MapReduce job name
 	//nReduce, err := strconv.Atoi(os.Args[3])
 
@@ -89,7 +94,7 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	go drv.Run(jobName, s3KeyFile, sampleDataKey, nReduce, dataShards, parityShards, maxGoRoutines, arrayFlags)
+	go drv.Run(*jobName, *s3KeyFile, *sampleDataKey, *nReduce, *dataShards, *parityShards, *maxGoRoutines, *arrayFlags)
 
 	drv.Wait()
 }
