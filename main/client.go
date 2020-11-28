@@ -67,7 +67,7 @@ func main() {
 	//}
 
 	//f, err := os.OpenFile("Client-"+string(os.Args[1])+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	f, err := os.OpenFile("Client-"+string(driverHostname)+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile("Client-"+(*driverHostname)+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
@@ -94,7 +94,7 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	go drv.Run(*jobName, *s3KeyFile, *sampleDataKey, *nReduce, *dataShards, *parityShards, *maxGoRoutines, *myFlags)
+	go drv.Run(*jobName, *s3KeyFile, *sampleDataKey, *nReduce, *dataShards, *parityShards, *maxGoRoutines, myFlags)
 
 	drv.Wait()
 }
