@@ -34,16 +34,16 @@ type srtrService string
 
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
-	JobName        string
-	S3Key          string
-	TaskNum        int
-	NReduce        int
-	NOthers        int
-	SampleKeys     []string
-	RedisEndpoints []string
-	DataShards     int
-	ParityShards   int
-	MaxGoroutines  int
+	JobName       string
+	S3Key         string
+	TaskNum       int
+	NReduce       int
+	NOthers       int
+	SampleKeys    []string
+	StorageIPs    []string
+	DataShards    int
+	ParityShards  int
+	MaxGoroutines int
 }
 
 type KeyValue struct {
@@ -165,7 +165,7 @@ func split(buf []byte, lim int) [][]byte {
 // using serverless.MergeName(jobName, reduceTask).
 func doReduce(
 	jobName string,
-	redisEndpoints []string,
+	storageIps []string,
 	reduceTaskNum int,
 	nMap int,
 	dataShards int,
@@ -181,13 +181,13 @@ func doReduce(
 	// 	WriteTimeout: 30 * time.Second,
 	// 	MaxRetries:   3,
 	// })
-	log.Println("Creating InfiniStore client for InfiniStore @ 127.0.0.1:6378")
+	log.Println("Creating storage client for storage @ 127.0.0.1:6378")
 	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
-	var addrList = "127.0.0.1:6378"
-	addrArr := strings.Split(addrList, ",")
-	cli.Dial(addrArr)
+	// var addrList = "127.0.0.1:6378"
+	// addrArr := strings.Split(addrList, ",")
+	cli.Dial(storageIps)
 
-	log.Println("Successfully created InfiniStore client for InfiniStore @ 127.0.0.1:6378")
+	log.Println("Successfully created storage client for storage @ 127.0.0.1:6378")
 
 	ioRecords := make([]IORecord, 0)
 
@@ -201,20 +201,20 @@ func doReduce(
 
 		var kvs []KeyValue
 		start := time.Now()
-		log.Printf("InfiniStore READ START. Key: \"%s\", InfiniStore Hostname: %s, Reduce Task #: %d.", redisKey, "127.0.0.1:6378", reduceTaskNum)
+		log.Printf("storage READ START. Key: \"%s\", storage Hostname: %s, Reduce Task #: %d.", redisKey, "127.0.0.1:6378", reduceTaskNum)
 		//marshalled_result, err := redis_client.Get(redisKey).Result()
 		reader, ok := cli.Get(redisKey)
 		marshalled_result, err := reader.ReadAll()
 		reader.Close()
 		if (err != nil) || (!ok) {
-			log.Printf("ERROR: InfiniStore @ %s encountered exception for key \"%s\"...", "127.0.0.1:6378", redisKey)
+			log.Printf("ERROR: storage @ %s encountered exception for key \"%s\"...", "127.0.0.1:6378", redisKey)
 			log.Printf("ERROR: Just skipping the key \"%s\"...", redisKey)
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			continue
 		}
 		end := time.Now()
 		readDuration := time.Since(start)
-		log.Printf("InfiniStore READ END. Key: \"%s\", InfiniStore Hostname: %s, Reduce Task #: %d, Bytes read: %f, Time: %d ms", redisKey, "127.0.0.1:6378", reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
+		log.Printf("storage READ END. Key: \"%s\", storage Hostname: %s, Reduce Task #: %d, Bytes read: %f, Time: %d ms", redisKey, "127.0.0.1:6378", reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 		json.Unmarshal([]byte(marshalled_result), &kvs)
@@ -268,7 +268,7 @@ func doReduce(
 		base_key := fileName + "-part"
 		for i, chunk := range chunks {
 			key := base_key + string(i)
-			log.Printf("InfiniStore WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
+			log.Printf("storage WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
 			start := time.Now()
 			//err := redis_client.Set(key, chunk, 0).Err()
 			_, ok := cli.EcSet(key, chunk)
@@ -276,9 +276,9 @@ func doReduce(
 			writeEnd := time.Since(start)
 			//checkError(err)
 			if !ok {
-				log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", key)
+				log.Fatal("ERROR while storing value in storage, key is \"%s\"", key)
 			}
-			log.Printf("InfiniStore WRITE CHUNK END. Chunk #: %d, Key: \"%s\", InfiniStore Hostname: %s, Size: %f, Time: %v ms \n", i, key, "127.0.0.1:6378", float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+			log.Printf("storage WRITE CHUNK END. Chunk #: %d, Key: \"%s\", storage Hostname: %s, Size: %f, Time: %v ms \n", i, key, "127.0.0.1:6378", float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
@@ -288,22 +288,22 @@ func doReduce(
 		//err := redis_client.Set(fileName, num_chunks_serialized, 0).Err()
 		_, ok := cli.EcSet(fileName, num_chunks_serialized)
 		if !ok {
-			log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", fileName)
+			log.Fatal("ERROR while storing value in storage, key is \"%s\"", fileName)
 		}
 		checkError(err)
 	} else {
-		log.Printf("InfiniStore WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
+		log.Printf("storage WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
 		start := time.Now()
 		//err := redis_client.Set(fileName, marshalled_result, 0).Err()
 		_, ok := cli.EcSet(fileName, marshalled_result)
 		if !ok {
-			log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", fileName)
+			log.Fatal("ERROR while storing value in storage, key is \"%s\"", fileName)
 		}
 		//checkError(err)
 		end := time.Now()
 		writeEnd := time.Since(start)
 
-		log.Printf("InfiniStore WRITE END. Key: %s, InfiniStore Hostname: %s, Size: %f, Time: %d ms \n", fileName, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+		log.Printf("storage WRITE END. Key: %s, storage Hostname: %s, Size: %f, Time: %d ms \n", fileName, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
@@ -334,7 +334,7 @@ func (s srtrService) DoService(raw []byte) error {
 	}
 	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
 
-	doReduce(args.JobName, args.RedisEndpoints, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines)
+	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines)
 
 	return nil
 }

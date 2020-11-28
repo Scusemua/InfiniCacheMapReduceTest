@@ -275,7 +275,7 @@ def launch_infinistore_proxies(ips, key_path = "G:\\Documents\\School\\College\\
         ip = ips[i]
         lambda_prefix = "CacheNode%d-" % i 
         print("Assigning lambda prefix \"%s\" to proxy at ip %s." % (lambda_prefix, ip))
-        command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; go run $PWD/../proxy/proxy.go -debug=true -prefix={} -disable-color >./log 2>&1".format(prefix)
+        command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; go run $PWD/../proxy/proxy.go -debug=true -prefix={} -lambda-prefix={} -disable-color >./log 2>&1".format(prefix, lambda_prefix)
         execute_command(command, 3, get_pty = True, ips = [ip], key_path = key_path)
 
     # This does NOT work.
@@ -360,6 +360,20 @@ def launch_workers(
         get_pty = True 
     )
 
+def update_lambdas_prefixed(ips, prefix = "CacheNode", key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
+    for i in range(0, len(ips)):
+        ip = ips[i]
+        lambda_prefix = prefix + "{}-".format(i)
+        command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {}".format(random.randint(60, 70), lambda_prefix)
+        print("Full command: {}".format(command))
+        execute_command(
+            command = command,
+            count_limit = 3,
+            ips = [ip],
+            key_path = key_path,
+            get_pty = True 
+        )    
+
 def update_lambdas(ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
     command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {}".format(random.randint(600, 900))
     print("Full command: {}".format(command))
@@ -402,14 +416,15 @@ def print_time():
 # experiment_prefix = lc.launch_infinistore_proxies([client_ip])
 # print("experiment_prefix = " + str(experiment_prefix))
 # lc.update_lambdas(worker_ips + [client_ip])
+# lc.update_lambdas_prefixed(worker_ips + [client_ip])
 if __name__ == "__main__":
     get_private_ips = lc.get_private_ips
     get_public_ips = lc.get_public_ips
     get_ips = lc.get_ips
     public_ips, private_ips = get_ips()
     all_ips = public_ips + private_ips
-    workers_per_vm = 4
-    NUM_CORES_PER_WORKER = 2
+    workers_per_vm = 3
+    NUM_CORES_PER_WORKER = 4
     shards_per_vm = 1
     num_redis = 0
 
@@ -435,7 +450,7 @@ if __name__ == "__main__":
     nReducers = workers_per_vm * len(worker_ips) * NUM_CORES_PER_WORKER
     print("nReducers = {}".format(nReducers))
 
-    lc.pull_from_github(worker_ips)
+    lc.pull_from_github([client_ip] + worker_ips, reset_first = True)
     start_time = lc.print_time()
     experiment_prefix = lc.launch_infinistore_proxies(worker_ips + [client_ip])
     print("experiment_prefix = " + str(experiment_prefix))
@@ -445,6 +460,7 @@ if __name__ == "__main__":
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/20GB_S3Keys.txt
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt
+    # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/20GB_S3Keys.txt
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt    

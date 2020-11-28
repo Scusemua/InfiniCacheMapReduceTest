@@ -48,13 +48,16 @@ type iimService string
 
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
-	JobName        string
-	S3Key          string
-	TaskNum        int
-	NReduce        int
-	NOthers        int
-	SampleKeys     []string
-	RedisEndpoints []string
+	JobName       string
+	S3Key         string
+	TaskNum       int
+	NReduce       int
+	NOthers       int
+	SampleKeys    []string
+	StorageIPs    []string
+	DataShards    int
+	ParityShards  int
+	MaxGoroutines int
 }
 
 type KeyValue struct {

@@ -49,16 +49,16 @@ type srtmService string
 
 // MapReduceArgs defines this plugin's argument format
 type MapReduceArgs struct {
-	JobName        string
-	S3Key          string
-	TaskNum        int
-	NReduce        int
-	NOthers        int
-	SampleKeys     []string
-	RedisEndpoints []string
-	DataShards     int
-	ParityShards   int
-	MaxGoroutines  int
+	JobName       string
+	S3Key         string
+	TaskNum       int
+	NReduce       int
+	NOthers       int
+	SampleKeys    []string
+	StorageIPs    []string
+	DataShards    int
+	ParityShards  int
+	MaxGoroutines int
 }
 
 type KeyValue struct {
@@ -100,7 +100,7 @@ func mapF(document string, value string) (res []KeyValue) {
 func doMap(
 	jobName string,
 	S3Key string,
-	redisEndpoints []string,
+	storageIPs []string,
 	taskNum int,
 	nReduce int,
 	dataShards int,
@@ -136,11 +136,11 @@ func doMap(
 
 	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
-	log.Println("Creating InfiniStore client for Redis @ 127.0.0.1:6378")
+	log.Println("Creating storage client for IP @ 127.0.0.1:6378")
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
-	var addrList = "127.0.0.1:6378"
-	addrArr := strings.Split(addrList, ",")
-	cli.Dial(addrArr)
+	// var addrList = "127.0.0.1:6378"
+	// addrArr := strings.Split(addrList, ",")
+	cli.Dial(storageIps)
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
 	// 	Addr:         "127.0.0.1:6378",
@@ -151,7 +151,7 @@ func doMap(
 	// 	MaxRetries:   3,
 	// })
 
-	log.Println("Successfully created InfiniStore client for InfiniStore @ 127.0.0.1:6378")
+	log.Println("Successfully created storage client for storage @ 127.0.0.1:6378")
 
 	Debug("Reading data for S3 key \"%s\" from downloaded file now...\n", S3Key)
 	b, err = ioutil.ReadFile(S3Key)
@@ -167,22 +167,22 @@ func doMap(
 
 	ioRecords := make([]IORecord, 0)
 
-	log.Println("Storing results in InfiniStore now...")
+	log.Println("Storing results in storage now...")
 
 	for k, v := range results {
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
 		start := time.Now()
-		log.Printf("InfiniStore WRITE START. Key: %s, InfiniStore Hostname: %s, Size: %f \n", k, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6))
+		log.Printf("storage WRITE START. Key: %s, storage Hostname: %s, Size: %f \n", k, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6))
 		writeStart := time.Now()
 		//err = redis_client.Set(k, marshalled_result, 0).Err()
 		_, ok := cli.EcSet(k, marshalled_result)
 		writeEnd := time.Since(writeStart)
 		//checkError(err)
 		if !ok {
-			log.Fatal("ERROR while storing value in InfiniStore, key is \"%s\"", k)
+			log.Fatal("ERROR while storing value in storage, key is \"%s\"", k)
 		}
-		log.Printf("InfiniStore WRITE END. Key: %s, InfiniStore Hostname: %s, Size: %f, Time: %d ms \n", k, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+		log.Printf("storage WRITE END. Key: %s, storage Hostname: %s, Size: %f, Time: %d ms \n", k, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 		end := time.Now()
 		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
@@ -222,7 +222,7 @@ func (s srtmService) DoService(raw []byte) error {
 
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
 
-	doMap(args.JobName, args.S3Key, args.RedisEndpoints, args.TaskNum, args.NReduce, args.DataShards, args.ParityShards, args.MaxGoroutines, trie)
+	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, args.ParityShards, args.MaxGoroutines, trie)
 
 	return nil
 }

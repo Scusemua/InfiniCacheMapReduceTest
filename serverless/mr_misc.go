@@ -15,7 +15,8 @@ import (
 
 // merge combines the results of the many reduce jobs into a single
 // output file XXX use merge sort
-func (drv *Driver) merge(redisHostnames []string, dataShards int, parityShards int, maxGoRoutines int) {
+//func (drv *Driver) merge(redisHostnames []string, dataShards int, parityShards int, maxGoRoutines int) {
+func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, maxGoRoutines int) {
 	Debug("Merge phase\n")
 	now := time.Now()
 
@@ -30,9 +31,9 @@ func (drv *Driver) merge(redisHostnames []string, dataShards int, parityShards i
 
 	// Create new InfiniStore client.
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
-	var addrList = "127.0.0.1:6378"
-	addrArr := strings.Split(addrList, ",")
-	cli.Dial(addrArr)
+	//var addrList = "127.0.0.1:6378"
+	//addrArr := strings.Split(addrList, ",")
+	cli.Dial(storageIps)
 
 	kvs := make(map[string]string)
 	for i := 0; i < drv.nReduce; i++ {
