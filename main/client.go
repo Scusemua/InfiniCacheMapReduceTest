@@ -53,8 +53,8 @@ func main() {
 	sampleDataKey := flag.String("sampleDataKey", "sample_data.dat", "The S3 key of the sample data to use for generating sample keys and building the trie.")
 	s3KeyFile := flag.String("s3KeyFile", "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt", "File which contains the S3 keys of the input data partitions.")
 	dataShards := flag.Int("dataShards", 10, "InfiniStore proxy data shards parameter.")
-	parityShards := flag.Int("dataShards", 2, "InfiniStore proxy parity shards parameter.")
-	maxGoRoutines := flag.Int("dataShards", 32, "InfiniStore proxy max goroutines parameter.")
+	parityShards := flag.Int("parityShards", 2, "InfiniStore proxy parity shards parameter.")
+	maxGoRoutines := flag.Int("maxGoRoutines", 32, "InfiniStore proxy max goroutines parameter.")
 	flag.Var(&myFlags, "storage-ips", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
 	flag.Parse()
 
