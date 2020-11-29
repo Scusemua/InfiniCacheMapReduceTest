@@ -181,13 +181,13 @@ func doReduce(
 	// 	WriteTimeout: 30 * time.Second,
 	// 	MaxRetries:   3,
 	// })
-	log.Println("Creating storage client for storage @ 127.0.0.1:6378")
+	log.Println("Creating storage client for storage")
 	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
 	// var addrList = "127.0.0.1:6378"
 	// addrArr := strings.Split(addrList, ",")
 	cli.Dial(storageIps)
 
-	log.Println("Successfully created storage client for storage @ 127.0.0.1:6378")
+	log.Println("Successfully created storage client for storage")
 
 	ioRecords := make([]IORecord, 0)
 
@@ -201,20 +201,20 @@ func doReduce(
 
 		var kvs []KeyValue
 		start := time.Now()
-		log.Printf("storage READ START. Key: \"%s\", storage Hostname: %s, Reduce Task #: %d.", redisKey, "127.0.0.1:6378", reduceTaskNum)
+		log.Printf("storage READ START. Key: \"%s\", Reduce Task #: %d.", redisKey, reduceTaskNum)
 		//marshalled_result, err := redis_client.Get(redisKey).Result()
 		reader, ok := cli.Get(redisKey)
 		marshalled_result, err := reader.ReadAll()
 		reader.Close()
 		if (err != nil) || (!ok) {
-			log.Printf("ERROR: storage @ %s encountered exception for key \"%s\"...", "127.0.0.1:6378", redisKey)
+			log.Printf("ERROR: storage encountered exception for key \"%s\"...", "addr", redisKey)
 			log.Printf("ERROR: Just skipping the key \"%s\"...", redisKey)
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			continue
 		}
 		end := time.Now()
 		readDuration := time.Since(start)
-		log.Printf("storage READ END. Key: \"%s\", storage Hostname: %s, Reduce Task #: %d, Bytes read: %f, Time: %d ms", redisKey, "127.0.0.1:6378", reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
+		log.Printf("storage READ END. Key: \"%s\", Reduce Task #: %d, Bytes read: %f, Time: %d ms", redisKey, reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 		json.Unmarshal([]byte(marshalled_result), &kvs)

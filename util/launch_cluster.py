@@ -162,6 +162,8 @@ def launch_client(
     . ~/.bashrc;
     """
 
+    # TODO: THIS DOES NOT CURRENTLY WORK. COMMAND IS NOT FORMATTED PROPERLY.
+
     #post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-client.sh {} {}".format(nReducers, s3_key_file)
     post_command = "cd /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main;./start-client.sh {} {}".format(nReducers, s3_key_file)
 
@@ -385,7 +387,7 @@ def update_lambdas(ips, key_path = "G:\\Documents\\School\\College\\Junior Year\
         get_pty = True 
     )    
 
-def format_proxy_config(proxy_ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
+def format_proxy_config(proxy_ips : list) -> str:
     num_proxies = len(proxy_ips)
     #code_line = "var ProxyList [{}]string = [{}]string".format(num_proxies, num_proxies)
     code_line = "var ProxyList []string = []string{"
@@ -401,6 +403,12 @@ def format_proxy_config(proxy_ips, key_path = "G:\\Documents\\School\\College\\J
     code_line = code_line + "}"
     return code_line
 
+def format_parameter_storage_list(ips : list, parameter_name : str) -> str:
+    param = ""
+    for ip in ips:
+        param = param + "-{} {} ".format(parameter_name, ip)
+    return param
+
 def print_time():
     now = datetime.now()
     date_time = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -412,6 +420,7 @@ def print_time():
 # lc.clean_workers(worker_ips = worker_ips)
 # lc.kill_go_processes(ips = worker_ips + [client_ip])
 # lc.pull_from_github(worker_ips)
+# lc.pull_from_github(worker_ips + [client_ip])
 # experiment_prefix = lc.launch_infinistore_proxies(worker_ips + [client_ip])
 # experiment_prefix = lc.launch_infinistore_proxies([client_ip])
 # print("experiment_prefix = " + str(experiment_prefix))
@@ -437,6 +446,8 @@ if __name__ == "__main__":
     code_line2 = lc.format_proxy_config([client_ip_private] + subset_workers)
 
     code_line = lc.format_proxy_config([client_ip_private] + worker_private_ips)
+
+    param = format_parameter_storage_list([client_ip_private] + worker_private_ips, "storageIps")
 
     print("Client IP: {}".format(client_ip))
     print("Client private IP: {}".format(client_ip_private))
@@ -465,6 +476,9 @@ if __name__ == "__main__":
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/20GB_S3Keys.txt
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt    
     #launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
+    # ./start-client srt 36 sample_data.dat /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt 10 2 32 
+    # go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 36 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.69.186 -storageIps 10.0.71.131 -storageIps 10.0.64.89 -storageIps 10.0.109.88
+    # -storageIps 10.0.109.88 -storageIps 10.0.96.35 -storageIps 10.0.123.94 -storageIps 10.0.104.255
     lc.launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
 
     lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)

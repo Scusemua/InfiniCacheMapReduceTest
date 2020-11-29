@@ -136,7 +136,7 @@ func doMap(
 
 	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
-	log.Println("Creating storage client for IP @ 127.0.0.1:6378")
+	log.Println("Creating storage client for IPs: %v", storageIPs)
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
 	// var addrList = "127.0.0.1:6378"
 	// addrArr := strings.Split(addrList, ",")
@@ -173,7 +173,7 @@ func doMap(
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
 		start := time.Now()
-		log.Printf("storage WRITE START. Key: %s, storage Hostname: %s, Size: %f \n", k, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6))
+		log.Printf("storage WRITE START. Key: %s, Size: %f \n", k, float64(len(marshalled_result))/float64(1e6))
 		writeStart := time.Now()
 		//err = redis_client.Set(k, marshalled_result, 0).Err()
 		_, ok := cli.EcSet(k, marshalled_result)
@@ -182,7 +182,7 @@ func doMap(
 		if !ok {
 			log.Fatal("ERROR while storing value in storage, key is \"%s\"", k)
 		}
-		log.Printf("storage WRITE END. Key: %s, storage Hostname: %s, Size: %f, Time: %d ms \n", k, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+		log.Printf("storage WRITE END. Key: %s, Size: %f, Time: %d ms \n", k, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 		end := time.Now()
 		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
