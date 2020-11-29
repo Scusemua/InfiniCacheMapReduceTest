@@ -173,7 +173,7 @@ func doMap(
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
 		start := time.Now()
-		log.Printf("storage WRITE START. Key: %s, Size: %f \n", k, float64(len(marshalled_result))/float64(1e6))
+		log.Printf("storage WRITE START. Key: \"%s\", Size: %f \n", k, float64(len(marshalled_result))/float64(1e6))
 		writeStart := time.Now()
 		//err = redis_client.Set(k, marshalled_result, 0).Err()
 		_, ok := cli.EcSet(k, marshalled_result)
@@ -182,7 +182,7 @@ func doMap(
 		if !ok {
 			log.Fatal("ERROR while storing value in storage, key is \"%s\"", k)
 		}
-		log.Printf("storage WRITE END. Key: %s, Size: %f, Time: %d ms \n", k, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", k, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 		end := time.Now()
 		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)

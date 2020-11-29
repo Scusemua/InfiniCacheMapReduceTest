@@ -280,9 +280,9 @@ func doReduce(
 			writeEnd := time.Since(start)
 			//checkError(err)
 			if !ok {
-				log.Fatal("ERROR while storing value in storage, key is \"%s\"", key)
+				log.Fatal("\n\nERROR while storing value in storage, key is \"%s\"", key)
 			}
-			log.Printf("storage WRITE CHUNK END. Chunk #: %d, Key: \"%s\", storage Hostname: %s, Size: %f, Time: %v ms \n", i, key, "127.0.0.1:6378", float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+			log.Printf("storage WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Size: %f, Time: %v ms \n", i, key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
@@ -307,7 +307,7 @@ func doReduce(
 		end := time.Now()
 		writeEnd := time.Since(start)
 
-		log.Printf("storage WRITE END. Key: %s, storage Hostname: %s, Size: %f, Time: %d ms \n", fileName, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+		log.Printf("storage WRITE END. Key: \"%s\", storage Hostname: %s, Size: %f, Time: %d ms \n", fileName, "127.0.0.1:6378", float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)

@@ -47,7 +47,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 		reader, ok := cli.Get(p)
 
 		//if err2 != nil {
-		if !ok {
+		if !ok == nil {
 			log.Printf("ERROR: Storage encountered exception for key \"%s\"...", p)
 			//log.Fatal(err2)
 		}
