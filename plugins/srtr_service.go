@@ -280,7 +280,7 @@ func doReduce(
 			writeEnd := time.Since(start)
 			//checkError(err)
 			if !ok {
-				log.Fatal("\n\nERROR while storing value in storage, key is \"%s\"", key)
+				log.Fatal("\n\nERROR while storing value in storage, key is: \"", key, "\"")
 			}
 			log.Printf("storage WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Size: %f, Time: %v ms \n", i, key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
@@ -292,7 +292,7 @@ func doReduce(
 		//err := redis_client.Set(fileName, num_chunks_serialized, 0).Err()
 		_, ok := cli.EcSet(fileName, num_chunks_serialized)
 		if !ok {
-			log.Fatal("ERROR while storing value in storage, key is \"%s\"", fileName)
+			log.Fatal("ERROR while storing value in storage, key is: \"", fileName, "\"")
 		}
 		checkError(err)
 	} else {
@@ -301,7 +301,7 @@ func doReduce(
 		//err := redis_client.Set(fileName, marshalled_result, 0).Err()
 		_, ok := cli.EcSet(fileName, marshalled_result)
 		if !ok {
-			log.Fatal("ERROR while storing value in storage, key is \"%s\"", fileName)
+			log.Fatal("ERROR while storing value in storage, key is key is: \"", fileName, "\"")
 		}
 		//checkError(err)
 		end := time.Now()

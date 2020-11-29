@@ -180,7 +180,7 @@ func doMap(
 		writeEnd := time.Since(writeStart)
 		//checkError(err)
 		if !ok {
-			log.Fatal("ERROR while storing value in storage, key is \"%s\"", k)
+			log.Fatal("ERROR while storing value in storage, key is: \"", k, "\"")
 		}
 		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", k, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 		end := time.Now()
