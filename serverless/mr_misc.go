@@ -41,22 +41,22 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 		p := MergeName(drv.jobName, i)
 		log.Printf("Merge: reading from InfiniStore: %s\n", p)
 
-		log.Printf("InfiniStore READ START. Key: \"%s\"", p)
+		log.Printf("InfiniStore READ START. Key: \"%s\"\n", p)
 		start := time.Now()
 		//result, err2 := redis_client.Get(p).Result()
 		reader, ok := cli.Get(p)
 
 		//if err2 != nil {
-		if !ok == nil {
-			log.Printf("ERROR: Storage encountered exception for key \"%s\"...", p)
-			//log.Fatal(err2)
+		if !ok || reader == nil {
+			log.Printf("ERROR: Storage encountered exception for key \"%s\".\n", p)
+			log.Fatal("Cannot create sorted file if data is missing.")
 		}
 
 		result, err2 := reader.ReadAll()
 		reader.Close()
 
 		if err2 != nil {
-			log.Printf("ERROR: Storage encountered exception when calling ReadAll for key \"%s\"...", p)
+			log.Printf("ERROR: Storage encountered exception when calling ReadAll for key \"%s\"...\n", p)
 			log.Fatal(err2)
 		}
 
@@ -77,35 +77,35 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 			if err != nil {
 				panic(err)
 			} else {
-				log.Println("Obtained integer for final result. Result must've been chunked.")
+				log.Println("Obtained integer for final result. Result must've been chunked.\n")
 
 				all_bytes := make([]byte, 0)
 				base_key := p + "-part"
 				for i := 0; i < res_int; i++ {
 					key := base_key + string(i)
 
-					log.Printf("storage READ CHUNK START. Key: \"%s\", Chunk #: %d.", key, i)
+					log.Printf("storage READ CHUNK START. Key: \"%s\", Chunk #: %d.\n", key, i)
 					chunkStart := time.Now()
 					//res, err2 := redis_client.Get(key).Result()
 					reader, ok := cli.Get(key)
 					if !ok {
-						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while retrieving chunks...", key)
+						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while retrieving chunks.\n", key)
 					}
 					res, err2 := reader.ReadAll()
 					reader.Close()
 					readDuration := time.Since(chunkStart)
 					if err2 != nil {
-						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while calling ReadAll...", key)
+						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while calling ReadAll.\n", key)
 						log.Fatal(err2)
 					}
 					checkError(err2)
 
-					log.Printf("storage READ CHUNK END. Key: \"%s\", Chunk #: %d, Bytes read: %f, Time: %d ms", key, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
+					log.Printf("storage READ CHUNK END. Key: \"%s\", Chunk #: %d, Bytes read: %f, Time: %d ms\n", key, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
 
 					all_bytes = append(all_bytes, []byte(res)...)
 				}
 
-				log.Println("Final size of all chunks combined together:", float64(len(all_bytes))/float64(1e6), "MB")
+				log.Println("Final size of all chunks combined together:\n", float64(len(all_bytes))/float64(1e6), "MB")
 
 				err = json.Unmarshal([]byte(all_bytes), &results)
 
@@ -113,14 +113,14 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					log.Fatal("Merge: ", err)
 					panic(err)
 				} else {
-					log.Println("Successfully retrieved data from storage!")
+					log.Println("Successfully retrieved data from storage!\n")
 					for _, kv := range results {
 						kvs[kv.Key] = kv.Value
 					}
 				}
 			}
 		} else {
-			log.Printf("storage READ END. Key: \"%s\", Bytes read: %f, Time: %d ms", p, float64(len(result))/float64(1e6), firstReadDuration.Nanoseconds()/1e6)
+			log.Printf("storage READ END. Key: \"%s\", Bytes read: %f, Time: %d ms\n", p, float64(len(result))/float64(1e6), firstReadDuration.Nanoseconds()/1e6)
 			for _, kv := range results {
 				kvs[kv.Key] = kv.Value
 			}
@@ -130,7 +130,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 	for k := range kvs {
 		keys = append(keys, k)
 	}
-	log.Println("There are", len(keys), "keys in the data retrieved from storage.")
+	log.Println("There are", len(keys), "keys in the data retrieved from storage.\n")
 	sort.Strings(keys)
 
 	file, err := os.Create("mr-final." + drv.jobName + ".out")
@@ -142,7 +142,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 		fmt.Fprintf(w, "%s\n", kvs[k])
 	}
 	since := time.Since(now)
-	log.Printf("Merge phase took %d ms.", since/1e6)
+	log.Printf("Merge phase took %d ms.\n", since/1e6)
 	w.Flush()
 	file.Close()
 }
