@@ -33,6 +33,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
 	//var addrList = "127.0.0.1:6378"
 	//addrArr := strings.Split(addrList, ",")
+	log.Printf("Creating storage client for IPs: %v\n", storageIps)
 	cli.Dial(storageIps)
 
 	kvs := make(map[string]string)
@@ -40,21 +41,22 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 		p := MergeName(drv.jobName, i)
 		log.Printf("Merge: reading from InfiniStore: %s\n", p)
 
-		log.Printf("InfiniStore READ START. Key: \"%s\", InfiniStore Hostname: %s.", p, "127.0.0.1:6378")
+		log.Printf("InfiniStore READ START. Key: \"%s\"", p)
 		start := time.Now()
 		//result, err2 := redis_client.Get(p).Result()
 		reader, ok := cli.Get(p)
-		result, err2 := reader.ReadAll()
-		reader.Close()
 
 		//if err2 != nil {
 		if !ok {
-			log.Printf("ERROR: InfiniStore @ %s encountered exception for key \"%s\"...", "127.0.0.1:6378", p)
+			log.Printf("ERROR: Storage encountered exception for key \"%s\"...", p)
 			//log.Fatal(err2)
 		}
 
+		result, err2 := reader.ReadAll()
+		reader.Close()
+
 		if err2 != nil {
-			log.Printf("ERROR: InfiniStore @ %s encountered exception when calling ReadAll for key \"%s\"...", "127.0.0.1:6378", p)
+			log.Printf("ERROR: Storage encountered exception when calling ReadAll for key \"%s\"...", p)
 			log.Fatal(err2)
 		}
 
@@ -63,7 +65,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 		var res_int int
 		results := make([]KeyValue, 0)
 
-		log.Println("Unmarshalling data retrieved from InfiniStore now...")
+		log.Println("Unmarshalling data retrieved from storage now...")
 
 		// Try to deserialize into a list of KeyValue. If it breaks, then try to deserialize to an int.
 		// If that works, then eveyrthing was chunked so grab all the pieces and combine them.
@@ -82,23 +84,23 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 				for i := 0; i < res_int; i++ {
 					key := base_key + string(i)
 
-					log.Printf("InfiniStore READ CHUNK START. Key: \"%s\", InfiniStore Hostname: %s, Chunk #: %d.", key, "127.0.0.1:6378", i)
+					log.Printf("storage READ CHUNK START. Key: \"%s\", Chunk #: %d.", key, i)
 					chunkStart := time.Now()
 					//res, err2 := redis_client.Get(key).Result()
 					reader, ok := cli.Get(key)
 					if !ok {
-						log.Printf("ERROR: InfiniStore @ %s encountered exception for key \"%s\". This occurred while retrieving chunks...", "127.0.0.1:6378", key)
+						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while retrieving chunks...", key)
 					}
 					res, err2 := reader.ReadAll()
 					reader.Close()
 					readDuration := time.Since(chunkStart)
 					if err2 != nil {
-						log.Printf("ERROR: InfiniStore @ %s encountered exception for key \"%s\". This occurred while calling ReadAll...", "127.0.0.1:6378", key)
+						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while calling ReadAll...", key)
 						log.Fatal(err2)
 					}
 					checkError(err2)
 
-					log.Printf("InfiniStore READ CHUNK END. Key: \"%s\", InfiniStore Hostname: %s, Chunk #: %d, Bytes read: %f, Time: %d ms", key, "127.0.0.1:6378", i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
+					log.Printf("storage READ CHUNK END. Key: \"%s\", Chunk #: %d, Bytes read: %f, Time: %d ms", key, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
 
 					all_bytes = append(all_bytes, []byte(res)...)
 				}
@@ -111,14 +113,14 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					log.Fatal("Merge: ", err)
 					panic(err)
 				} else {
-					log.Println("Successfully retrieved data from InfiniStore!")
+					log.Println("Successfully retrieved data from storage!")
 					for _, kv := range results {
 						kvs[kv.Key] = kv.Value
 					}
 				}
 			}
 		} else {
-			log.Printf("InfiniStore READ END. Key: \"%s\", InfiniStore Hostname: %s, Bytes read: %f, Time: %d ms", p, "127.0.0.1:6378", float64(len(result))/float64(1e6), firstReadDuration.Nanoseconds()/1e6)
+			log.Printf("storage READ END. Key: \"%s\", Bytes read: %f, Time: %d ms", p, float64(len(result))/float64(1e6), firstReadDuration.Nanoseconds()/1e6)
 			for _, kv := range results {
 				kvs[kv.Key] = kv.Value
 			}
@@ -128,7 +130,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 	for k := range kvs {
 		keys = append(keys, k)
 	}
-	log.Println("There are", len(keys), "keys in the data retrieved from InfiniStore.")
+	log.Println("There are", len(keys), "keys in the data retrieved from storage.")
 	sort.Strings(keys)
 
 	file, err := os.Create("mr-final." + drv.jobName + ".out")

@@ -303,6 +303,10 @@ def kill_go_processes(
     kill_command = "sudo ps aux | grep go | awk '{print $2}' | xargs kill -9 $1"
     execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
 
+def kill_proxies(ips, key_path = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"):
+    kill_command = "sudo ps aux | grep proxy | awk '{print $2}' | xargs kill -9 $1"
+    execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
+
 # lc.clear_redis_instances(flushall = True, hostnames = hostnames)
 def clear_redis_instances(
     flushall = False,
@@ -366,7 +370,7 @@ def update_lambdas_prefixed(ips, prefix = "CacheNode", key_path = "G:\\Documents
     for i in range(0, len(ips)):
         ip = ips[i]
         lambda_prefix = prefix + "{}-".format(i)
-        command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {}".format(random.randint(60, 70), lambda_prefix)
+        command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {}".format(random.randint(60, 80), lambda_prefix)
         print("Full command: {}".format(command))
         execute_command(
             command = command,
@@ -477,8 +481,8 @@ if __name__ == "__main__":
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt    
     #launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
     # ./start-client srt 36 sample_data.dat /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt 10 2 32 
-    # go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 36 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.69.186:6378 -storageIps 10.0.71.131:6378 -storageIps 10.0.64.89:6378 -storageIps 10.0.109.88:6378
-    # -storageIps 10.0.109.88 -storageIps 10.0.96.35 -storageIps 10.0.123.94 -storageIps 10.0.104.255
+    # go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 36 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.64.237:6378 -storageIps 10.0.69.5:6378 -storageIps 10.0.82.164:6378
+    # -storageIps 10.0.109.88 -storageIps 10.0.82.164 
     lc.launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
 
     lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
