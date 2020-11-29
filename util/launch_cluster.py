@@ -403,10 +403,10 @@ def format_proxy_config(proxy_ips : list) -> str:
     code_line = code_line + "}"
     return code_line
 
-def format_parameter_storage_list(ips : list, parameter_name : str) -> str:
+def format_parameter_storage_list(ips : list, port : int, parameter_name : str) -> str:
     param = ""
     for ip in ips:
-        param = param + "-{} {} ".format(parameter_name, ip)
+        param = param + "-{} {}:{} ".format(parameter_name, ip, port)
     return param
 
 def print_time():
@@ -447,7 +447,7 @@ if __name__ == "__main__":
 
     code_line = lc.format_proxy_config([client_ip_private] + worker_private_ips)
 
-    param = format_parameter_storage_list([client_ip_private] + worker_private_ips, "storageIps")
+    param = format_parameter_storage_list([client_ip_private] + worker_private_ips, 6378, "storageIps")
 
     print("Client IP: {}".format(client_ip))
     print("Client private IP: {}".format(client_ip_private))
@@ -477,7 +477,7 @@ if __name__ == "__main__":
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt    
     #launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
     # ./start-client srt 36 sample_data.dat /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt 10 2 32 
-    # go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 36 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.69.186 -storageIps 10.0.71.131 -storageIps 10.0.64.89 -storageIps 10.0.109.88
+    # go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 36 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.69.186:6378 -storageIps 10.0.71.131:6378 -storageIps 10.0.64.89:6378 -storageIps 10.0.109.88:6378
     # -storageIps 10.0.109.88 -storageIps 10.0.96.35 -storageIps 10.0.123.94 -storageIps 10.0.104.255
     lc.launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
 
