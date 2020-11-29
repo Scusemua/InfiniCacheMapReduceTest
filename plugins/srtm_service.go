@@ -136,7 +136,7 @@ func doMap(
 
 	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
-	log.Println("Creating storage client for IPs: %v", storageIPs)
+	log.Printf("Creating storage client for IPs: %v\n", storageIps)
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
 	// var addrList = "127.0.0.1:6378"
 	// addrArr := strings.Split(addrList, ",")
