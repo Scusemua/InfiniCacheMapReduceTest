@@ -181,13 +181,13 @@ func doReduce(
 	// 	WriteTimeout: 30 * time.Second,
 	// 	MaxRetries:   3,
 	// })
-	log.Println("Creating storage client for storage %v", storageIps)
+	log.Println("Creating storage client for storage ", storageIps)
 	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
 	// var addrList = "127.0.0.1:6378"
 	// addrArr := strings.Split(addrList, ",")
 	cli.Dial(storageIps)
 
-	log.Println("Successfully created storage client for storage")
+	log.Println("Successfully created storage client")
 
 	ioRecords := make([]IORecord, 0)
 
@@ -204,7 +204,7 @@ func doReduce(
 		log.Printf("storage READ START. Key: \"%s\", Reduce Task #: %d.", redisKey, reduceTaskNum)
 		//marshalled_result, err := redis_client.Get(redisKey).Result()
 		reader, ok := cli.Get(redisKey)
-		if !ok {
+		if !ok || reader == nil {
 			log.Printf("ERROR: Failed to retrieve data from storage with key \"%s\"", redisKey)
 			continue
 		}
