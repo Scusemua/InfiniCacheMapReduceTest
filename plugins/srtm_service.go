@@ -11,13 +11,13 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/cespare/xxhash"
+	"math/rand"
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
 	"io/ioutil"
@@ -187,7 +187,7 @@ func doMap(
 		log.Printf("md5 of key \"%s\": %v\n", k, md5.Sum([]byte(k)))
 
 		// Exponential backoff.
-		success := false 
+		success := false
 		for current_attempt := 0; current_attempt < 10; current_attempt++ {
 			log.Printf("Attempt %d/%d for key \"%s\".\n", current_attempt, 5, k)
 			_, ok := cli.EcSet(k, marshalled_result)
@@ -195,12 +195,11 @@ func doMap(
 			if !ok {
 				max_duration := (2 << current_attempt) - 1
 				duration := rand.Intn(max_duration + 1)
-				log.Printf("[ERROR] Failed to write key \"" + k + "\". Backing off for %d ms.\n", k, duration)
+				log.Printf("[ERROR] Failed to write key \"%s\". Backing off for %d ms.\n", k, duration)
 				time.Sleep(duration * time.Millisecond)
-			}
-			else {
+			} else {
 				log.Printf("Successfully wrote key \"%s\" on attempt %d.\n", k, current_attempt)
-				success = true 
+				success = true
 				break
 			}
 		}

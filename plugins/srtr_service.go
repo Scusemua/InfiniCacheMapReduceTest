@@ -352,11 +352,10 @@ func exponentialBackoffWrite(key : string, value : []byte, client : client.Clien
 	   if !ok {
 		  max_duration := (2 << current_attempt) - 1
 		  duration := rand.Intn(max_duration + 1)
-		  log.Printf("[ERROR] Failed to write key \"" + key + "\". Backing off for %d ms.\n", k, duration)
+		  log.Printf("[ERROR] Failed to write key \"%s\". Backing off for %d ms.\n", key, duration)
 		  time.Sleep(duration * time.Millisecond)
-	   }
-	   else {
-		  log.Printf("Successfully wrote key \"%s\" on attempt %d.\n", k, current_attempt)
+	   } else {
+		  log.Printf("Successfully wrote key \"%s\" on attempt %d.\n", key, current_attempt)
 		  success = true 
 		  break
 	   }
