@@ -4,11 +4,11 @@ import os
 
 if __name__ == "__main__":
    parser = argparse.ArgumentParser()
-   parser.add_argument("-start", "--starting_value", dest = "starting_value", type=int, default = 0)
-   parser.add_argument("-end", "--ending_value", dest = "ending_value", type = int, default = 1000)
-   parser.add_argument("-incr", "--increment", dest = "increment", type = int, default = 250)
-   parser.add_argument("-file", "--filename", dest = "filename", type = str, default = "part")
-   parser.add_argument("-threads", "--threads", dest = "threads", type = int, default = 1)
+   parser.add_argument("-start", "--starting_value", dest = "starting_value", type=int, help = "Value of the first key.", default = 0)
+   parser.add_argument("-end", "--ending_value", dest = "ending_value", type = int, help = "Value of the final key.", default = 1000)
+   parser.add_argument("-incr", "--increment", dest = "increment", type = int, help = "Generate the data in partitions of this size.", default = 250)
+   parser.add_argument("-file", "--filename", dest = "filename", type = str, help = "The prefix of the filename. The full name will be of the form <PREFIX>part-<x>-<y>-thru-<z>, where x identifies the chunk (chunk 1, chunk 2, etc.), y is the first key in this partition, and z is the last key in the partition.", default = "part")
+   parser.add_argument("-threads", "--threads", dest = "threads", type = int, help = "Number of threads to use when generating the data.", default = 1)
    
    args = parser.parse_args()
    starting_val = args.starting_value
