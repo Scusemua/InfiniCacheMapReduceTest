@@ -8,6 +8,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/md5"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -206,6 +207,7 @@ func doReduce(
 		log.Printf("storage READ START. Key: \"%s\", Reduce Task #: %d.", redisKey, reduceTaskNum)
 		//marshalled_result, err := redis_client.Get(redisKey).Result()
 		log.Printf("Hash of key \"%s\": %v\n", redisKey, xxhash.Sum64([]byte(redisKey)))
+		log.Printf("md5 of key \"%s\": %v\n", redisKey, md5.Sum([]byte(redisKey)))
 		reader, ok := cli.Get(redisKey)
 		if !ok || reader == nil {
 			log.Printf("ERROR: Failed to retrieve data from storage with key \"%s\"", redisKey)
@@ -279,6 +281,7 @@ func doReduce(
 			start := time.Now()
 			//err := redis_client.Set(key, chunk, 0).Err()
 			log.Printf("Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
+			log.Printf("md5 of key \"%s\": %v\n", key, md5.Sum([]byte(key)))
 			_, ok := cli.EcSet(key, chunk)
 			end := time.Now()
 			writeEnd := time.Since(start)
@@ -295,6 +298,7 @@ func doReduce(
 		checkError(err3)
 		//err := redis_client.Set(fileName, num_chunks_serialized, 0).Err()
 		log.Printf("Hash of key \"%s\": %v\n", fileName, xxhash.Sum64([]byte(fileName)))
+		log.Printf("md5 of key \"%s\": %v\n", fileName, md5.Sum([]byte(fileName)))
 		_, ok := cli.EcSet(fileName, num_chunks_serialized)
 		if !ok {
 			log.Fatal("ERROR while storing value in storage, key is: \"", fileName, "\"")
@@ -305,6 +309,7 @@ func doReduce(
 		start := time.Now()
 		//err := redis_client.Set(fileName, marshalled_result, 0).Err()
 		log.Printf("Hash of key \"%s\": %v\n", fileName, xxhash.Sum64([]byte(fileName)))
+		log.Printf("md5 of key \"%s\": %v\n", fileName, md5.Sum([]byte(fileName)))
 		_, ok := cli.EcSet(fileName, marshalled_result)
 		if !ok {
 			log.Fatal("ERROR while storing value in storage, key is key is: \"", fileName, "\"")

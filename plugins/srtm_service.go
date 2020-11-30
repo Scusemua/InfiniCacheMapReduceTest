@@ -7,6 +7,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/md5"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -179,6 +180,7 @@ func doMap(
 		writeStart := time.Now()
 		//err = redis_client.Set(k, marshalled_result, 0).Err()
 		log.Printf("Hash of key \"%s\": %v\n", k, xxhash.Sum64([]byte(k)))
+		log.Printf("md5 of key \"%s\": %v\n", k, md5.Sum([]byte(k)))
 		_, ok := cli.EcSet(k, marshalled_result)
 		writeEnd := time.Since(writeStart)
 		//checkError(err)

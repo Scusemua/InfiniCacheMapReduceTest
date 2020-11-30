@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	//"github.com/go-redis/redis/v7"
+	"crypto/md5"
 	"github.com/cespare/xxhash"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
@@ -47,6 +48,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 		start := time.Now()
 		//result, err2 := redis_client.Get(p).Result()
 		log.Printf("Hash of key \"%s\": %v\n", p, xxhash.Sum64([]byte(p)))
+		log.Printf("md5 of key \"%s\": %v\n", p, md5.Sum([]byte(p)))
 		reader, ok := cli.Get(p)
 
 		//if err2 != nil {
@@ -91,6 +93,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					chunkStart := time.Now()
 					//res, err2 := redis_client.Get(key).Result()
 					log.Printf("Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
+					log.Printf("md5 of key \"%s\": %v\n", key, md5.Sum([]byte(key)))
 					reader, ok := cli.Get(key)
 					if !ok {
 						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while retrieving chunks.\n", key)
