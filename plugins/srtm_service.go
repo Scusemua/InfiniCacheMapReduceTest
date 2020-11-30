@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"github.com/cespare/xxhash"
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/aws/aws-sdk-go/aws"
@@ -140,7 +141,7 @@ func doMap(
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
 	// var addrList = "127.0.0.1:6378"
 	// addrArr := strings.Split(addrList, ",")
-	cli.Dial(storageIPs)
+	cli.Dial(["10.0.109.88:6378", "10.0.121.202:6378"])
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
 	// 	Addr:         "127.0.0.1:6378",
@@ -176,6 +177,7 @@ func doMap(
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f \n", k, float64(len(marshalled_result))/float64(1e6))
 		writeStart := time.Now()
 		//err = redis_client.Set(k, marshalled_result, 0).Err()
+		log.Printf("Hash of key \"%s\": %v\n", k, xxhash.Sum64([]byte(k)))
 		_, ok := cli.EcSet(k, marshalled_result)
 		writeEnd := time.Since(writeStart)
 		//checkError(err)

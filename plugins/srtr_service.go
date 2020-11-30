@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"github.com/cespare/xxhash"
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	//"github.com/go-redis/redis/v7"
@@ -185,7 +186,7 @@ func doReduce(
 	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
 	// var addrList = "127.0.0.1:6378"
 	// addrArr := strings.Split(addrList, ",")
-	cli.Dial(storageIps)
+	cli.Dial(["10.0.109.88:6378", "10.0.121.202:6378"])
 
 	log.Println("Successfully created storage client")
 
@@ -203,6 +204,7 @@ func doReduce(
 		start := time.Now()
 		log.Printf("storage READ START. Key: \"%s\", Reduce Task #: %d.", redisKey, reduceTaskNum)
 		//marshalled_result, err := redis_client.Get(redisKey).Result()
+		log.Printf("Hash of key \"%s\": %v\n", redisKey, xxhash.Sum64([]byte(redisKey)))
 		reader, ok := cli.Get(redisKey)
 		if !ok || reader == nil {
 			log.Printf("ERROR: Failed to retrieve data from storage with key \"%s\"", redisKey)
@@ -275,6 +277,7 @@ func doReduce(
 			log.Printf("storage WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
 			start := time.Now()
 			//err := redis_client.Set(key, chunk, 0).Err()
+			log.Printf("Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
 			_, ok := cli.EcSet(key, chunk)
 			end := time.Now()
 			writeEnd := time.Since(start)
@@ -290,6 +293,7 @@ func doReduce(
 		num_chunks_serialized, err3 := json.Marshal(num_chunks)
 		checkError(err3)
 		//err := redis_client.Set(fileName, num_chunks_serialized, 0).Err()
+		log.Printf("Hash of key \"%s\": %v\n", fileName, xxhash.Sum64([]byte(fileName)))
 		_, ok := cli.EcSet(fileName, num_chunks_serialized)
 		if !ok {
 			log.Fatal("ERROR while storing value in storage, key is: \"", fileName, "\"")
@@ -299,6 +303,7 @@ func doReduce(
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
 		start := time.Now()
 		//err := redis_client.Set(fileName, marshalled_result, 0).Err()
+		log.Printf("Hash of key \"%s\": %v\n", fileName, xxhash.Sum64([]byte(fileName)))
 		_, ok := cli.EcSet(fileName, marshalled_result)
 		if !ok {
 			log.Fatal("ERROR while storing value in storage, key is key is: \"", fileName, "\"")

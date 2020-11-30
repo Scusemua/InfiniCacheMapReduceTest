@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"github.com/cespare/xxhash"
 	//"strings"
 	"time"
 )
@@ -34,7 +35,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 	//var addrList = "127.0.0.1:6378"
 	//addrArr := strings.Split(addrList, ",")
 	log.Printf("Creating storage client for IPs: %v\n", storageIps)
-	cli.Dial(storageIps)
+	cli.Dial(["10.0.109.88:6378", "10.0.121.202:6378"])
 
 	kvs := make(map[string]string)
 	for i := 0; i < drv.nReduce; i++ {
@@ -44,6 +45,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 		log.Printf("InfiniStore READ START. Key: \"%s\"\n", p)
 		start := time.Now()
 		//result, err2 := redis_client.Get(p).Result()
+		log.Printf("Hash of key \"%s\": %v\n", p, xxhash.Sum64([]byte(p)))
 		reader, ok := cli.Get(p)
 
 		//if err2 != nil {
@@ -87,6 +89,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					log.Printf("storage READ CHUNK START. Key: \"%s\", Chunk #: %d.\n", key, i)
 					chunkStart := time.Now()
 					//res, err2 := redis_client.Get(key).Result()
+					log.Printf("Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
 					reader, ok := cli.Get(key)
 					if !ok {
 						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while retrieving chunks.\n", key)
