@@ -174,6 +174,9 @@ func doReduce(
 	parityShards int,
 	maxEcGoroutines int,
 ) {
+	keyTest := "mr.srt-res-1"
+	fmt.Printf("[TEST] srtr doReduce -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
+
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
 	// 	Addr:         "127.0.0.1:6378",
@@ -348,6 +351,9 @@ func (s srtrService) DoService(raw []byte) error {
 		return err
 	}
 	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
+
+	keyTest := "mr.srt-res-1"
+	fmt.Printf("[TEST] srtr DoService -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
 
 	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines)
 

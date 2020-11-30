@@ -115,6 +115,9 @@ func doMap(
 	var s3KeyFile *os.File
 	var ioData *os.File
 
+	keyTest := "mr.srt-res-1"
+	fmt.Printf("[TEST] srtm doMap -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
+
 	// The session the S3 Downloader will use
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1")},
@@ -224,6 +227,9 @@ func (s srtmService) DoService(raw []byte) error {
 		return err
 	}
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
+
+	keyTest := "mr.srt-res-1"
+	fmt.Printf("[TEST] srtr DoService -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
 
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
 

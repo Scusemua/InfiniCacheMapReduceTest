@@ -22,6 +22,9 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 	Debug("Merge phase\n")
 	now := time.Now()
 
+	keyTest := "mr.srt-res-1"
+	fmt.Printf("[TEST] Merge Start -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
+
 	// redis_client := redis.NewClient(&redis.Options{
 	// 	Addr:         "127.0.0.1:6378",
 	// 	Password:     "",

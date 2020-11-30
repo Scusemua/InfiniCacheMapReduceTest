@@ -331,7 +331,7 @@ func (drv *Driver) run(
 	jobDuration := time.Since(jobStartTime)
 
 	log.Println("JOB END: ", jobEndTime.Format("2006-01-02 15:04:05:.99999"))
-	log.Printf("Job Duration: %f ms\n", jobDuration/1000000)
+	log.Printf("Job Duration: %v ms\n", jobDuration/1000000)
 
 	drv.doneChannel <- true
 }
