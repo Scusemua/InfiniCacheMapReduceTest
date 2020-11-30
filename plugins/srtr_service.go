@@ -184,11 +184,11 @@ func doReduce(
 	// 	MaxRetries:   3,
 	// })
 	//storageIps2 := []string{"10.0.109.88:6378", "10.0.121.202:6378"}
-	log.Println("Creating storage client for storage ", storageIPs)
+	log.Println("Creating storage client for storage ", storageIps)
 	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
 	// var addrList = "127.0.0.1:6378"
 	// addrArr := strings.Split(addrList, ",")
-	cli.Dial(storageIPs)
+	cli.Dial(storageIps)
 
 	log.Println("Successfully created storage client")
 
