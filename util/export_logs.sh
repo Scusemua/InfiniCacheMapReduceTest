@@ -3,6 +3,14 @@ LAMBDA="/aws/lambda/"
 FILE="log/"
 LOG_PREFIX="CacheNode"
 
+# Command-line Arguments
+# 1) Experimental Prefix
+# 2) Start time
+# 3) Stop time 
+# 4) From Lambda number
+# 5) To Lambda number
+# 6) Number of deployments to export.
+
 PREFIX=$1
 start=$2
 end=$3 
@@ -67,7 +75,7 @@ do
         # Try 3 times.
         for k in {0..2}
         do
-            echo "Exporting $LAMBDA$LOG_PREFIX$x-$i"
+            echo "Exporting $LAMBDA$LOG_PREFIX$x-$i, destination prefix $FILE$PREFIX$LOG_PREFIX$x-$i"
             aws logs create-export-task --log-group-name $LAMBDA$LOG_PREFIX$x-$i --from ${startTime} --to ${endTime} --destination "infinistore-logs" --destination-prefix $FILE$PREFIX$LOG_PREFIX$x-$i
             sleep 2s
 
