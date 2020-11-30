@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/cespare/xxhash"
+	"math/rand"
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
 	//infinicache "github.com/mason-leap-lab/infinicache/client"
@@ -317,7 +318,7 @@ func doReduce(
 		log.Printf("md5 of key \"%s\": %v\n", fileName, md5.Sum([]byte(fileName)))
 		//_, ok := cli.EcSet(fileName, marshalled_result)
 		success := exponentialBackoffWrite(fileName, marshalled_result, cli)
-		if !ok {
+		if !success {
 			log.Fatal("ERROR while storing value in storage with key \"", fileName, "\"")
 		}
 		//checkError(err)
@@ -343,11 +344,11 @@ func doReduce(
 	cli.Close()
 }
 
-func exponentialBackoffWrite(key string, value []byte, client client.Client) bool {
+func exponentialBackoffWrite(key string, value []byte, client *client.Client) bool {
 	success := false
 	for current_attempt := 0; current_attempt < 10; current_attempt++ {
 		log.Printf("Attempt %d/%d for key \"%s\".\n", current_attempt, 5, key)
-		_, ok := cli.EcSet(key, value)
+		_, ok := client.EcSet(key, value)
 
 		if !ok {
 			max_duration := (2 << uint(current_attempt)) - 1
