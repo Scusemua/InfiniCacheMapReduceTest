@@ -139,11 +139,11 @@ func doMap(
 	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
 	//storageIps2 := []string{"10.0.109.88:6378", "10.0.121.202:6378"}
-	log.Printf("Creating storage client for IPs: %v\n", storageIps)
+	log.Printf("Creating storage client for IPs: %v\n", storageIPs)
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
 	// var addrList = "127.0.0.1:6378"
 	// addrArr := strings.Split(addrList, ",")
-	cli.Dial(storageIps)
+	cli.Dial(storageIPs)
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
 	// 	Addr:         "127.0.0.1:6378",
