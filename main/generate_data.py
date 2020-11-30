@@ -35,4 +35,4 @@ if __name__ == "__main__":
 
    print("\n== S3 Keys ==")
    for s3_key in filenames:
-      print(s3_key)
+      print(s3_key + ".dat")
