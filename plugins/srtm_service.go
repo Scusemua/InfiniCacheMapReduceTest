@@ -9,13 +9,13 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"github.com/cespare/xxhash"
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/cespare/xxhash"
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
 	"io/ioutil"
@@ -141,7 +141,8 @@ func doMap(
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
 	// var addrList = "127.0.0.1:6378"
 	// addrArr := strings.Split(addrList, ",")
-	cli.Dial(["10.0.109.88:6378", "10.0.121.202:6378"])
+	addresses := []string{"10.0.109.88:6378", "10.0.121.202:6378"}
+	cli.Dial(addresses)
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
 	// 	Addr:         "127.0.0.1:6378",

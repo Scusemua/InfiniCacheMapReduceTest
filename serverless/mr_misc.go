@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	//"github.com/go-redis/redis/v7"
+	"github.com/cespare/xxhash"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
 	"os"
 	"sort"
-	"github.com/cespare/xxhash"
 	//"strings"
 	"time"
 )
@@ -35,7 +35,8 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 	//var addrList = "127.0.0.1:6378"
 	//addrArr := strings.Split(addrList, ",")
 	log.Printf("Creating storage client for IPs: %v\n", storageIps)
-	cli.Dial(["10.0.109.88:6378", "10.0.121.202:6378"])
+	addresses := []string{"10.0.109.88:6378", "10.0.121.202:6378"}
+	cli.Dial(addresses)
 
 	kvs := make(map[string]string)
 	for i := 0; i < drv.nReduce; i++ {

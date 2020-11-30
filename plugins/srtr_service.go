@@ -10,9 +10,9 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
-	"github.com/cespare/xxhash"
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+	"github.com/cespare/xxhash"
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
 	//infinicache "github.com/mason-leap-lab/infinicache/client"
@@ -186,7 +186,8 @@ func doReduce(
 	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
 	// var addrList = "127.0.0.1:6378"
 	// addrArr := strings.Split(addrList, ",")
-	cli.Dial(["10.0.109.88:6378", "10.0.121.202:6378"])
+	addresses := []string{"10.0.109.88:6378", "10.0.121.202:6378"}
+	cli.Dial(addresses)
 
 	log.Println("Successfully created storage client")
 
