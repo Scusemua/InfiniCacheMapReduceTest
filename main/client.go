@@ -46,6 +46,9 @@ func (i *arrayFlags) Set(value string) error {
 func main() {
 	log.Println("os.Args =", os.Args)
 
+	key := "mr.srt-res-1"
+	fmt.Printf("[TEST] Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
+
 	// Get command-line arguments.
 	driverHostname := flag.String("driverHostname", "127.0.0.1:1234", "The driver hostname and IP address.")
 	jobName := flag.String("jobName", "srt", "The name of the MapReduce job.")
