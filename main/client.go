@@ -15,7 +15,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+	"github.com/cespare/xxhash"
 	"io"
 	"log"
 	"os"
