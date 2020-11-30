@@ -193,7 +193,7 @@ func doMap(
 			_, ok := cli.EcSet(k, marshalled_result)
 
 			if !ok {
-				max_duration := (2 << current_attempt) - 1
+				max_duration := (2 << uint(current_attempt)) - 1
 				duration := rand.Intn(max_duration + 1)
 				log.Printf("[ERROR] Failed to write key \"%s\". Backing off for %d ms.\n", k, duration)
 				time.Sleep(duration * time.Millisecond)
