@@ -35,9 +35,9 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
 	//var addrList = "127.0.0.1:6378"
 	//addrArr := strings.Split(addrList, ",")
-	storageIps2 := []string{"10.0.109.88:6378", "10.0.121.202:6378"}
-	log.Printf("Creating storage client for IPs: %v\n", storageIps2)
-	cli.Dial(storageIps2)
+	//storageIps2 := []string{"10.0.109.88:6378", "10.0.121.202:6378"}
+	log.Printf("Creating storage client for IPs: %v\n", storageIPs)
+	cli.Dial(storageIPs)
 
 	kvs := make(map[string]string)
 	for i := 0; i < drv.nReduce; i++ {
