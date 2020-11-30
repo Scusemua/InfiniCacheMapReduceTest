@@ -268,7 +268,7 @@ def launch_infinistore_proxies(ips, key_path = "G:\\Documents\\School\\College\\
     # command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; export GOPATH=/home/ubuntu/project; make start-server"
     # command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export GOPATH=/home/ubuntu/project; make start-server"
     #command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/evaluation; export PATH=$PATH:/usr/local/go/bin; export GOPATH=/home/ubuntu/project; ./server.sh >./log 2>&1 &"
-    prefix = datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M')
+    prefix = datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M') + "/"
     
     # This starts the proxies successfully, but I get failures almost immediately during workload. May be entirely unrelated.
 
@@ -370,7 +370,7 @@ def update_lambdas_prefixed(ips, prefix = "CacheNode", key_path = "G:\\Documents
     for i in range(0, len(ips)):
         ip = ips[i]
         lambda_prefix = prefix + "{}-".format(i)
-        command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {}".format(random.randint(60, 80), lambda_prefix)
+        command = "cd /home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {}".format(random.randint(60, 100), lambda_prefix)
         print("Full command: {}".format(command))
         execute_command(
             command = command,
@@ -437,27 +437,34 @@ if __name__ == "__main__":
     public_ips, private_ips = get_ips()
     all_ips = public_ips + private_ips
     workers_per_vm = 3
-    NUM_CORES_PER_WORKER = 4
+    NUM_CORES_PER_WORKER = 5
     shards_per_vm = 1
     num_redis = 0
 
+    # If the Client IP appears first in the list.
     client_ip = public_ips[0]
     client_ip_private = private_ips[0]
     worker_ips = public_ips[1:]
     worker_private_ips = private_ips[1:]
+
+    # If the Client IP appears last in the list.
+    client_ip = public_ips[-1]
+    client_ip_private = private_ips[-1]
+    worker_ips = public_ips[:-1]
+    worker_private_ips = private_ips[:-1]
 
     subset_workers = worker_ips[0:2]
     code_line2 = lc.format_proxy_config([client_ip_private] + subset_workers)
 
     code_line = lc.format_proxy_config([client_ip_private] + worker_private_ips)
 
-    param = format_parameter_storage_list([client_ip_private] + worker_private_ips, 6378, "storageIps")
+    param = lc.format_parameter_storage_list([client_ip_private] + worker_private_ips, 6378, "storageIps")
 
     print("Client IP: {}".format(client_ip))
     print("Client private IP: {}".format(client_ip_private))
     print("Worker IP's ({}): {}".format(len(worker_ips), worker_ips))
     print("Worker private IP's ({}): {}".format(len(worker_private_ips), worker_private_ips))
-    print(code_line)
+    print(param)
 
     wondershape(ips = [client_ip] + worker_ips)
 
@@ -468,6 +475,7 @@ if __name__ == "__main__":
     lc.pull_from_github([client_ip] + worker_ips, reset_first = True)
     start_time = lc.print_time()
     experiment_prefix = lc.launch_infinistore_proxies(worker_ips + [client_ip])
+    experiment_prefix += "/" #TODO: Remove this next time, as the launch_infinistore_proxies will be updated.
     print("experiment_prefix = " + str(experiment_prefix))
 
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt
@@ -487,7 +495,7 @@ if __name__ == "__main__":
     lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
 
     #lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips[0:2], workers_per_vm = workers_per_vm, count_limit = 1)
-    end_time = print_time()
+    end_time = lc.print_time()
 
 # make stop-server
 
@@ -502,6 +510,6 @@ if __name__ == "__main__":
 # cd ../deploy
 # ./update_function.sh 607
 
-#go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 36 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.121.202:6378
+#go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.90.182:6378 -storageIps 10.0.85.195:6378 -storageIps 10.0.84.138:6378 -storageIps 10.0.95.169:6378 -storageIps 10.0.79.137:6378 -storageIps 10.0.72.120:6378 -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt 
 #go run $PWD/../proxy/proxy.go -debug=true -prefix=202011291702 -lambda-prefix=CacheNode0- -disable-color >./log 2>&1
 #go run $PWD/../proxy/proxy.go -debug=true -prefix=202011291702 -lambda-prefix=CacheNode1- -disable-color >./log 2>&1

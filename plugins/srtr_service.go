@@ -285,11 +285,12 @@ func doReduce(
 			//err := redis_client.Set(key, chunk, 0).Err()
 			log.Printf("Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
 			log.Printf("md5 of key \"%s\": %v\n", key, md5.Sum([]byte(key)))
-			_, ok := cli.EcSet(key, chunk)
+			//_, ok := cli.EcSet(key, chunk)
+			success := exponentialBackoffWrite(key, chunk, cli)
 			end := time.Now()
 			writeEnd := time.Since(start)
 			//checkError(err)
-			if !ok {
+			if !success {
 				log.Fatal("\n\nERROR while storing value in storage, key is: \"", key, "\"")
 			}
 			log.Printf("storage WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Size: %f, Time: %v ms \n", i, key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
@@ -302,8 +303,9 @@ func doReduce(
 		//err := redis_client.Set(fileName, num_chunks_serialized, 0).Err()
 		log.Printf("Hash of key \"%s\": %v\n", fileName, xxhash.Sum64([]byte(fileName)))
 		log.Printf("md5 of key \"%s\": %v\n", fileName, md5.Sum([]byte(fileName)))
-		_, ok := cli.EcSet(fileName, num_chunks_serialized)
-		if !ok {
+		//_, ok := cli.EcSet(fileName, num_chunks_serialized)
+		success := exponentialBackoffWrite(fileName, num_chunks_serialized, cli)
+		if !success {
 			log.Fatal("ERROR while storing value in storage, key is: \"", fileName, "\"")
 		}
 		checkError(err)
@@ -313,9 +315,10 @@ func doReduce(
 		//err := redis_client.Set(fileName, marshalled_result, 0).Err()
 		log.Printf("Hash of key \"%s\": %v\n", fileName, xxhash.Sum64([]byte(fileName)))
 		log.Printf("md5 of key \"%s\": %v\n", fileName, md5.Sum([]byte(fileName)))
-		_, ok := cli.EcSet(fileName, marshalled_result)
+		//_, ok := cli.EcSet(fileName, marshalled_result)
+		success := exponentialBackoffWrite(fileName, marshalled_result, cli)
 		if !ok {
-			log.Fatal("ERROR while storing value in storage, key is key is: \"", fileName, "\"")
+			log.Fatal("ERROR while storing value in storage with key \"", fileName, "\"")
 		}
 		//checkError(err)
 		end := time.Now()
@@ -338,6 +341,28 @@ func doReduce(
 	// Close all of the Redis clients now that we're
 	//redis_client.Close()
 	cli.Close()
+}
+
+func exponentialBackoffWrite(key : string, value : []byte, client : client.Client) bool {
+	success := false 
+	for current_attempt := 0; current_attempt < 10; current_attempt++ {
+	   log.Printf("Attempt %d/%d for key \"%s\".\n", current_attempt, 5, key)
+	   _, ok := cli.EcSet(key, value)
+	
+	   if !ok {
+		  max_duration := (2 << current_attempt) - 1
+		  duration := rand.Intn(max_duration + 1)
+		  log.Printf("[ERROR] Failed to write key \"" + key + "\". Backing off for %d ms.\n", k, duration)
+		  time.Sleep(duration * time.Millisecond)
+	   }
+	   else {
+		  log.Printf("Successfully wrote key \"%s\" on attempt %d.\n", k, current_attempt)
+		  success = true 
+		  break
+	   }
+	}
+
+	return success
 }
 
 // DON'T MODIFY THIS FUNCTION

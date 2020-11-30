@@ -11,6 +11,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -184,12 +185,31 @@ func doMap(
 		//err = redis_client.Set(k, marshalled_result, 0).Err()
 		log.Printf("Hash of key \"%s\": %v\n", k, xxhash.Sum64([]byte(k)))
 		log.Printf("md5 of key \"%s\": %v\n", k, md5.Sum([]byte(k)))
-		_, ok := cli.EcSet(k, marshalled_result)
-		writeEnd := time.Since(writeStart)
-		//checkError(err)
-		if !ok {
-			log.Fatal("ERROR while storing value in storage, key is: \"", k, "\"")
+
+		// Exponential backoff.
+		success := false 
+		for current_attempt := 0; current_attempt < 10; current_attempt++ {
+			log.Printf("Attempt %d/%d for key \"%s\".\n", current_attempt, 5, k)
+			_, ok := cli.EcSet(k, marshalled_result)
+
+			if !ok {
+				max_duration := (2 << current_attempt) - 1
+				duration := rand.Intn(max_duration + 1)
+				log.Printf("[ERROR] Failed to write key \"" + k + "\". Backing off for %d ms.\n", k, duration)
+				time.Sleep(duration * time.Millisecond)
+			}
+			else {
+				log.Printf("Successfully wrote key \"%s\" on attempt %d.\n", k, current_attempt)
+				success = true 
+				break
+			}
 		}
+
+		if !success {
+			log.Fatal("Failed to write key \"%s\" to storage in minimum number of attempts.")
+		}
+
+		writeEnd := time.Since(writeStart)
 		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", k, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 		end := time.Now()
 		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}

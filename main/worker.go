@@ -204,7 +204,7 @@ loop:
 // The main entrance of worker.go
 func main() {
 	key := "mr.srt-res-1"
-	fmt.Printf("[TEST] Client Start -- Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
+	fmt.Printf("[TEST] Worker Start -- Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
 
 	wk := new(Worker)
 	wk.address = os.Args[1]               // the 1st cmd-line argument: worker hostname and ip addr
