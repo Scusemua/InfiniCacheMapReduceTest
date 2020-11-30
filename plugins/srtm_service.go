@@ -196,7 +196,7 @@ func doMap(
 				max_duration := (2 << uint(current_attempt)) - 1
 				duration := rand.Intn(max_duration + 1)
 				log.Printf("[ERROR] Failed to write key \"%s\". Backing off for %d ms.\n", k, duration)
-				time.Sleep(duration * time.Millisecond)
+				time.Sleep(time.Duration(duration) * time.Millisecond)
 			} else {
 				log.Printf("Successfully wrote key \"%s\" on attempt %d.\n", k, current_attempt)
 				success = true

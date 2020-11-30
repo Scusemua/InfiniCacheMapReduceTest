@@ -343,22 +343,22 @@ func doReduce(
 	cli.Close()
 }
 
-func exponentialBackoffWrite(key : string, value : []byte, client : client.Client) bool {
-	success := false 
+func exponentialBackoffWrite(key string, value []byte, client client.Client) bool {
+	success := false
 	for current_attempt := 0; current_attempt < 10; current_attempt++ {
-	   log.Printf("Attempt %d/%d for key \"%s\".\n", current_attempt, 5, key)
-	   _, ok := cli.EcSet(key, value)
-	
-	   if !ok {
-		  max_duration := (2 << uint(current_attempt)) - 1
-		  duration := rand.Intn(max_duration + 1)
-		  log.Printf("[ERROR] Failed to write key \"%s\". Backing off for %d ms.\n", key, duration)
-		  time.Sleep(time.Duration(duration) * time.Millisecond)
-	   } else {
-		  log.Printf("Successfully wrote key \"%s\" on attempt %d.\n", key, current_attempt)
-		  success = true 
-		  break
-	   }
+		log.Printf("Attempt %d/%d for key \"%s\".\n", current_attempt, 5, key)
+		_, ok := cli.EcSet(key, value)
+
+		if !ok {
+			max_duration := (2 << uint(current_attempt)) - 1
+			duration := rand.Intn(max_duration + 1)
+			log.Printf("[ERROR] Failed to write key \"%s\". Backing off for %d ms.\n", key, duration)
+			time.Sleep(time.Duration(duration) * time.Millisecond)
+		} else {
+			log.Printf("Successfully wrote key \"%s\" on attempt %d.\n", key, current_attempt)
+			success = true
+			break
+		}
 	}
 
 	return success
