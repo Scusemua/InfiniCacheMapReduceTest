@@ -17,6 +17,8 @@ if __name__ == "__main__":
    filename = args.filename 
    threads = args.threads
    
+   filenames = []
+
    counter = 0
    for i in range(starting_val, ending_val, increment):
       full_filename = "{}part{}-{}-thru-{}".format(filename, counter, i, i + increment)
@@ -24,8 +26,13 @@ if __name__ == "__main__":
       counter = counter + 1
       print("Executing command: {}".format(command))
       os.system(command)
+      filenames.append(full_filename)
    
    full_filename = "{}merged-{}-thru-{}".format(filename, 0, ending_val)
    command = "gensort -a -b0 {} {}.dat".format(ending_val, full_filename)
    print("Executing command: {}".format(command))
    os.system(command)   
+
+   print("\n== S3 Keys ==")
+   for s3_key in filenames:
+      print(s3_key)
