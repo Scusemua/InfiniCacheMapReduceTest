@@ -7,7 +7,7 @@ import (
 	//"github.com/go-redis/redis/v7"
 	"crypto/md5"
 	"github.com/cespare/xxhash"
-	"github.com/mason-leap-lab/infinicache/reader"
+	"github.com/mason-leap-lab/infinicache/client"
 	"log"
 	"os"
 	"sort"
