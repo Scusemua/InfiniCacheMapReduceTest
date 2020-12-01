@@ -261,7 +261,7 @@ func (drv *Driver) Wait() {
 
 // run executes tasks.
 //
-// First, it registers the compiled plugin service library at the
+// First, it registeFrs the compiled plugin service library at the
 // remote worker side.  Second, it schedules tasks (the just
 // registered plugin service) on remote workers.  Last, it wraps up
 // by killing remote workers and shut down itself.
@@ -324,13 +324,19 @@ func (drv *Driver) run(
 	log.Printf("Reduce phase duration: %f ms", reducePhaseDuration.Nanoseconds()/1e6)
 	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %f ms", mapReduceDuration.Nanoseconds()/1e6)
 
-	//drv.merge(redisHostnames, dataShards, parityShards, maxGoRoutines)
+	startOfMerge := time.Now()
 	drv.merge(storageIps, dataShards, parityShards, maxGoRoutines)
+	mergePhaseDuration := time.Since(startOfMerge)
 
 	jobEndTime := time.Now()
 	jobDuration := time.Since(jobStartTime)
 
 	log.Println("JOB END: ", jobEndTime.Format("2006-01-02 15:04:05:.99999"))
+
+	log.Printf("Map phase duration: %f ms\n", mapPhaseDuration.Nanoseconds()/1e6)
+	log.Printf("Reduce phase duration: %f ms", reducePhaseDuration.Nanoseconds()/1e6)
+	log.Printf("Merge phase duration: %f ms", mergePhaseDuration.Nanoseconds()/1e6)
+	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %f ms", mapReduceDuration.Nanoseconds()/1e6)
 	log.Printf("Job Duration: %v ms\n", jobDuration/1000000)
 
 	drv.doneChannel <- true
