@@ -226,7 +226,7 @@ func doReduce(
 				log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
 				time.Sleep(time.Duration(duration) * time.Millisecond)
 			} else {
-				log.Printf("Successfully ")
+				log.Printf("Successfully read data with key \"%s\" on attempt %d.\n", dataKey, current_attempt)
 				success = true
 				break
 			}
