@@ -217,7 +217,7 @@ func doReduce(
 		success := false
 		// Exponential backoff.
 		for current_attempt := 0; current_attempt < 10; current_attempt++ {
-			readAllCloser, ok = cli.Get(dataKey)
+			readAllCloser, ok := cli.Get(dataKey)
 
 			// Check for failure, and backoff exponentially on-failure.
 			if !ok || readAllCloser == nil {
