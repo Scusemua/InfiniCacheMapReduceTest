@@ -9,6 +9,7 @@ import (
 	"github.com/cespare/xxhash"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
+	"math/rand"
 	"os"
 	"sort"
 	//"strings"
@@ -164,13 +165,13 @@ func readExponentialBackoff(key string, cli *client.Client) client.ReadAllCloser
 	success := false
 	// Exponential backoff.
 	for current_attempt := 0; current_attempt < 10; current_attempt++ {
-		readAllCloser, ok = cli.Get(dataKey)
+		readAllCloser, ok := cli.Get(key)
 
 		// Check for failure, and backoff exponentially on-failure.
 		if !ok || readAllCloser == nil {
 			max_duration := (2 << uint(current_attempt)) - 1
 			duration := rand.Intn(max_duration + 1)
-			log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
+			log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", key, duration)
 			time.Sleep(time.Duration(duration) * time.Millisecond)
 		} else {
 			log.Printf("Successfully ")
