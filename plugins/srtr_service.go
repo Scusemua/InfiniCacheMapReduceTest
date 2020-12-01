@@ -214,10 +214,11 @@ func doReduce(
 		log.Printf("md5 of key \"%s\": %v\n", dataKey, md5.Sum([]byte(dataKey)))
 
 		var readAllCloser client.ReadAllCloser
+		var ok bool
 		success := false
 		// Exponential backoff.
 		for current_attempt := 0; current_attempt < 10; current_attempt++ {
-			readAllCloser, ok := cli.Get(dataKey)
+			readAllCloser, ok = cli.Get(dataKey)
 
 			// Check for failure, and backoff exponentially on-failure.
 			if !ok || readAllCloser == nil {
@@ -232,7 +233,7 @@ func doReduce(
 			}
 		}
 
-		if !success || readAllCloser == nil {
+		if !success {
 			log.Fatal("ERROR: Failed to retrieve data from storage with key \"" + dataKey + "\" in allotted number of attempts.\n")
 		}
 

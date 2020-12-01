@@ -162,10 +162,11 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 func readExponentialBackoff(key string, cli *client.Client) (client.ReadAllCloser, bool) {
 	var readAllCloser client.ReadAllCloser
+	var ok bool
 	success := false
 	// Exponential backoff.
 	for current_attempt := 0; current_attempt < 10; current_attempt++ {
-		readAllCloser, ok := cli.Get(key)
+		readAllCloser, ok = cli.Get(key)
 
 		// Check for failure, and backoff exponentially on-failure.
 		if !ok || readAllCloser == nil {
