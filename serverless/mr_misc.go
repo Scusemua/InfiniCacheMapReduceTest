@@ -54,10 +54,10 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 		log.Printf("Hash of key \"%s\": %v\n", p, xxhash.Sum64([]byte(p)))
 		log.Printf("md5 of key \"%s\": %v\n", p, md5.Sum([]byte(p)))
 		//reader, ok := cli.Get(p)
-		reader := readExponentialBackoff(p, cli)
+		reader, success := readExponentialBackoff(p, cli)
 
 		//if err2 != nil {
-		if reader == nil {
+		if reader == nil || !success {
 			log.Printf("ERROR: Storage encountered exception for key \"%s\".\n", p)
 			log.Fatal("Cannot create sorted file if data is missing.")
 		}
@@ -100,8 +100,8 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					log.Printf("Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
 					log.Printf("md5 of key \"%s\": %v\n", key, md5.Sum([]byte(key)))
 					//reader, ok := cli.Get(key)
-					reader := readExponentialBackoff(key, cli)
-					if reader == nil {
+					reader, success := readExponentialBackoff(key, cli)
+					if reader == nil || !success {
 						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while retrieving chunks.\n", key)
 					}
 					res, err2 := reader.ReadAll()
@@ -160,7 +160,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 	file.Close()
 }
 
-func readExponentialBackoff(key string, cli *client.Client) client.ReadAllCloser {
+func readExponentialBackoff(key string, cli *client.Client) (client.ReadAllCloser, bool) {
 	var readAllCloser client.ReadAllCloser
 	success := false
 	// Exponential backoff.
@@ -180,5 +180,5 @@ func readExponentialBackoff(key string, cli *client.Client) client.ReadAllCloser
 		}
 	}
 
-	return readAllCloser
+	return readAllCloser, success
 }
