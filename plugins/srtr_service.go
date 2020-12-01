@@ -17,7 +17,6 @@ import (
 	"math/rand"
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
-	"github.com/mason-leap-lab/infinicache/reader"
 	//infinicache "github.com/mason-leap-lab/infinicache/client"
 	//"io"
 	"log"
@@ -214,7 +213,7 @@ func doReduce(
 		log.Printf("Hash of key \"%s\": %v\n", dataKey, xxhash.Sum64([]byte(dataKey)))
 		log.Printf("md5 of key \"%s\": %v\n", dataKey, md5.Sum([]byte(dataKey)))
 
-		var readAllCloser reader.ReadAllCloser
+		var readAllCloser client.ReadAllCloser
 		success := false
 		// Exponential backoff.
 		for current_attempt := 0; current_attempt < 10; current_attempt++ {

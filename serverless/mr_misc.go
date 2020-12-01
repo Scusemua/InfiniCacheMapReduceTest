@@ -7,7 +7,6 @@ import (
 	//"github.com/go-redis/redis/v7"
 	"crypto/md5"
 	"github.com/cespare/xxhash"
-	"github.com/mason-leap-lab/infinicache/client"
 	"github.com/mason-leap-lab/infinicache/reader"
 	"log"
 	"os"
@@ -160,8 +159,8 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 	file.Close()
 }
 
-func readExponentialBackoff(key string, cli *client.Client) reader.ReadAllCloser {
-	var readAllCloser reader.ReadAllCloser
+func readExponentialBackoff(key string, cli *client.Client) client.ReadAllCloser {
+	var readAllCloser client.ReadAllCloser
 	success := false
 	// Exponential backoff.
 	for current_attempt := 0; current_attempt < 10; current_attempt++ {
