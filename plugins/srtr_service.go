@@ -17,6 +17,7 @@ import (
 	"math/rand"
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
+	"github.com/mason-leap-lab/infinicache/reader"
 	//infinicache "github.com/mason-leap-lab/infinicache/client"
 	//"io"
 	"log"
@@ -204,31 +205,50 @@ func doReduce(
 		// nMap is the number of Map tasks (i.e., the number of S3 keys or # of initial data partitions).
 		// So the variable i here refers to the associated Map task/initial data partition, or where
 		// the data we're processing came from, essentially.
-		redisKey := serverless.ReduceName(jobName, i, reduceTaskNum)
+		dataKey := serverless.ReduceName(jobName, i, reduceTaskNum)
 
 		var kvs []KeyValue
 		start := time.Now()
-		log.Printf("storage READ START. Key: \"%s\", Reduce Task #: %d.", redisKey, reduceTaskNum)
-		//marshalled_result, err := redis_client.Get(redisKey).Result()
-		log.Printf("Hash of key \"%s\": %v\n", redisKey, xxhash.Sum64([]byte(redisKey)))
-		log.Printf("md5 of key \"%s\": %v\n", redisKey, md5.Sum([]byte(redisKey)))
-		reader, ok := cli.Get(redisKey)
-		if !ok || reader == nil {
-			log.Printf("ERROR: Failed to retrieve data from storage with key \"%s\"", redisKey)
-			continue
+		log.Printf("storage READ START. Key: \"%s\", Reduce Task #: %d.", dataKey, reduceTaskNum)
+		//marshalled_result, err := redis_client.Get(dataKey).Result()
+		log.Printf("Hash of key \"%s\": %v\n", dataKey, xxhash.Sum64([]byte(dataKey)))
+		log.Printf("md5 of key \"%s\": %v\n", dataKey, md5.Sum([]byte(dataKey)))
+
+		var readAllCloser reader.ReadAllCloser
+		success := false
+		// Exponential backoff.
+		for current_attempt := 0; current_attempt < 10; current_attempt++ {
+			readAllCloser, ok = cli.Get(dataKey)
+
+			// Check for failure, and backoff exponentially on-failure.
+			if !ok || readAllCloser == nil {
+				max_duration := (2 << uint(current_attempt)) - 1
+				duration := rand.Intn(max_duration + 1)
+				log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
+				time.Sleep(time.Duration(duration) * time.Millisecond)
+			} else {
+				log.Printf("Successfully ")
+				success = true
+				break
+			}
 		}
-		marshalled_result, err := reader.ReadAll()
-		reader.Close()
-		if (err != nil) || (!ok) {
-			log.Printf("ERROR: storage encountered exception for key \"%s\"...", "addr", redisKey)
-			log.Printf("ERROR: Just skipping the key \"%s\"...", redisKey)
+
+		if !success {
+			log.Fatal("ERROR: Failed to retrieve data from storage with key \"" + dataKey + "\" in allotted number of attempts.\n")
+		}
+
+		marshalled_result, err := readAllCloser.ReadAll()
+		readAllCloser.Close()
+		if err != nil {
+			log.Printf("ERROR: storage encountered exception for key \"%s\"...", "addr", dataKey)
+			log.Printf("ERROR: Just skipping the key \"%s\"...", dataKey)
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			continue
 		}
 		end := time.Now()
 		readDuration := time.Since(start)
-		log.Printf("storage READ END. Key: \"%s\", Reduce Task #: %d, Bytes read: %f, Time: %d ms", redisKey, reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
-		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: redisKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
+		log.Printf("storage READ END. Key: \"%s\", Reduce Task #: %d, Bytes read: %f, Time: %d ms", dataKey, reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 		json.Unmarshal([]byte(marshalled_result), &kvs)
 		for _, kv := range kvs {
@@ -344,11 +364,11 @@ func doReduce(
 	cli.Close()
 }
 
-func exponentialBackoffWrite(key string, value []byte, client *client.Client) bool {
+func exponentialBackoffWrite(key string, value []byte, cli *client.Client) bool {
 	success := false
 	for current_attempt := 0; current_attempt < 10; current_attempt++ {
 		log.Printf("Attempt %d/%d for key \"%s\".\n", current_attempt, 5, key)
-		_, ok := client.EcSet(key, value)
+		_, ok := cli.EcSet(key, value)
 
 		if !ok {
 			max_duration := (2 << uint(current_attempt)) - 1

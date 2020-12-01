@@ -52,7 +52,8 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 		//result, err2 := redis_client.Get(p).Result()
 		log.Printf("Hash of key \"%s\": %v\n", p, xxhash.Sum64([]byte(p)))
 		log.Printf("md5 of key \"%s\": %v\n", p, md5.Sum([]byte(p)))
-		reader, ok := cli.Get(p)
+		//reader, ok := cli.Get(p)
+		reader := readExponentialBackoff(p, cli)
 
 		//if err2 != nil {
 		if !ok || reader == nil {
@@ -97,7 +98,8 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					//res, err2 := redis_client.Get(key).Result()
 					log.Printf("Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
 					log.Printf("md5 of key \"%s\": %v\n", key, md5.Sum([]byte(key)))
-					reader, ok := cli.Get(key)
+					//reader, ok := cli.Get(key)
+					reader := readExponentialBackoff(key, cli)
 					if !ok {
 						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while retrieving chunks.\n", key)
 					}
@@ -155,4 +157,27 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 	log.Printf("Merge phase took %d ms.\n", since/1e6)
 	w.Flush()
 	file.Close()
+}
+
+func readExponentialBackoff(key string, cli *client.Client) reader.ReadAllCloser {
+	var readAllCloser reader.ReadAllCloser
+	success := false
+	// Exponential backoff.
+	for current_attempt := 0; current_attempt < 10; current_attempt++ {
+		readAllCloser, ok = cli.Get(dataKey)
+
+		// Check for failure, and backoff exponentially on-failure.
+		if !ok || readAllCloser == nil {
+			max_duration := (2 << uint(current_attempt)) - 1
+			duration := rand.Intn(max_duration + 1)
+			log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
+			time.Sleep(time.Duration(duration) * time.Millisecond)
+		} else {
+			log.Printf("Successfully ")
+			success = true
+			break
+		}
+	}
+
+	return readAllCloser
 }
