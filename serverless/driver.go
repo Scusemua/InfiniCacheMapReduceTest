@@ -84,7 +84,7 @@ func getSampleKeys(sampleFileS3Key string, nReduce int) []string {
 
 		downloadDuration := time.Since(now)
 
-		log.Printf("File %s downloaded, %d bytes, time elapsed = %d ms\n", sampleFileS3Key, n, downloadDuration/1e6)
+		log.Printf("File %s downloaded, %d bytes, time elapsed = %d\n", sampleFileS3Key, n, downloadDuration)
 	} else {
 		log.Printf("Sample file \"%s\" DOES exist locally.", sampleFileS3Key)
 		s3KeyFile, err = os.Open(sampleFileS3Key)
@@ -303,7 +303,7 @@ func (drv *Driver) run(
 	endOfMap := time.Now()
 	mapPhaseDuration := time.Since(jobStartTime)
 
-	log.Printf("Map phase duration: %f ms\n", float64(mapPhaseDuration.Nanoseconds()/1e6))
+	log.Printf("Map phase duration: %v\n", float64(mapPhaseDuration.Milliseconds()))
 
 	// E.g., for word count, the name of the reduce plugin service
 	// module would be 'wcr_service'; for inverted indexing, the name
@@ -314,15 +314,15 @@ func (drv *Driver) run(
 	reducePhaseDuration := time.Since(endOfMap)
 	mapReduceDuration := time.Since(jobStartTime)
 
-	log.Printf("Map phase duration: %f ms\n", mapPhaseDuration.Nanoseconds()/1e6)
-	log.Printf("Reduce phase duration: %f ms", reducePhaseDuration.Nanoseconds()/1e6)
-	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %f ms", mapReduceDuration.Nanoseconds()/1e6)
+	log.Printf("Map phase duration: %v\n", mapPhaseDuration.Milliseconds())
+	log.Printf("Reduce phase duration: %v", reducePhaseDuration.Milliseconds())
+	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %v", mapReduceDuration.Milliseconds())
 
 	finish()
 
-	log.Printf("Map phase duration: %f ms\n", mapPhaseDuration.Nanoseconds()/1e6)
-	log.Printf("Reduce phase duration: %f ms", reducePhaseDuration.Nanoseconds()/1e6)
-	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %f ms", mapReduceDuration.Nanoseconds()/1e6)
+	log.Printf("Map phase duration: %v\n", mapPhaseDuration.Milliseconds())
+	log.Printf("Reduce phase duration: %v", reducePhaseDuration.Milliseconds())
+	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %v", mapReduceDuration.Milliseconds())
 
 	startOfMerge := time.Now()
 	drv.merge(storageIps, dataShards, parityShards, maxGoRoutines)
@@ -333,11 +333,11 @@ func (drv *Driver) run(
 
 	log.Println("JOB END: ", jobEndTime.Format("2006-01-02 15:04:05:.99999"))
 
-	log.Printf("Map phase duration: %f ms\n", mapPhaseDuration.Nanoseconds()/1e6)
-	log.Printf("Reduce phase duration: %f ms", reducePhaseDuration.Nanoseconds()/1e6)
-	log.Printf("Merge phase duration: %f ms", mergePhaseDuration.Nanoseconds()/1e6)
-	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %f ms", mapReduceDuration.Nanoseconds()/1e6)
-	log.Printf("Job Duration: %v ms\n", jobDuration/1000000)
+	log.Printf("Map phase duration: %v\n", mapPhaseDuration.Milliseconds())
+	log.Printf("Reduce phase duration: %v", reducePhaseDuration.Milliseconds())
+	log.Printf("Merge phase duration: %v", mergePhaseDuration.Milliseconds())
+	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %v", mapReduceDuration.Milliseconds())
+	log.Printf("Job Duration: %v\n", jobDuration.Milliseconds())
 
 	drv.doneChannel <- true
 }
@@ -393,7 +393,7 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 	end := time.Now()
 	elapsed := end.Sub(start)
 
-	log.Printf("Driver generating sample keys took %d ms.", elapsed/1e6)
+	log.Printf("Driver generating sample keys took %d.", elapsed)
 	log.Printf("Sample keys: %s\n", strings.Join(sampleKeys, ","))
 
 	log.Printf("Number of S3 keys: %d\n", len(s3Keys))
