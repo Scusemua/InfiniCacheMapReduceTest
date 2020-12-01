@@ -50,13 +50,13 @@ func (drv *Driver) schedule(
 	// The jobChan is a queue of jobs to be exected. Allows failed jobs to
 	// be requeued by invokeService when they fail
 	var nTasks int
-	var jobChan chan *serverless.MapReduceArgs
+	var jobChan chan *MapReduceArgs
 	Debug("Driver: Creating jobs. nTasks: %d\n", len(drv.s3Keys))
 	if phase == mapPhase {
 		nTasks = len(drv.s3Keys)
-		jobChan = make(chan *serverless.MapReduceArgs, nTasks)
+		jobChan = make(chan *MapReduceArgs, nTasks)
 		for i, fileName := range drv.s3Keys {
-			arg := new(serverless.MapReduceArgs)
+			arg := new(MapReduceArgs)
 			arg.TaskNum = i
 			arg.JobName = serviceName
 			arg.S3Key = string(fileName)
@@ -71,9 +71,9 @@ func (drv *Driver) schedule(
 		}
 	} else {
 		nTasks = drv.nReduce
-		jobChan = make(chan *serverless.MapReduceArgs, nTasks)
+		jobChan = make(chan *MapReduceArgs, nTasks)
 		for i := 0; i < nTasks; i++ {
-			arg := new(serverless.MapReduceArgs)
+			arg := new(MapReduceArgs)
 			arg.TaskNum = i
 			arg.JobName = serviceName
 			arg.NReduce = drv.nReduce
@@ -100,7 +100,7 @@ func (drv *Driver) schedule(
 
 	// invokeService is a goroutine that is used to call the RPC
 	// method of Worker.InvokeService at the worker side.
-	invokeService := func(worker string, args *serverless.MapReduceArgs) {
+	invokeService := func(worker string, args *MapReduceArgs) {
 		var buf bytes.Buffer
 
 		log.Printf("Schedule: scheduling %s task #%d onto worker %s now...", phase, args.TaskNum, worker)
