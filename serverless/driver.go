@@ -303,7 +303,7 @@ func (drv *Driver) run(
 	endOfMap := time.Now()
 	mapPhaseDuration := time.Since(jobStartTime)
 
-	log.Printf("Map phase duration: %v ms\n", time.Duration(mapPhaseDuration.Nanoseconds())*time.Millisecond)
+	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration/1e6)
 
 	// E.g., for word count, the name of the reduce plugin service
 	// module would be 'wcr_service'; for inverted indexing, the name
@@ -314,15 +314,15 @@ func (drv *Driver) run(
 	reducePhaseDuration := time.Since(endOfMap)
 	mapReduceDuration := time.Since(jobStartTime)
 
-	log.Printf("Map phase duration: %v ms\n", time.Duration(mapPhaseDuration.Nanoseconds())*time.Millisecond)
-	log.Printf("Reduce phase duration: %v ms", time.Duration(reducePhaseDuration.Nanoseconds())*time.Millisecond)
-	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %v ms", time.Duration(mapReduceDuration.Nanoseconds())*time.Millisecond)
+	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration/1e6)
+	log.Printf("Reduce phase duration: %d ms", reducePhaseDuration/1e6)
+	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %d ms", mapReduceDuration/1e6)
 
 	finish()
 
-	log.Printf("Map phase duration: %v ms\n", time.Duration(mapPhaseDuration.Nanoseconds())*time.Millisecond)
-	log.Printf("Reduce phase duration: %v ms", time.Duration(reducePhaseDuration.Nanoseconds())*time.Millisecond)
-	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %v ms", time.Duration(mapReduceDuration.Nanoseconds())*time.Millisecond)
+	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration/1e6)
+	log.Printf("Reduce phase duration: %d ms", reducePhaseDuration/1e6)
+	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %d ms", mapReduceDuration/1e6)
 
 	startOfMerge := time.Now()
 	drv.merge(storageIps, dataShards, parityShards, maxGoRoutines)
@@ -333,11 +333,11 @@ func (drv *Driver) run(
 
 	log.Println("JOB END: ", jobEndTime.Format("2006-01-02 15:04:05:.99999"))
 
-	log.Printf("Map phase duration: %v ms\n", time.Duration(mapPhaseDuration.Nanoseconds())*time.Millisecond)
-	log.Printf("Reduce phase duration: %v ms", time.Duration(reducePhaseDuration.Nanoseconds())*time.Millisecond)
-	log.Printf("Merge phase duration: %v ms", time.Duration(mergePhaseDuration.Nanoseconds())*time.Millisecond)
-	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %v ms", time.Duration(mapReduceDuration.Nanoseconds())*time.Millisecond)
-	log.Printf("Job Duration: %v ms\n", time.Duration(jobDuration.Nanoseconds())*time.Millisecond)
+	log.Printf("Map phase duration: %d ms\n", mapPhaseDuration/1e6)
+	log.Printf("Reduce phase duration: %d ms", reducePhaseDuration/1e6)
+	log.Printf("Merge phase duration: %d ms", mergePhaseDuration/1e6)
+	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %d ms", mapReduceDuration/1e6)
+	log.Printf("Job Duration: %d ms\n", jobDuration/1e6)
 
 	drv.doneChannel <- true
 }
