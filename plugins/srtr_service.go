@@ -232,7 +232,7 @@ func doReduce(
 			}
 		}
 
-		if !success {
+		if !success || readAllCloser = nil {
 			log.Fatal("ERROR: Failed to retrieve data from storage with key \"" + dataKey + "\" in allotted number of attempts.\n")
 		}
 
