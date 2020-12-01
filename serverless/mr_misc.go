@@ -8,6 +8,7 @@ import (
 	"crypto/md5"
 	"github.com/cespare/xxhash"
 	"github.com/mason-leap-lab/infinicache/client"
+	"github.com/mason-leap-lab/infinicache/reader"
 	"log"
 	"os"
 	"sort"
@@ -56,7 +57,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 		reader := readExponentialBackoff(p, cli)
 
 		//if err2 != nil {
-		if !ok || reader == nil {
+		if reader == nil {
 			log.Printf("ERROR: Storage encountered exception for key \"%s\".\n", p)
 			log.Fatal("Cannot create sorted file if data is missing.")
 		}
@@ -100,7 +101,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					log.Printf("md5 of key \"%s\": %v\n", key, md5.Sum([]byte(key)))
 					//reader, ok := cli.Get(key)
 					reader := readExponentialBackoff(key, cli)
-					if !ok {
+					if reader == nil {
 						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while retrieving chunks.\n", key)
 					}
 					res, err2 := reader.ReadAll()
