@@ -48,18 +48,19 @@ func checkError(err error) {
 type wcmService string
 
 // MapReduceArgs defines this plugin's argument format
-type MapReduceArgs struct {
-	JobName       string
-	S3Key         string
-	TaskNum       int
-	NReduce       int
-	NOthers       int
-	SampleKeys    []string
-	StorageIPs    []string
-	DataShards    int
-	ParityShards  int
-	MaxGoroutines int
-}
+// type MapReduceArgs struct {
+	// 	JobName       string
+	// 	S3Key         string
+	// 	TaskNum       int
+	// 	NReduce       int
+	// 	NOthers       int
+	// 	SampleKeys    []string
+	// 	StorageIPs    []string
+	// 	DataShards    int
+	// 	ParityShards  int
+	// 	MaxGoroutines int
+	// 	Pattern 	  string 
+	// }
 
 type KeyValue struct {
 	Key   string
@@ -131,7 +132,7 @@ func ihash(s string) int {
 
 // DON'T MODIFY THIS FUNCTION
 func (s wcmService) DoService(raw []byte) error {
-	var args MapReduceArgs
+	var args serverless.MapReduceArgs
 	buf := bytes.NewBuffer(raw)
 	dec := gob.NewDecoder(buf)
 	err := dec.Decode(&args)

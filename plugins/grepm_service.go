@@ -1,14 +1,5 @@
-//////////////////////////////////////////////////////////////////////
-//
-// G00616949
-//
-// Paul McKerley
-//
-// CS675 Spring 2020 -- Lab2
-//
-// Performs map actions for inverted index service.
-//
-//////////////////////////////////////////////////////////////////////
+// MapReduce MAP function for GREP.
+
 package main
 
 import (
@@ -26,9 +17,9 @@ import (
 )
 
 // To compile the map plugin: run:
-// go build --buildmode=plugin -o iim_service.so iim_service.go
+// go build --buildmode=plugin -o wcm_service.so wcm_service.go
 
-const debugEnabled = false
+const debugEnabled = true
 
 func Debug(format string, a ...interface{}) (n int, err error) {
 	if debugEnabled {
@@ -43,23 +34,22 @@ func checkError(err error) {
 	}
 }
 
-// Define Inverted Indexing's map service
-type iimService string
+// Define grep's map service
+type grepmService string
 
 // MapReduceArgs defines this plugin's argument format
-//type MapReduceArgs struct {
-	// 	JobName       string
-	// 	S3Key         string
-	// 	TaskNum       int
-	// 	NReduce       int
-	// 	NOthers       int
-	// 	SampleKeys    []string
-	// 	StorageIPs    []string
-	// 	DataShards    int
-	// 	ParityShards  int
-	// 	MaxGoroutines int
-	// 	Pattern 	  string 
-	// }
+// type MapReduceArgs struct {
+// 	JobName       string
+// 	S3Key         string
+// 	TaskNum       int
+// 	NReduce       int
+// 	NOthers       int
+// 	SampleKeys    []string
+// 	StorageIPs    []string
+// 	DataShards    int
+// 	ParityShards  int
+// 	MaxGoroutines int
+// }
 
 type KeyValue struct {
 	Key   string
@@ -67,28 +57,14 @@ type KeyValue struct {
 }
 
 // The mapping function is called once for each piece of the input.
-// In this framework, the key is the name of the file that is being
-// processed, and the value is the file's contents. The return value
-// should be a slice of key/value pairs, each represented by a
-// mapreduce.KeyValue.
 func mapF(document string, value string) (res []KeyValue) {
-
-	// map to track which words we've seen already
-	seen := make(map[string]bool)
-
-	// Split document up into words on non-word boundaries.
 	for _, s := range strings.FieldsFunc(value, func(r rune) bool {
 		if !unicode.IsLetter(r) {
 			return true
 		}
 		return false
 	}) {
-		_, ok := seen[s]
-
-		if !ok {
-			res = append(res, KeyValue{s, document})
-			seen[s] = true
-		}
+		res = append(res, KeyValue{s, "1"})
 	}
 	return res
 }
@@ -99,9 +75,13 @@ func mapF(document string, value string) (res []KeyValue) {
 // intermediate files.
 func doMap(
 	jobName string,
-	inFile string,
+	S3Key string,
+	storageIPs []string,
 	taskNum int,
 	nReduce int,
+	dataShards int,
+	parityShards int,
+	maxGoRoutines int,
 ) {
 	reduceEncoders := make([]*json.Encoder, nReduce)
 
@@ -118,6 +98,7 @@ func doMap(
 	var err error
 	var b []byte
 
+	// Read in whole file. Not scalable, but OK for a lab.
 	Debug("Reading %s", inFile)
 	b, err = ioutil.ReadFile(inFile)
 	checkError(err)
@@ -127,6 +108,8 @@ func doMap(
 		err = reduceEncoders[reducerNum].Encode(&result)
 		checkError(err)
 	}
+
+	return nil 
 }
 
 // We supply you an ihash function to help with mapping of a given
@@ -138,20 +121,19 @@ func ihash(s string) int {
 }
 
 // DON'T MODIFY THIS FUNCTION
-func (s iimService) DoService(raw []byte) error {
+func (s grepmService) DoService(raw []byte) error {
 	var args serverless.MapReduceArgs
 	buf := bytes.NewBuffer(raw)
 	dec := gob.NewDecoder(buf)
 	err := dec.Decode(&args)
 	if err != nil {
-		log.Printf("Inverted Indexing Service: Failed to decode!\n")
 		return err
 	}
-	log.Printf("Hello from inverted indexing service plugin: %s\n", args.S3Key)
+	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
 
-	doMap(args.JobName, args.S3Key, args.TaskNum, args.NReduce)
+	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, args.ParityShards, args.MaxGoroutines, trie)
 
 	return nil
 }
 
-var Interface iimService
+var Interface grepmService

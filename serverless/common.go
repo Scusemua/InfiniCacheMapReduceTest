@@ -65,3 +65,17 @@ var phaseServiceMap = map[jobPhase]string{
 func ServiceName(service string, phase jobPhase) string {
 	return service + phaseServiceMap[phase] + "_service"
 }
+
+type MapReduceArgs struct {
+	JobName       string
+	S3Key         string
+	TaskNum       int
+	NReduce       int
+	NOthers       int
+	SampleKeys    []string
+	StorageIPs    []string
+	DataShards    int
+	ParityShards  int
+	MaxGoroutines int
+	Pattern 	  string 
+}

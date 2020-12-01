@@ -51,18 +51,19 @@ func checkError(err error) {
 type srtmService string
 
 // MapReduceArgs defines this plugin's argument format
-type MapReduceArgs struct {
-	JobName       string
-	S3Key         string
-	TaskNum       int
-	NReduce       int
-	NOthers       int
-	SampleKeys    []string
-	StorageIPs    []string
-	DataShards    int
-	ParityShards  int
-	MaxGoroutines int
-}
+//type MapReduceArgs struct {
+	// 	JobName       string
+	// 	S3Key         string
+	// 	TaskNum       int
+	// 	NReduce       int
+	// 	NOthers       int
+	// 	SampleKeys    []string
+	// 	StorageIPs    []string
+	// 	DataShards    int
+	// 	ParityShards  int
+	// 	MaxGoroutines int
+	// 	Pattern 	  string 
+	// }
 
 type KeyValue struct {
 	Key   string
@@ -238,7 +239,7 @@ func ihash(s string, trie serverless.TrieNode) int {
 
 // DON'T MODIFY THIS FUNCTION
 func (s srtmService) DoService(raw []byte) error {
-	var args MapReduceArgs
+	var args serverless.MapReduceArgs
 	buf := bytes.NewBuffer(raw)
 	dec := gob.NewDecoder(buf)
 	err := dec.Decode(&args)
@@ -247,8 +248,8 @@ func (s srtmService) DoService(raw []byte) error {
 	}
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
 
-	keyTest := "mr.srt-res-1"
-	fmt.Printf("[TEST] srtr DoService -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
+	//keyTest := "mr.srt-res-1"
+	//fmt.Printf("[TEST] srtr DoService -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
 
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
 

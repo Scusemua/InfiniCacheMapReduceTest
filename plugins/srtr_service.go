@@ -36,18 +36,19 @@ import (
 type srtrService string
 
 // MapReduceArgs defines this plugin's argument format
-type MapReduceArgs struct {
-	JobName       string
-	S3Key         string
-	TaskNum       int
-	NReduce       int
-	NOthers       int
-	SampleKeys    []string
-	StorageIPs    []string
-	DataShards    int
-	ParityShards  int
-	MaxGoroutines int
-}
+//type MapReduceArgs struct {
+	// 	JobName       string
+	// 	S3Key         string
+	// 	TaskNum       int
+	// 	NReduce       int
+	// 	NOthers       int
+	// 	SampleKeys    []string
+	// 	StorageIPs    []string
+	// 	DataShards    int
+	// 	ParityShards  int
+	// 	MaxGoroutines int
+	// 	Pattern 	  string 
+	// }
 
 type KeyValue struct {
 	Key   string
@@ -387,7 +388,7 @@ func exponentialBackoffWrite(key string, value []byte, cli *client.Client) bool 
 
 // DON'T MODIFY THIS FUNCTION
 func (s srtrService) DoService(raw []byte) error {
-	var args MapReduceArgs
+	var args serverless.MapReduceArgs
 	buf := bytes.NewBuffer(raw)
 	dec := gob.NewDecoder(buf)
 	err := dec.Decode(&args)
@@ -397,8 +398,8 @@ func (s srtrService) DoService(raw []byte) error {
 	}
 	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
 
-	keyTest := "mr.srt-res-1"
-	fmt.Printf("[TEST] srtr DoService -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
+	//keyTest := "mr.srt-res-1"
+	//fmt.Printf("[TEST] srtr DoService -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
 
 	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines)
 
