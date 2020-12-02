@@ -119,6 +119,55 @@ func doMap(
 		storageKey := serverless.ReduceName(jobName, taskNum, reducerNum)
 		results[storageKey] = append(results[storageKey], result)
 	}
+
+	ioRecords := make([]IORecord, 0)
+
+	log.Println("Storing results in storage now...")
+
+	for k, v := range results {
+		marshalled_result, err := json.Marshal(v)
+		checkError(err)
+		start := time.Now()
+		log.Printf("storage WRITE START. Key: \"%s\", Size: %f \n", k, float64(len(marshalled_result))/float64(1e6))
+		writeStart := time.Now()
+
+		// Exponential backoff.
+		success := false
+		for current_attempt := 0; current_attempt < 10; current_attempt++ {
+			log.Printf("Attempt %d/%d for key \"%s\".\n", current_attempt, 5, k)
+			_, ok := cli.EcSet(k, marshalled_result)
+
+			if !ok {
+				max_duration := (2 << uint(current_attempt)) - 1
+				duration := rand.Intn(max_duration + 1)
+				log.Printf("[ERROR] Failed to write key \"%s\". Backing off for %d ms.\n", k, duration)
+				time.Sleep(time.Duration(duration) * time.Millisecond)
+			} else {
+				log.Printf("Successfully wrote key \"%s\" on attempt %d.\n", k, current_attempt)
+				success = true
+				break
+			}
+		}
+
+		if !success {
+			log.Fatal("Failed to write key \"%s\" to storage in minimum number of attempts.")
+		}
+
+		writeEnd := time.Since(writeStart)
+		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", k, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+		end := time.Now()
+		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
+		ioRecords = append(ioRecords, rec)
+	}
+	
+	Debug("Writing metric data to file now...\n")
+	ioData, err = os.Create("IOData/map_io_data_" + jobName + strconv.Itoa(taskNum) + ".dat")
+	checkError(err)
+	defer ioData.Close()
+	for _, rec := range ioRecords {
+		_, err := ioData.WriteString(fmt.Sprintf("%v\n", rec))
+		checkError(err)
+	}	
 }
 
 // We supply you an ihash function to help with mapping of a given
