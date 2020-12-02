@@ -278,6 +278,7 @@ func (drv *Driver) run(
 	dataShards int,
 	parityShards int,
 	maxGoRoutines int,
+	pattern string,
 	storageIps []string,
 	schedule func(phase jobPhase, serviceName string),
 	finish func(),
@@ -345,7 +346,17 @@ func (drv *Driver) run(
 // Run is a function exposed to client.
 // Run calls the internal call `run` to register plugin services and
 // schedule tasks with workers over RPC.
-func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string, nReduce int, dataShards int, parityShards int, maxGoRoutines int, storageIps []string) {
+func (drv *Driver) Run(
+	jobName string, 
+	s3KeyFile string, 
+	sampleFileS3Key string, 
+	nReduce int, 
+	dataShards int, 
+	parityShards int, 
+	maxGoRoutines int, 
+	pattern string,
+	storageIps []string,
+) {
 	Debug("%s: Starting driver RPC server\n", drv.address)
 	drv.startRPCServer()
 
@@ -398,11 +409,11 @@ func (drv *Driver) Run(jobName string, s3KeyFile string, sampleFileS3Key string,
 
 	log.Printf("Number of S3 keys: %d\n", len(s3Keys))
 
-	go drv.run(jobName, s3Keys, nReduce, sampleKeys, dataShards, parityShards, maxGoRoutines, storageIps,
+	go drv.run(jobName, s3Keys, nReduce, sampleKeys, dataShards, parityShards, maxGoRoutines, storageIps, pattern,
 		func(phase jobPhase, serviceName string) { // func schedule()
 			registerChan := make(chan string)
 			go drv.prepareService(registerChan, ServiceName(serviceName, phase))
-			drv.schedule(phase, serviceName, registerChan, dataShards, parityShards, maxGoRoutines)
+			drv.schedule(phase, serviceName, registerChan, dataShards, parityShards, maxGoRoutines, pattern)
 		},
 		func() { // func finish()
 			drv.killWorkers()

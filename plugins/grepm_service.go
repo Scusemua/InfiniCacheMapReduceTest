@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
+	"regexp"
 	"io/ioutil"
 	"log"
 	"os"
@@ -56,16 +57,16 @@ type KeyValue struct {
 	Value string
 }
 
+var pattern *regexp.Regexp
+
 // The mapping function is called once for each piece of the input.
-func mapF(document string, value string) (res []KeyValue) {
-	for _, s := range strings.FieldsFunc(value, func(r rune) bool {
-		if !unicode.IsLetter(r) {
-			return true
-		}
-		return false
-	}) {
-		res = append(res, KeyValue{s, "1"})
+func mapF(s3Key string, text string) (res []KeyValue) {
+	matches := pattern.FindAllString(text, -1)
+
+	for _, match := range matches {
+		res = append(res, KeyValue{text, match})
 	}
+
 	return res
 }
 
@@ -82,31 +83,45 @@ func doMap(
 	dataShards int,
 	parityShards int,
 	maxGoRoutines int,
+	pattern string,
 ) {
-	reduceEncoders := make([]*json.Encoder, nReduce)
-
-	for i := 0; i < nReduce; i++ {
-		fileName := serverless.ReduceName(jobName, taskNum, i)
-		Debug("Creating %s\n", fileName)
-		f, err := os.Create(fileName)
-		checkError(err)
-		defer f.Close()
-		enc := json.NewEncoder(f)
-		reduceEncoders[i] = enc
-	}
-
 	var err error
 	var b []byte
+	var s3KeyFile *os.File
+	var ioData *os.File
 
-	// Read in whole file. Not scalable, but OK for a lab.
-	Debug("Reading %s", inFile)
-	b, err = ioutil.ReadFile(inFile)
+	keyTest := "mr.srt-res-1"
+	fmt.Printf("[TEST] srtm doMap -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
+
+	// The session the S3 Downloader will use
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1")},
+	))
+
+	// Create a downloader with the session and default options
+	downloader := s3manager.NewDownloader(sess)
+
+	log.Printf("Creating file \"%s\" to read S3 data into...\n", S3Key)
+
+	// Create a file to write the S3 Object contents to.
+	s3KeyFile, err = os.Create(S3Key)
 	checkError(err)
 
-	for _, result := range mapF(inFile, string(b)) {
+	// Write the contents of S3 Object to the file
+	n, err := downloader.Download(s3KeyFile, &s3.GetObjectInput{
+		Bucket: aws.String("infinistore-mapreduce"),
+		Key:    aws.String(S3Key),
+	})
+	checkError(err)
+
+	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
+
+	log.Println("Performing grep map function now...")
+	results := make(map[string][]KeyValue)
+	for _, result := range mapF(S3Key, string(b)) {
 		reducerNum := ihash(result.Key) % nReduce
-		err = reduceEncoders[reducerNum].Encode(&result)
-		checkError(err)
+		storageKey := serverless.ReduceName(jobName, taskNum, reducerNum)
+		results[storageKey] = append(results[storageKey], result)
 	}
 
 	return nil 
@@ -130,8 +145,12 @@ func (s grepmService) DoService(raw []byte) error {
 		return err
 	}
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
+	log.Printf("Compiling the regex pattern \"%s\"\n", args.Pattern)
 
-	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, args.ParityShards, args.MaxGoroutines, trie)
+	// Compile the regex pattern.
+	pattern = regexp.MustCompile(args.Pattern)
+
+	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, args.ParityShards, args.MaxGoroutines)
 
 	return nil
 }

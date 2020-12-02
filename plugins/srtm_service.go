@@ -43,27 +43,8 @@ func checkError(err error) {
 	}
 }
 
-// To compile the map plugin: run:
-// go build --buildmode=plugin -o srtr_service.so srtr_service.go
-// go build --buildmode=plugin -o srtm_service.so srtm_service.go
-
 // Define Inverted Indexing's map service
 type srtmService string
-
-// MapReduceArgs defines this plugin's argument format
-//type MapReduceArgs struct {
-	// 	JobName       string
-	// 	S3Key         string
-	// 	TaskNum       int
-	// 	NReduce       int
-	// 	NOthers       int
-	// 	SampleKeys    []string
-	// 	StorageIPs    []string
-	// 	DataShards    int
-	// 	ParityShards  int
-	// 	MaxGoroutines int
-	// 	Pattern 	  string 
-	// }
 
 type KeyValue struct {
 	Key   string
@@ -83,8 +64,7 @@ type IORecord struct {
 // processed, and the value is the file's contents. The return value
 // should be a slice of key/value pairs, each represented by a
 // mapreduce.KeyValue.
-func mapF(document string, value string) (res []KeyValue) {
-	//var arr []string
+func mapF(s3Key string, value string) (res []KeyValue) {
 	// Split up string line-by-line.
 	for _, s := range strings.FieldsFunc(value, func(r rune) bool {
 		if r == '\n' {
@@ -143,23 +123,11 @@ func doMap(
 
 	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
-	//storageIps2 := []string{"10.0.109.88:6378", "10.0.121.202:6378"}
 	log.Printf("Creating storage client for IPs: %v\n", storageIPs)
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
-	// var addrList = "127.0.0.1:6378"
-	// addrArr := strings.Split(addrList, ",")
 	cli.Dial(storageIPs)
-	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
-	// redis_client := redis.NewClient(&redis.Options{
-	// 	Addr:         "127.0.0.1:6378",
-	// 	Password:     "",
-	// 	DB:           0,
-	// 	ReadTimeout:  30 * time.Second,
-	// 	WriteTimeout: 30 * time.Second,
-	// 	MaxRetries:   3,
-	// })
 
-	log.Println("Successfully created storage client for storage @ 127.0.0.1:6378")
+	log.Println("Successfully created storage client.")
 
 	Debug("Reading data for S3 key \"%s\" from downloaded file now...\n", S3Key)
 	b, err = ioutil.ReadFile(S3Key)

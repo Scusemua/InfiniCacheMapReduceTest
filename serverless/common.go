@@ -67,15 +67,15 @@ func ServiceName(service string, phase jobPhase) string {
 }
 
 type MapReduceArgs struct {
-	JobName       string
-	S3Key         string
-	TaskNum       int
-	NReduce       int
-	NOthers       int
-	SampleKeys    []string
-	StorageIPs    []string
-	DataShards    int
-	ParityShards  int
-	MaxGoroutines int
-	Pattern 	  string 
+	JobName       string		// Name of the MapReduce job being executed.
+	S3Key         string		// S3 key of data that needs to be downloaded for the job.
+	TaskNum       int			// Identifier for the task.
+	NReduce       int			// The number of Reducers. Used to partition keys to reducers during Map.
+	NOthers       int			// The number of Mappers. Used in Reduce.
+	SampleKeys    []string		// Used to partition the keys to reducers during TeraSort such that they're relatively soretd.
+	StorageIPs    []string		// The hostnames (format "<IP>:<PORT>") of remote/intermediate storage.
+	DataShards    int			// InfiniStore parameter.
+	ParityShards  int			// InfiniStore parameter.
+	MaxGoroutines int			// InfiniStore parameter.
+	Pattern 	  string 		// Regex, used for Grep.
 }

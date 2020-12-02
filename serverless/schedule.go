@@ -26,6 +26,7 @@ func (drv *Driver) schedule(
 	dataShards int,
 	parityShards int,
 	maxGoRoutines int,
+	pattern string,
 ) {
 	Debug("Driver: schedule %s\n", phase)
 	// MapReduceArgs defines the format of your MapReduce service plugins.
@@ -67,6 +68,7 @@ func (drv *Driver) schedule(
 			arg.DataShards = dataShards
 			arg.ParityShards = parityShards
 			arg.MaxGoroutines = maxGoRoutines
+			arg.Pattern = pattern
 			jobChan <- arg
 		}
 	} else {
@@ -84,6 +86,7 @@ func (drv *Driver) schedule(
 			arg.DataShards = dataShards
 			arg.ParityShards = parityShards
 			arg.MaxGoroutines = maxGoRoutines
+			arg.Pattern = pattern
 			jobChan <- arg
 		}
 	}

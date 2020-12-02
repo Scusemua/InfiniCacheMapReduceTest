@@ -510,6 +510,6 @@ if __name__ == "__main__":
 # cd ../deploy
 # ./update_function.sh 607
 
-#go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.90.182:6378 -storageIps 10.0.85.195:6378 -storageIps 10.0.84.138:6378 -storageIps 10.0.95.169:6378 -storageIps 10.0.79.137:6378 -storageIps 10.0.72.120:6378 -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt 
+#go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.74.253:6378 -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt 
 #go run $PWD/../proxy/proxy.go -debug=true -prefix=202011291702 -lambda-prefix=CacheNode0- -disable-color >./log 2>&1
 #go run $PWD/../proxy/proxy.go -debug=true -prefix=202011291702 -lambda-prefix=CacheNode1- -disable-color >./log 2>&1
