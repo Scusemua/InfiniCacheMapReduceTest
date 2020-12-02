@@ -112,7 +112,7 @@ func doReduce(
 			readAllCloser, ok = cli.Get(dataKey)
 
 			// Check for failure, and backoff exponentially on-failure.
-			if !ok == nil {
+			if !ok {
 				max_duration := (2 << uint(current_attempt)) - 1
 				duration := rand.Intn(max_duration + 1)
 				log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
