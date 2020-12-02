@@ -52,7 +52,10 @@ func Debug(format string, a ...interface{}) (n int, err error) {
 // with a list of that key's string value (merged across all inputs).
 // The return value should be a single output value for that key.
 func reduceF(key string, values []string) string {
-	return strings.Join(values, "\n")
+	//log.Printf("Reducing key=\"%s\", values = %v\n", key, values)
+	res := strings.Join(values, "\n")
+	//log.Printf("Result: %v\n", res)
+	return res
 }
 
 // Used to chunk up the final results to prevent writing huge blocks of data at once.
