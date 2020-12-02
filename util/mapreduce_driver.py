@@ -49,6 +49,9 @@ KEYFILE_PATH = "C:\\Users\\benrc\\.ssh\\CS484_Desktop.pem"
 # This is the branch to use for InfiniStore.
 INFINISTORE_BRANCH = "origin/config_ben"
 
+# This is the branch to use for the MapReduce framework.
+MAPREDUCE_BRANCH = "origin/ecclient"
+
 def get_private_ips(region_name="us-east-1"):
     """
     Get the private IPv4 addresses of EC2 instances.
@@ -428,7 +431,44 @@ def git_status(ips, key_path = KEYFILE_PATH):
     command = "cd %s; git status" % INFINISTORE_DIRECTORY
     execute_command(command, 3, get_pty = True, ips = ips, key_path = key_path)
 
-def pull_from_github(ips, reset_first = False, key_path = KEYFILE_PATH):
+def build_mapreduce(ips, count_limit = 1, key_path = KEYFILE_PATH):
+    """
+    Execute the ./build.sh script in the /plugins directory of the MapReduce library on each of the
+    given VMs, as specified by their IP addresses in the ips parameter.
+
+    Arguments:
+        ips (list of string): The IPs of the VM's you want to build the MapReduce framework on.
+
+        key_path (str): Path to your SSH key.
+    """
+    print("Executing /plugins/build.sh for the MapReduce framework on %d VMs." % len(ips))
+    command = "cd %s/plugins; ./build.sh" % MAPREDUCE_DIRECTORY
+    execute_command(command, count_limit, get_pty = True, ips = ips, key_path = key_path)   
+
+def pull_from_github_mapreduce(ips, reset_first = False, key_path = KEYFILE_PATH):
+    """
+    Execute 'git pull' on the MapReduce repo on the given VM's.
+
+    Arguments:
+        ips (list of string): The IPs of the VM's you want to execute 'git pull' on.
+
+        reset_first (bool): This will just perform 'git reset --hard <BRANCH>', effectively overwriting
+        any local changes. This is useful if you made local changes to the code for debugging and now
+        want to reset yourself to the state of the remote branch (like the state of the branch as it
+        exists on GitHub).
+
+        key_path (str): Path to your SSH key.
+    """
+    if reset_first:
+        print("Resetting the MapReduce repo first, before pulling.")
+        command_reset = "cd %s; git reset --hard %s" % (MAPREDUCE_DIRECTORY, MAPREDUCE_BRANCH)
+        execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
+    
+    print("Now pulling latest code from GitHub for MapReduce repo.")
+    command = "cd %s; git pull" % MAPREDUCE_DIRECTORY
+    execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)    
+
+def pull_from_github_infinistore(ips, reset_first = False, key_path = KEYFILE_PATH):
     """
     Execute 'git pull' on the InfiniStore repo on the given VM's.
 
@@ -443,11 +483,11 @@ def pull_from_github(ips, reset_first = False, key_path = KEYFILE_PATH):
         key_path (str): Path to your SSH key.
     """
     if reset_first:
-        print("Resetting first...")
+        print("Resetting the InfiniStore repo first, before pulling.")
         command_reset = "cd %s/evaluation; git reset --hard %s" % (INFINISTORE_DIRECTORY, INFINISTORE_BRANCH)
         execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
     
-    print("Now pulling...")
+    print("Now pulling latest code from GitHub for InfiniStore repo.")
     command = "cd %s/evaluation; git pull" % INFINISTORE_DIRECTORY
     execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
 
@@ -631,7 +671,7 @@ def update_lambdas_prefixed(ips, prefix = "CacheNode", key_path = KEYFILE_PATH):
     for i in range(0, len(ips)):
         ip = ips[i]
         lambda_prefix = prefix + "{}-".format(i)
-        command = "cd %s/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {}".format(INFINISTORE_DIRECTORY, random.randint(60, 100), lambda_prefix)
+        command = "cd {}/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {}".format(INFINISTORE_DIRECTORY, random.randint(60, 100), lambda_prefix)
         print("Full command: {}".format(command))
         execute_command(
             command = command,
@@ -669,7 +709,7 @@ def format_proxy_config(proxy_ips : list) -> str:
 
     We would take the output of this function, replace the associated line in
     proxy/config/config.go (in the InfiniStore repo), add, commit, and push to GitHub, then
-    use the 'pull_from_github' function defined above to update all the VMs.
+    use the 'pull_from_github_infinistore' function defined above to update all the VMs.
     """
     num_proxies = len(proxy_ips)
     #code_line = "var ProxyList [{}]string = [{}]string".format(num_proxies, num_proxies)
@@ -736,8 +776,8 @@ def print_time():
 # mrd.clear_redis_instances(flushall = True, hostnames = hostnames)
 # mrd.clean_workers(worker_ips = worker_ips)
 # mrd.kill_go_processes(ips = worker_ips + [client_ip])
-# mrd.pull_from_github(worker_ips)
-# mrd.pull_from_github(worker_ips + [client_ip])
+# mrd.pull_from_github_infinistore(worker_ips)
+# mrd.pull_from_github_infinistore(worker_ips + [client_ip])
 # experiment_prefix = mrd.launch_infinistore_proxies(worker_ips + [client_ip])
 # experiment_prefix = mrd.launch_infinistore_proxies([client_ip])
 # print("experiment_prefix = " + str(experiment_prefix))
@@ -796,7 +836,7 @@ if __name__ == "__main__":
     print("nReducers = {}".format(nReducers))
 
     # Sometimes needed, sometimes not. Used to update the InfiniStore repos on the VMs.
-    mrd.pull_from_github([client_ip] + worker_ips, reset_first = True)
+    mrd.pull_from_github_infinistore([client_ip] + worker_ips, reset_first = True)
 
     # =======================================================
     # We use this block to start all the InfiniStore proxies.
@@ -848,7 +888,7 @@ if __name__ == "__main__":
 # that I stop and start but never terminate) so its private IPv4 is basically static. You use the VM's
 # private IPv4 for the 'driverHostname' parameter, along with port 1234.
 
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 36 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.82.235:6378 -storageIps 10.0.74.229:6378 -storageIps 10.0.84.162:6378 -storageIps 10.0.76.96:6378 -storageIps 10.0.74.191:6378 -storageIps 10.0.75.173:6378
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.93.17:6378 -storageIps 10.0.65.243:6378 -storageIps 10.0.76.170:6378 -storageIps 10.0.95.158:6378 -storageIps 10.0.73.135:6378 -storageIps 10.0.72.9:6378
 
 # Change the 'jobName' parameter depending on what job you want to run. For TeraSort, it is 'srt'.
 # For grep, it is 'grep'. For Word Count, it is 'wc'. Basically, it is the prefix of the two service
