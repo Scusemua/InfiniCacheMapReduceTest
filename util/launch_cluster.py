@@ -37,6 +37,9 @@ MAPREDUCE_DIRECTORY = "{}/src/github.com/Scusemua/InfiniCacheMapReduceTest".form
 # The path to your keyfile.
 KEYFILE_PATH = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"
 
+# This is the branch to use for InfiniStore.
+INFINISTORE_BRANCH = "origin/config_ben"
+
 def get_private_ips(region_name="us-east-1"):
     """
     Get the private IPv4 addresses of EC2 instances.
@@ -195,6 +198,26 @@ def launch_redis_servers(
     Launch Redis virtual machines on VM's. This assumes that the VM has been configured a certain
     way so that redis-server is installed (I think you can install it by running either
     "apt-get install redis-server" or "yum install redis-server" on your VM if it isn't already installed.)
+    
+    Arguments:
+        connect_and_ping (bool): If True, then this will attempt to connect to each Redis instance and
+        ping it (via the Redis API) after creating the instance to ensure it is working.
+
+        count_limit (int): Number of attempts to make in retrieving output of executing SSH commands on VM.
+
+        ips (list of string): The IPs of the VM's on which we want to launch Redis instances.
+
+        key_path (str): The path to your SSH key so Paramiko can execute SSH commands on the EC2 VMs.
+
+        kill_first(bool): Attempt to kill any existing/currently-running Redis instances on each VM before
+        launching the new ones.
+
+        shards_per_vm (int): The number of Redis instances to launch on each VM. 
+
+        starting_port (int): The first port to use when launching a Redis instance on the VM. If 
+        'shards_per_vm' is greater than zero, then the second Redis instance will have port equal to
+        'starting_port + 1', and so on and so forth.
+    
     Returns: 
         list of str: hostnames of instances that were launched.
     """
@@ -397,9 +420,22 @@ def git_status(ips, key_path = KEYFILE_PATH):
     execute_command(command, 3, get_pty = True, ips = ips, key_path = key_path)
 
 def pull_from_github(ips, reset_first = False, key_path = KEYFILE_PATH):
+    """
+    Execute 'git pull' on the InfiniStore repo on the given VM's.
+
+    Arguments:
+        ips (list of string): The IPs of the VM's you want to execute 'git pull' on.
+
+        reset_first (bool): This will just perform 'git reset --hard <BRANCH>', effectively overwriting
+        any local changes. This is useful if you made local changes to the code for debugging and now
+        want to reset yourself to the state of the remote branch (like the state of the branch as it
+        exists on GitHub).
+
+        key_path (str): Path to your SSH key.
+    """
     if reset_first:
         print("Resetting first...")
-        command_reset = "cd %s/evaluation; git reset --hard origin/config_ben" % INFINISTORE_DIRECTORY
+        command_reset = "cd %s/evaluation; git reset --hard %s" % (INFINISTORE_DIRECTORY, INFINISTORE_BRANCH)
         execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
     
     print("Now pulling...")
@@ -407,6 +443,14 @@ def pull_from_github(ips, reset_first = False, key_path = KEYFILE_PATH):
     execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
 
 def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
+    """
+    Launch the InfiniStore proxies on the VMs.
+
+    Arguments:
+        ips (list of string): IPs of VM's on which you'll launch proxies.
+
+        key_path (str): Path to your SSH key.
+    """
     prefix = datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M') + "/"
     
     # Each proxy needs a slightly different command as each proxy uses different Lambdas.
@@ -420,10 +464,28 @@ def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
     return prefix
 
 def export_cloudwatch_logs(ips, prefix, start, end, key_path = KEYFILE_PATH):
+    """
+    This executes the 'export_ubuntu.sh' script on each VM. This script exports the AWS Lambda logs of
+    InfiniStore to S3.
+
+    Arguments:
+        ips (list of string): The IPv4's of the VM's on which you wish to execute 'export_ubuntu.sh'.
+
+        prefix (string): The experimental prefix as passed to the InfiniStore proxies.
+
+        start (string): The start time of the experiment formatted as a date '%Y-%m-%d %H:%M:%S'. Used
+                        to identify which Lambda logs to export.
+        
+        end (string): The end time of the experiment formatted as a date '%Y-%m-%d %H:%M:%S'. Also used
+                      to identify which Lambda logs to export.
+    """
     command = "cd %s/evaluation/cloudwatch; ./export_ubuntu.sh %s %s %s;" % (INFINISTORE_DIRECTORY, prefix, str(start), str(end))
     execute_command(command, 3, get_pty = True, ips = ips, key_path = key_path)
 
 def stop_infinistore_proxies(ips, key_path = KEYFILE_PATH):
+    """
+    Stop the InfiniStore proxies running on the given VMs (specified via their IPv4 addresses).
+    """
     command = "cd %s/evaluation; make stop-server" % INFINISTORE_DIRECTORY
     execute_command(command, 1, get_pty = True, ips = ips, key_path = key_path)
 
@@ -434,10 +496,20 @@ def kill_go_processes(
     ips = None,
     key_path = KEYFILE_PATH
 ):
+    """
+    Kills all GO processes running on the VMs (specified via their IPv4 addresses).
+    """  
     kill_command = "sudo ps aux | grep go | awk '{print $2}' | xargs kill -9 $1"
     execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
 
 def kill_proxies(ips, key_path = KEYFILE_PATH):
+    """
+    Kills all InfiniStore proxies running on the VMs (specified via their IPv4 addresses).
+
+    Similar to 'kill_proxies' but more forceful, I guess? I think they essentially do the exact
+    same thing so it doesn't really matter. I usually use 'kill_go_processes' to just kill
+    everything, though (proxies, MapReduce clients and workers, etc.).
+    """      
     kill_command = "sudo ps aux | grep proxy | awk '{print $2}' | xargs kill -9 $1"
     execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
 
@@ -446,6 +518,14 @@ def clear_redis_instances(
     flushall = False,
     hostnames = None
 ):
+    """
+    Execute the "flushall" or "flushdb" commands on the Redis VMs.
+
+    Arguments:
+        flushall (bool): If True, executes 'flushall()'. Otherwise executes 'flushdb()'.
+
+        hostnames (list of string): List of Redis hostnames in the form of "<IP>:<PORT>"
+    """
     for hostname in hostnames:
         _split = hostname.split(":")
         rc = redis.Redis(host = _split[0], port = int(_split[1]), db = 0)
@@ -461,6 +541,14 @@ def clean_workers(
     key_path = KEYFILE_PATH,
     worker_ips = None
 ):
+    """
+    Removes intermediate data generated by MapReduce from the workers. Isn't really necessary to run.
+
+    Arguments:
+        key_path: Path to SSH key.
+
+        worker_ips: IPv4 addresses of worker VMs.
+    """
     command = "cd %s/main/;sudo rm WorkerLog*; sudo rm *.dat" % MAPREDUCE_DIRECTORY
     execute_command(
         command = command,
@@ -477,6 +565,21 @@ def launch_workers(
     workers_per_vm = 5,
     worker_ips = None
 ):
+    """
+    Commonly-used function. This launches the MapReduce workers.
+
+    Arguments:
+        client_ip (str): String of the form "<IP>:<PORT>". The IP is the IPv4 (usually private) of 
+        the MapReduce client VM, and port is the port that the client is listening on (usually 1234).
+
+        count_limit (int): Number of attempts to obtain output of executing SSH commands on the VM.
+
+        key_path (string): Path to your SSH key (on your local computer/wherever you're running this script).
+
+        workers_per_vm (int): Number of MapReduce workers to create on each VM.
+
+        worker_ips (list of str): IPv4 addresses of the VMs on which you want to create the workers.
+    """
     print("Key path = {}".format(key_path))
 
     pre_command = """
@@ -500,6 +603,22 @@ def launch_workers(
     )
 
 def update_lambdas_prefixed(ips, prefix = "CacheNode", key_path = KEYFILE_PATH):
+    """
+    This executes the ./update_function.sh InfiniStore script on each of the VMs specified by their
+    IP address.
+
+    This is used for prefixed deployments. For example, you may have created several InfiniStore
+    AWS Lambda deployments. The first had prefix "CacheNode0-", the next had prefix "CacheNode1-", etc.
+    The "base" prefix for each deployment is "CacheNode". 
+
+    So the first IP in the ips parameter (which is a list of strings) will execute 'update_function' 
+    for CacheNode0- prefix. The second IP will do the same for CacheNode1- prefix.
+
+    So the 'prefix' argument is the base prefix. This assumes each prefix is of the form
+    "<BASE_PREFIX><NUMBER>-". 
+
+    This passes a random integer (currently between 60 and 100) for the timeout for the Lambda functions.
+    """
     for i in range(0, len(ips)):
         ip = ips[i]
         lambda_prefix = prefix + "{}-".format(i)
@@ -514,6 +633,15 @@ def update_lambdas_prefixed(ips, prefix = "CacheNode", key_path = KEYFILE_PATH):
         )    
 
 def update_lambdas(ips, key_path = KEYFILE_PATH):
+    """
+    This just executes the ./update_function.sh script on each VM specified by the ips list (list of str).
+
+    So either you should only specify 1 IP and the update_function.sh script should be configured correctly
+    on that VM (i.e., be configured to update Lambdas with the desired prefix), or each update_function.sh on the
+    VMs specified by ips should be configured for different Lambdas (different prefix in each update_function.sh script).
+
+    I usually just use update_lambdas_prefixed.
+    """
     command = "cd %s/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {}".format(INFINISTORE_DIRECTORY, random.randint(600, 900))
     print("Full command: {}".format(command))
     execute_command(
@@ -525,6 +653,15 @@ def update_lambdas(ips, key_path = KEYFILE_PATH):
     )    
 
 def format_proxy_config(proxy_ips : list) -> str:
+    """
+    When MapReduce framework used the Redis protocol for InfiniStore, we needed to update
+    the file config.go, as in n proxy/config/config.go. This file needed a list of all the
+    InfiniStore proxies. But we don't use the Redis protocol anymore so this function is not used.
+
+    We would take the output of this function, replace the associated line in
+    proxy/config/config.go (in the InfiniStore repo), add, commit, and push to GitHub, then
+    use the 'pull_from_github' function defined above to update all the VMs.
+    """
     num_proxies = len(proxy_ips)
     #code_line = "var ProxyList [{}]string = [{}]string".format(num_proxies, num_proxies)
     code_line = "var ProxyList []string = []string{"
@@ -541,18 +678,52 @@ def format_proxy_config(proxy_ips : list) -> str:
     return code_line
 
 def format_parameter_storage_list(ips : list, port : int, parameter_name : str) -> str:
+    """
+    Users must pass to the MapReduce client a list of all the InfiniStore proxies. This parameter is formatted
+    as "-storageIps <IP 1>:<PORT> -storageIps <IP 2>:<PORT> ...". This can be very tedious to write out
+    by hand, so this function will basically generate the formatted parameter for you. Then you can
+    copy-and-paste or otherwise append the string to the command for launching the MapReduce client.
+
+    Arguments:
+        ips (list of string): The IPv4s (usually private) of VMs that have an InfiniStore proxy running on them.
+
+        port (int): The port that the InfiniStore proxies use (should just be 6378).
+
+        parameter_name (str): The name of the parameter for the client. Currently it is 'storageIps'.
+    
+    For example, let's say you have InfiniStore proxies running on two VMs. The first VM has private IPv4
+    10.0.109.88, and the second VM has private IPv4 10.0.255.255. The ips argument would be:
+    ["10.0.109.88", "10.0.255.255"]. port would be 6378. parameter_name would be 'storageIps'. This 
+    function would return the following:
+
+    "-storageIps 10.0.109.88:6378 -storageIps 10.0.255.255:6378"
+
+    You could then copy and paste this to the end of your command to start MapReduce client
+
+    go run client.go -hostname 10.0.109.88:1234 ... ... ... -storageIps 10.0.109.88:6378 -storageIps 10.0.255.255:6378
+    """
     param = ""
     for ip in ips:
         param = param + "-{} {}:{} ".format(parameter_name, ip, port)
     return param
 
 def print_time():
+    """
+    Print the current time formatted in the way that the export_ubuntu.sh script, which is used for 
+    exporting AWS Lambda CloudWatch logs to AWS S3, expects the start and end parameters to be.
+    """
     now = datetime.now()
     date_time = now.strftime("%Y-%m-%d %H:%M:%S")
     print(date_time)
     return date_time
 
-# 52.55.211.171, 3.84.164.176
+# =========================================================
+# Quick reference, copy-and-paste these commands as needed.
+# =========================================================
+#
+# They are commented out bc otherwise they would be executed when we import 
+# launch_cluster.py into our Python terminal session.
+
 # lc.clear_redis_instances(flushall = True, hostnames = hostnames)
 # lc.clean_workers(worker_ips = worker_ips)
 # lc.kill_go_processes(ips = worker_ips + [client_ip])
@@ -564,56 +735,83 @@ def print_time():
 # lc.update_lambdas(worker_ips + [client_ip])
 # lc.update_lambdas_prefixed(worker_ips + [client_ip])
 if __name__ == "__main__":
-    get_private_ips = lc.get_private_ips
-    get_public_ips = lc.get_public_ips
-    get_ips = lc.get_ips
-    public_ips, private_ips = get_ips()
-    all_ips = public_ips + private_ips
-    workers_per_vm = 3
-    NUM_CORES_PER_WORKER = 5
-    shards_per_vm = 1
-    num_redis = 0
 
-    # If the Client IP appears first in the list.
-    client_ip = public_ips[0]
-    client_ip_private = private_ips[0]
-    worker_ips = public_ips[1:]
-    worker_private_ips = private_ips[1:]
+    # I usually copy-and-paste this entire block of text into a terminal. Make sure you
+    # un-indent them before copying-and-pasting. They are indented now bc otherwise 
+    # they cause errors when importing launch_cluster.py into your Python terminal session.
+    # In most code editors, you can highlight the whole block and press SHIFT+TAB to unindent all at once.
+    public_ips, private_ips = lc.get_ips() # Get the public & private IPv4 addresses of all running VMs.
+    all_ips = public_ips + private_ips     # Creates a list of all the IPv4 addresses.
+    workers_per_vm = 3                     # Number of MapReduce workers per VM.
+    NUM_CORES_PER_WORKER = 5               # Number of cores that each worker gets.
 
-    # If the Client IP appears last in the list.
-    client_ip = public_ips[-1]
-    client_ip_private = private_ips[-1]
-    worker_ips = public_ips[:-1]
-    worker_private_ips = private_ips[:-1]
+    # Generally my InfiniStore client VM is the first or last VM in the list public_ips. 
+    # So depending on which it is, I then copy and paste this block or the next block to 
+    # populate the values accordingly.
 
-    subset_workers = worker_ips[0:2]
-    code_line2 = lc.format_proxy_config([client_ip_private] + subset_workers)
+    # If the Client IP appears first in the list. 
+    client_ip = public_ips[0]   # Create variable to hold the MapReduce client's IP public address.
+    client_ip_private = private_ips[0] # Create variable to hold the MapReduce client's IP private address. 
+    worker_ips = public_ips[1:] # The remaining IPs are public worker IPs.
+    worker_private_ips = private_ips[1:] # The remaining IPs are private worker IPs.
 
+    # If the Client IP appears last in the list. Only copy-and-paste this block if you didn't
+    # use the previous block.
+    client_ip = public_ips[-1] # Create variable to hold the MapReduce client's IP public address.
+    client_ip_private = private_ips[-1] # Create variable to hold the MapReduce client's IP private address.
+    worker_ips = public_ips[:-1] # The remaining IPs are public worker IPs. 
+    worker_private_ips = private_ips[:-1] # The remaining IPs are private worker IPs.
+
+    # This function isn't used anymore; this was only for when we used the Redis protocol with
+    # InfiniStore. See the documentation for 'format_proxy_config'.
     code_line = lc.format_proxy_config([client_ip_private] + worker_private_ips)
 
+    # We DO use this. Usually I'll execute this, print out the value of 'param', then update the
+    # command I use to launch the MapReduce worker.
     param = lc.format_parameter_storage_list([client_ip_private] + worker_private_ips, 6378, "storageIps")
 
+    # Print the IPs.
     print("Client IP: {}".format(client_ip))
     print("Client private IP: {}".format(client_ip_private))
     print("Worker IP's ({}): {}".format(len(worker_ips), worker_ips))
     print("Worker private IP's ({}): {}".format(len(worker_private_ips), worker_private_ips))
     print(param)
 
+    # Only do this if we're purposefully modifying the upload/download speeds of our VMs.
     wondershape(ips = [client_ip] + worker_ips)
 
-    # NUM_WORKERS_PER_VM * NUM_VMs * NUM_CORES_PER_WORKER
+    # Number of Reducers = NUM_WORKERS_PER_VM * NUM_VMs * NUM_CORES_PER_WORKER
+    # This value gets passed to the MapReduce client. You need to update the command yourself
+    # with whatever this calculates.
     nReducers = workers_per_vm * len(worker_ips) * NUM_CORES_PER_WORKER
     print("nReducers = {}".format(nReducers))
 
+    # Sometimes needed, sometimes not. Used to update the InfiniStore repos on the VMs.
     lc.pull_from_github([client_ip] + worker_ips, reset_first = True)
+
+    # =======================================================
+    # We use this block to start all the InfiniStore proxies.
+    # 
+    # First, we get the start time of the experiment. We'll need to pass this value to export_ubuntu.sh
+    # if we want to export the AWS Lambda CloudWatch logs after running the workload.
+    #
+    # Next, we launch the InfiniStore proxies. We launch one on each worker VM and one on the client VM.
+    # We store the returned experiment_prefix in a variable (and print it) as we also need that to pass
+    # to export_ubuntu.sh. Basically, we use the prefix when creating a folder in our AWS S3 bucket for
+    # the logs corresponding to this specific experiment/job.
     start_time = lc.print_time()
     experiment_prefix = lc.launch_infinistore_proxies(worker_ips + [client_ip])
-    experiment_prefix += "/" #TODO: Remove this next time, as the launch_infinistore_proxies will be updated.
     print("experiment_prefix = " + str(experiment_prefix))
 
+    # ===============================================================================================
     # NOTE: I generally copy-and-paste these into a terminal session, so I leave the FULL paths here
     # without using the MAPREDUCE_DIRECTORY and GOPATH variables defined in launch_cluster.py. I 
     # recommend you replace these with your own hard-coded paths if you intend to copy-and-paste them.
+
+    # The input data for TeraSort/grep is stored in S3. The MapReduce framework needs the keys of the
+    # input data. Usually there are 20+ shards, so passing that as a command-line argument would be
+    # obnoxious. Instead, I created a bunch of text files, each containing the S3 keys of the input
+    # data partitions for various problem sizes. 
 
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
@@ -624,29 +822,42 @@ if __name__ == "__main__":
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/20GB_S3Keys.txt
     # /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt    
-    #launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt")
-    # ./start-client srt 36 sample_data.dat /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt 10 2 32 
-    # go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 36 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.121.202:6378
+
+    # This function does NOT work anymore. I am leaving it here in case I ever decide to update it, though. That way,
+    # I don't have to rewrite this function call.
     lc.launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
 
+    # This function IS used. This is a pre-formatted function call to start the workers based on all the code we executed above.
     lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
 
-    #lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips[0:2], workers_per_vm = workers_per_vm, count_limit = 1)
+    # Make sure to print this at the end so you know when the job stopped (in the correct format).
+    # This gets passed to export_ubuntu.sh if you export the AWS Lambda CloudWatch logs for this job.
     end_time = lc.print_time()
 
-# make stop-server
+# ======================================================================================================
+# This is a pre-formatted command to run the MapReduce client. I created a long-running EC2 VM (like one
+# that I stop and start but never terminate) so its private IPv4 is basically static. You use the VM's
+# private IPv4 for the 'driverHostname' parameter, along with port 1234.
 
-# cd ../evaluation
-# make start-server 
-# tail -f log
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 36 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.121.202:6378
 
-# vim ../proxy/config/config.go
+# Change the 'jobName' parameter depending on what job you want to run. For TeraSort, it is 'srt'.
+# For grep, it is 'grep'. For Word Count, it is 'wc'. Basically, it is the prefix of the two service
+# files which implement the job. For example, TeraSort is implemented in srtm_service.go and srtr_service.go.
+# These files are named as <JOB_NAME>m_service.go for the Map service/function, and similarly
+# <JOB_NAME>r_service.go for the Reduce service/function.
 
-# vim ../deploy/update_function.sh
+# Make sure to update the nReduce argument based on what you calculated above.
 
-# cd ../deploy
-# ./update_function.sh 607
+# You should change the s3KeyFile parameter based on the problem size you wish to use. 
 
-#   
+# Finally, make sure to append the updated -storageIps parameters to the end of the command. Replace the
+# existing 'storageIps' parameter.
+
+
+# ==========================================================================================
+# These are two hard-coded functions to start InfiniStore proxies. The first uses CacheNode0
+# while the second uses CacheNode1. This is just for debugging, as the prefix values are old/outdated.
+
 #go run $PWD/../proxy/proxy.go -debug=true -prefix=202011291702 -lambda-prefix=CacheNode0- -disable-color >./log 2>&1
 #go run $PWD/../proxy/proxy.go -debug=true -prefix=202011291702 -lambda-prefix=CacheNode1- -disable-color >./log 2>&1
