@@ -23,8 +23,16 @@ to learn about GOPATH.
 KEYFILE_PATH is the path to your SSH key so Paramiko can SSH onto your VM's to execute commands.
 """
 
+# This is the $GOPATH environment variable on your virtual machine(s).
+GOPATH = "/home/ubuntu/project"
+
 # This is the path to the root of the InfiniStore local GitHub repository on the VM.
-INFINISTORE_DIRECTORY = "/home/ubuntu/project/src/github.com/mason-leap-lab/infinicache/"
+# It should be under the GOPATH directory, which is why the GOPATH variable is used automatically.
+INFINISTORE_DIRECTORY = "{}/src/github.com/mason-leap-lab/infinicache".format(GOPATH)
+
+# This is the path to the root of the MapReduce framework GitHub repository on the VM. (So this
+# repo). It should be under the GOPATH directory, which is why the GOPATH variable is used automatically.
+MAPREDUCE_DIRECTORY = "{}/src/github.com/Scusemua/InfiniCacheMapReduceTest".format(GOPATH)
 
 # The path to your keyfile.
 KEYFILE_PATH = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"
@@ -232,9 +240,9 @@ def launch_client(
     client_ip = None,
     key_path = KEYFILE_PATH,
     nReducers = 10,
-    #s3_key_file = "/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt"
-    s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt"
-    # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
+    #s3_key_file = "%s/util/1MB_S3Keys.txt" % MAPREDUCE_DIRECTORY
+    s3_key_file = "%s/util/1MB_S3Keys.txt" % MAPREDUCE_DIRECTORY
+    # %s/util/5GB_S3Keys.txt % MAPREDUCE_DIRECTORY
 ):
     """
     Launch a MapReduce client on the given VM.
@@ -261,8 +269,7 @@ def launch_client(
 
     # TODO: THIS DOES NOT CURRENTLY WORK. COMMAND IS NOT FORMATTED PROPERLY.
 
-    #post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-client.sh {} {}".format(nReducers, s3_key_file)
-    post_command = "cd /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main;./start-client.sh {} {}".format(nReducers, s3_key_file)
+    post_command = "cd /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main;./start-client.sh {} {}".format(MAPREDUCE_DIRECTORY, nReducers, s3_key_file)
 
     command = pre_command + post_command
 
@@ -371,7 +378,7 @@ def update_redis_hosts(
                 create_redis_file_command = create_redis_file_command + redis_ip + ":6379" + "\n"
     
     #create_redis_file_command = create_redis_file_command + " > /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/redis_hosts.txt"
-    create_redis_file_command = create_redis_file_command + " > /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main/redis_hosts.txt"
+    create_redis_file_command = create_redis_file_command + " > %s/main/redis_hosts.txt" % MAPREDUCE_DIRECTORY
     
     print("create_redis_file_command = \"{}\"".format(create_redis_file_command))
 
@@ -392,40 +399,32 @@ def git_status(ips, key_path = KEYFILE_PATH):
 def pull_from_github(ips, reset_first = False, key_path = KEYFILE_PATH):
     if reset_first:
         print("Resetting first...")
-        command_reset = "cd %sevaluation; git reset --hard origin/config_ben" % INFINISTORE_DIRECTORY
+        command_reset = "cd %s/evaluation; git reset --hard origin/config_ben" % INFINISTORE_DIRECTORY
         execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
     
     print("Now pulling...")
-    command = "cd %sevaluation; git pull" % INFINISTORE_DIRECTORY
+    command = "cd %s/evaluation; git pull" % INFINISTORE_DIRECTORY
     execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
 
 def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
-    # command = "cd %sevaluation; export PATH=$PATH:/usr/local/go/bin; export GOPATH=/home/ubuntu/project; make start-server" % INFINISTORE_DIRECTORY
-    # command = "cd %sevaluation; export GOPATH=/home/ubuntu/project; make start-server" % INFINISTORE_DIRECTORY
-    #command = "cd %sevaluation; export PATH=$PATH:/usr/local/go/bin; export GOPATH=/home/ubuntu/project; ./server.sh >./log 2>&1 &" % INFINISTORE_DIRECTORY
     prefix = datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M') + "/"
     
-    # This starts the proxies successfully, but I get failures almost immediately during workload. May be entirely unrelated.
-
     # Each proxy needs a slightly different command as each proxy uses different Lambdas.
     for i in range(0, len(ips)):
         ip = ips[i]
         lambda_prefix = "CacheNode%d-" % i 
         print("Assigning lambda prefix \"%s\" to proxy at ip %s." % (lambda_prefix, ip))
-        command = "cd {}evaluation; export PATH=$PATH:/usr/local/go/bin; go run $PWD/../proxy/proxy.go -debug=true -prefix={} -lambda-prefix={} -disable-color >./log 2>&1".format(INFINISTORE_DIRECTORY, prefix, lambda_prefix)
+        command = "cd {}/evaluation; export PATH=$PATH:/usr/local/go/bin; go run $PWD/../proxy/proxy.go -debug=true -prefix={} -lambda-prefix={} -disable-color >./log 2>&1".format(INFINISTORE_DIRECTORY, prefix, lambda_prefix)
         execute_command(command, 3, get_pty = True, ips = [ip], key_path = key_path)
-
-    # This does NOT work.
-    #command = "cd %sevaluation; export PATH=$PATH:/usr/local/go/bin; make start-server; cat log; cat log" % INFINISTORE_DIRECTORY
 
     return prefix
 
 def export_cloudwatch_logs(ips, prefix, start, end, key_path = KEYFILE_PATH):
-    command = "cd %sevaluation/cloudwatch; ./export_ubuntu.sh %s %s %s;" % (INFINISTORE_DIRECTORY, prefix, str(start), str(end))
+    command = "cd %s/evaluation/cloudwatch; ./export_ubuntu.sh %s %s %s;" % (INFINISTORE_DIRECTORY, prefix, str(start), str(end))
     execute_command(command, 3, get_pty = True, ips = ips, key_path = key_path)
 
 def stop_infinistore_proxies(ips, key_path = KEYFILE_PATH):
-    command = "cd %sevaluation; make stop-server" % INFINISTORE_DIRECTORY
+    command = "cd %s/evaluation; make stop-server" % INFINISTORE_DIRECTORY
     execute_command(command, 1, get_pty = True, ips = ips, key_path = key_path)
 
 # lc.kill_go_processes(ips = worker_ips)
@@ -462,8 +461,7 @@ def clean_workers(
     key_path = KEYFILE_PATH,
     worker_ips = None
 ):
-    #command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;sudo rm WorkerLog*; sudo rm *.dat"
-    command = "cd /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main/;sudo rm WorkerLog*; sudo rm *.dat"
+    command = "cd %s/main/;sudo rm WorkerLog*; sudo rm *.dat" % MAPREDUCE_DIRECTORY
     execute_command(
         command = command,
         count_limit = 2,
@@ -487,7 +485,7 @@ def launch_workers(
     """
 
     #post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234 {}".format(client_ip, workers_per_vm)
-    post_command = "cd /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main/;./start-workers.sh {}:1234 {}".format(client_ip, workers_per_vm)
+    post_command = "cd {}/main/;./start-workers.sh {}:1234 {}".format(MAPREDUCE_DIRECTORY, client_ip, workers_per_vm)
 
     command = pre_command + post_command
 
@@ -505,7 +503,7 @@ def update_lambdas_prefixed(ips, prefix = "CacheNode", key_path = KEYFILE_PATH):
     for i in range(0, len(ips)):
         ip = ips[i]
         lambda_prefix = prefix + "{}-".format(i)
-        command = "cd %sdeploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {}".format(INFINISTORE_DIRECTORY, random.randint(60, 100), lambda_prefix)
+        command = "cd %s/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {}".format(INFINISTORE_DIRECTORY, random.randint(60, 100), lambda_prefix)
         print("Full command: {}".format(command))
         execute_command(
             command = command,
@@ -516,7 +514,7 @@ def update_lambdas_prefixed(ips, prefix = "CacheNode", key_path = KEYFILE_PATH):
         )    
 
 def update_lambdas(ips, key_path = KEYFILE_PATH):
-    command = "cd %sdeploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {}".format(INFINISTORE_DIRECTORY, random.randint(600, 900))
+    command = "cd %s/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {}".format(INFINISTORE_DIRECTORY, random.randint(600, 900))
     print("Full command: {}".format(command))
     execute_command(
         command = command,
@@ -612,6 +610,10 @@ if __name__ == "__main__":
     experiment_prefix = lc.launch_infinistore_proxies(worker_ips + [client_ip])
     experiment_prefix += "/" #TODO: Remove this next time, as the launch_infinistore_proxies will be updated.
     print("experiment_prefix = " + str(experiment_prefix))
+
+    # NOTE: I generally copy-and-paste these into a terminal session, so I leave the FULL paths here
+    # without using the MAPREDUCE_DIRECTORY and GOPATH variables defined in launch_cluster.py. I 
+    # recommend you replace these with your own hard-coded paths if you intend to copy-and-paste them.
 
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt
     # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
