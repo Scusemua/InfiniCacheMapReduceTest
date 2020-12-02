@@ -1,10 +1,11 @@
+# I recommend copying-and-pasting these imports into your Python terminal session.
 import boto3   
 import time 
 import paramiko
 import random
 from datetime import datetime
 import redis 
-import launch_cluster as lc
+import mapreduce_driver as mrd
 
 """
 This file contains scripts that I use to orchestrate workloads on remote clusters/virtual machines.
@@ -489,9 +490,9 @@ def stop_infinistore_proxies(ips, key_path = KEYFILE_PATH):
     command = "cd %s/evaluation; make stop-server" % INFINISTORE_DIRECTORY
     execute_command(command, 1, get_pty = True, ips = ips, key_path = key_path)
 
-# lc.kill_go_processes(ips = worker_ips)
-# lc.kill_go_processes(ips = worker_ips + [client_ip])
-# lc.kill_go_processes(ips = [client_ip])
+# mrd.kill_go_processes(ips = worker_ips)
+# mrd.kill_go_processes(ips = worker_ips + [client_ip])
+# mrd.kill_go_processes(ips = [client_ip])
 def kill_go_processes(
     ips = None,
     key_path = KEYFILE_PATH
@@ -513,7 +514,7 @@ def kill_proxies(ips, key_path = KEYFILE_PATH):
     kill_command = "sudo ps aux | grep proxy | awk '{print $2}' | xargs kill -9 $1"
     execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
 
-# lc.clear_redis_instances(flushall = True, hostnames = hostnames)
+# mrd.clear_redis_instances(flushall = True, hostnames = hostnames)
 def clear_redis_instances(
     flushall = False,
     hostnames = None
@@ -536,7 +537,7 @@ def clear_redis_instances(
             print("Flushing DB on Redis @ {}".format(hostname))
             rc.flushdb()
 
-# lc.clean_workers(worker_ips = worker_ips)
+# mrd.clean_workers(worker_ips = worker_ips)
 def clean_workers(
     key_path = KEYFILE_PATH,
     worker_ips = None
@@ -722,25 +723,25 @@ def print_time():
 # =========================================================
 #
 # They are commented out bc otherwise they would be executed when we import 
-# launch_cluster.py into our Python terminal session.
+# mapreduce_driver.py into our Python terminal session.
 
-# lc.clear_redis_instances(flushall = True, hostnames = hostnames)
-# lc.clean_workers(worker_ips = worker_ips)
-# lc.kill_go_processes(ips = worker_ips + [client_ip])
-# lc.pull_from_github(worker_ips)
-# lc.pull_from_github(worker_ips + [client_ip])
-# experiment_prefix = lc.launch_infinistore_proxies(worker_ips + [client_ip])
-# experiment_prefix = lc.launch_infinistore_proxies([client_ip])
+# mrd.clear_redis_instances(flushall = True, hostnames = hostnames)
+# mrd.clean_workers(worker_ips = worker_ips)
+# mrd.kill_go_processes(ips = worker_ips + [client_ip])
+# mrd.pull_from_github(worker_ips)
+# mrd.pull_from_github(worker_ips + [client_ip])
+# experiment_prefix = mrd.launch_infinistore_proxies(worker_ips + [client_ip])
+# experiment_prefix = mrd.launch_infinistore_proxies([client_ip])
 # print("experiment_prefix = " + str(experiment_prefix))
-# lc.update_lambdas(worker_ips + [client_ip])
-# lc.update_lambdas_prefixed(worker_ips + [client_ip])
+# mrd.update_lambdas(worker_ips + [client_ip])
+# mrd.update_lambdas_prefixed(worker_ips + [client_ip])
 if __name__ == "__main__":
 
     # I usually copy-and-paste this entire block of text into a terminal. Make sure you
     # un-indent them before copying-and-pasting. They are indented now bc otherwise 
-    # they cause errors when importing launch_cluster.py into your Python terminal session.
+    # they cause errors when importing mapreduce_driver.py into your Python terminal session.
     # In most code editors, you can highlight the whole block and press SHIFT+TAB to unindent all at once.
-    public_ips, private_ips = lc.get_ips() # Get the public & private IPv4 addresses of all running VMs.
+    public_ips, private_ips = mrd.get_ips() # Get the public & private IPv4 addresses of all running VMs.
     all_ips = public_ips + private_ips     # Creates a list of all the IPv4 addresses.
     workers_per_vm = 3                     # Number of MapReduce workers per VM.
     NUM_CORES_PER_WORKER = 5               # Number of cores that each worker gets.
@@ -764,11 +765,11 @@ if __name__ == "__main__":
 
     # This function isn't used anymore; this was only for when we used the Redis protocol with
     # InfiniStore. See the documentation for 'format_proxy_config'.
-    code_line = lc.format_proxy_config([client_ip_private] + worker_private_ips)
+    code_line = mrd.format_proxy_config([client_ip_private] + worker_private_ips)
 
     # We DO use this. Usually I'll execute this, print out the value of 'param', then update the
     # command I use to launch the MapReduce worker.
-    param = lc.format_parameter_storage_list([client_ip_private] + worker_private_ips, 6378, "storageIps")
+    param = mrd.format_parameter_storage_list([client_ip_private] + worker_private_ips, 6378, "storageIps")
 
     # Print the IPs.
     print("Client IP: {}".format(client_ip))
@@ -787,7 +788,7 @@ if __name__ == "__main__":
     print("nReducers = {}".format(nReducers))
 
     # Sometimes needed, sometimes not. Used to update the InfiniStore repos on the VMs.
-    lc.pull_from_github([client_ip] + worker_ips, reset_first = True)
+    mrd.pull_from_github([client_ip] + worker_ips, reset_first = True)
 
     # =======================================================
     # We use this block to start all the InfiniStore proxies.
@@ -799,13 +800,13 @@ if __name__ == "__main__":
     # We store the returned experiment_prefix in a variable (and print it) as we also need that to pass
     # to export_ubuntu.sh. Basically, we use the prefix when creating a folder in our AWS S3 bucket for
     # the logs corresponding to this specific experiment/job.
-    start_time = lc.print_time()
-    experiment_prefix = lc.launch_infinistore_proxies(worker_ips + [client_ip])
+    start_time = mrd.print_time()
+    experiment_prefix = mrd.launch_infinistore_proxies(worker_ips + [client_ip])
     print("experiment_prefix = " + str(experiment_prefix))
 
     # ===============================================================================================
     # NOTE: I generally copy-and-paste these into a terminal session, so I leave the FULL paths here
-    # without using the MAPREDUCE_DIRECTORY and GOPATH variables defined in launch_cluster.py. I 
+    # without using the MAPREDUCE_DIRECTORY and GOPATH variables defined in mapreduce_driver.py. I 
     # recommend you replace these with your own hard-coded paths if you intend to copy-and-paste them.
 
     # The input data for TeraSort/grep is stored in S3. The MapReduce framework needs the keys of the
@@ -825,14 +826,14 @@ if __name__ == "__main__":
 
     # This function does NOT work anymore. I am leaving it here in case I ever decide to update it, though. That way,
     # I don't have to rewrite this function call.
-    lc.launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
+    mrd.launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
 
     # This function IS used. This is a pre-formatted function call to start the workers based on all the code we executed above.
-    lc.launch_workers(client_ip = client_ip, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
+    mrd.launch_workers(client_ip = client_ip, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
 
     # Make sure to print this at the end so you know when the job stopped (in the correct format).
     # This gets passed to export_ubuntu.sh if you export the AWS Lambda CloudWatch logs for this job.
-    end_time = lc.print_time()
+    end_time = mrd.print_time()
 
 # ======================================================================================================
 # This is a pre-formatted command to run the MapReduce client. I created a long-running EC2 VM (like one
