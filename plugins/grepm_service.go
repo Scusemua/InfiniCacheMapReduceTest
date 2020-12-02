@@ -136,7 +136,6 @@ func doMap(
 		reducerNum := ihash(result.Key) % nReduce
 		storageKey := serverless.ReduceName(jobName, taskNum, reducerNum)
 		results[storageKey] = append(results[storageKey], result)
-		log.Printf("Map #%d done.\n", idx)
 	}
 
 	ioRecords := make([]IORecord, 0)
