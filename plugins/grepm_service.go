@@ -4,7 +4,7 @@ package main
 
 import (
 	"bytes"
-	"cs675-spring20-labs/lab2/serverless"
+	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
