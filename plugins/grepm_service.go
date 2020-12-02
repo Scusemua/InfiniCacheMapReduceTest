@@ -6,15 +6,15 @@ import (
 	"bytes"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"encoding/gob"
-	"encoding/json"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"hash/fnv"
 	"regexp"
-	"io/ioutil"
 	"log"
 	"os"
-	"strings"
-	"unicode"
 )
 
 // To compile the map plugin: run:
