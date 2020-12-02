@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"encoding/gob"
+	"io/ioutil"
 	"encoding/json"
 	"time"
 	"fmt"
