@@ -83,7 +83,6 @@ func doMap(
 	dataShards int,
 	parityShards int,
 	maxGoRoutines int,
-	pattern string,
 ) {
 	var err error
 	var b []byte
@@ -120,8 +119,6 @@ func doMap(
 		storageKey := serverless.ReduceName(jobName, taskNum, reducerNum)
 		results[storageKey] = append(results[storageKey], result)
 	}
-
-	return nil 
 }
 
 // We supply you an ihash function to help with mapping of a given
