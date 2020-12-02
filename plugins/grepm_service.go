@@ -132,7 +132,7 @@ func doMap(
 
 	log.Println("Performing grep map function now...")
 	results := make(map[string][]KeyValue)
-	for idx, result := range mapF(S3Key, string(b)) {
+	for _, result := range mapF(S3Key, string(b)) {
 		reducerNum := ihash(result.Key) % nReduce
 		storageKey := serverless.ReduceName(jobName, taskNum, reducerNum)
 		results[storageKey] = append(results[storageKey], result)
