@@ -17,6 +17,14 @@ paste them into a terminal.
 At the very least, you need to modify the variable declarations at the top of the file to match
 your setup. 
 
+-----------------------------------------------------------------------------------------------
+If you make changes to this file AFTER starting a Python interactive session, you can re-import
+the module and obtain the changes. You need to use the importlib module:
+
+import importlib
+importlib.reload(mrd) # or importlib.reload(mapreduce_driver)
+-----------------------------------------------------------------------------------------------
+
 INFINISTORE_DIRECTORY is the path to the root of the InfiniStore GitHub repo. Note that this should
 be under your $GOPATH environment variable. (My GOPATH is /home/ubuntu/project, I believe). Use Google
 to learn about GOPATH.
@@ -36,7 +44,7 @@ INFINISTORE_DIRECTORY = "{}/src/github.com/mason-leap-lab/infinicache".format(GO
 MAPREDUCE_DIRECTORY = "{}/src/github.com/Scusemua/InfiniCacheMapReduceTest".format(GOPATH)
 
 # The path to your keyfile.
-KEYFILE_PATH = "G:\\Documents\\School\\College\\Junior Year\\CS 484_\\HW1\\CS484_Desktop.pem"
+KEYFILE_PATH = "C:\\Users\\benrc\\.ssh\\CS484_Desktop.pem"
 
 # This is the branch to use for InfiniStore.
 INFINISTORE_BRANCH = "origin/config_ben"
@@ -826,7 +834,7 @@ if __name__ == "__main__":
 
     # This function does NOT work anymore. I am leaving it here in case I ever decide to update it, though. That way,
     # I don't have to rewrite this function call.
-    mrd.launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
+    # mrd.launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
 
     # This function IS used. This is a pre-formatted function call to start the workers based on all the code we executed above.
     mrd.launch_workers(client_ip = client_ip, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
@@ -840,7 +848,7 @@ if __name__ == "__main__":
 # that I stop and start but never terminate) so its private IPv4 is basically static. You use the VM's
 # private IPv4 for the 'driverHostname' parameter, along with port 1234.
 
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 36 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.121.202:6378
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 36 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.82.235:6378 -storageIps 10.0.74.229:6378 -storageIps 10.0.84.162:6378 -storageIps 10.0.76.96:6378 -storageIps 10.0.74.191:6378 -storageIps 10.0.75.173:6378
 
 # Change the 'jobName' parameter depending on what job you want to run. For TeraSort, it is 'srt'.
 # For grep, it is 'grep'. For Word Count, it is 'wc'. Basically, it is the prefix of the two service

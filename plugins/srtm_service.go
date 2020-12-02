@@ -118,6 +118,11 @@ func doMap(
 
 	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
+	// =====================================================================
+	// Storage Client Creation
+	// ---------------------------------------------------------------------
+	// In theory, you would create whatever clients that Pocket uses here...
+	// =====================================================================
 	log.Printf("Creating storage client for IPs: %v\n", storageIPs)
 	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
 	cli.Dial(storageIPs)

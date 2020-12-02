@@ -183,11 +183,18 @@ func doReduce(
 	// 	WriteTimeout: 30 * time.Second,
 	// 	MaxRetries:   3,
 	// })
-	//storageIps2 := []string{"10.0.109.88:6378", "10.0.121.202:6378"}
-	log.Println("Creating storage client for storage ", storageIps)
+	log.Println("Creating storage client for IPs ", storageIps)
+
+	// =====================================================================
+	// Storage Client Creation
+	// ---------------------------------------------------------------------
+	// In theory, you would create whatever clients that Pocket uses here...
+	// =====================================================================
+
+	// This creates a new InfiniStore EcClient object.
 	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
-	// var addrList = "127.0.0.1:6378"
-	// addrArr := strings.Split(addrList, ",")
+	
+	// This effectively connects the InfiniStore EcClient to all of the proxies.
 	cli.Dial(storageIps)
 
 	log.Println("Successfully created storage client")
@@ -212,9 +219,14 @@ func doReduce(
 		success := false
 		// Exponential backoff.
 		for current_attempt := 0; current_attempt < 10; current_attempt++ {
+			// This is a read operation from InfiniStore. The code that follows is also related.
+			// Basically, the Get function returns a tuple where the first element of the tuple is 
+			// an object of type ReadAllCloser, and the second element of the tuple is a boolean
+			// which indicates whether or not the read operation went well.
 			readAllCloser, ok = cli.Get(dataKey)
 
 			// Check for failure, and backoff exponentially on-failure.
+			// If either the bool is false or the ReadAllCloser object is nil (null), then the read failed.
 			if !ok || readAllCloser == nil {
 				max_duration := (2 << uint(current_attempt)) - 1
 				duration := rand.Intn(max_duration + 1)
@@ -226,11 +238,15 @@ func doReduce(
 				break
 			}
 		}
-
+		
+		// If ultimately the read failed after multiple attempts during exponential backoff,
+		// we log the error with log.Fatal(), which prints the error and then exits.
 		if !success {
 			log.Fatal("ERROR: Failed to retrieve data from storage with key \"" + dataKey + "\" in allotted number of attempts.\n")
 		}
 
+		// To get the data from the read, we call ReadAll() on the ReadAllCloser object. This is still
+		// InfiniStore specific. That's just how it works. After reading, we call Close().
 		marshalled_result, err := readAllCloser.ReadAll()
 		readAllCloser.Close()
 		if err != nil {
@@ -297,9 +313,12 @@ func doReduce(
 			key := base_key + string(i)
 			log.Printf("storage WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
 			start := time.Now()
-			//err := redis_client.Set(key, chunk, 0).Err()
-			//_, ok := cli.EcSet(key, chunk)
+
+			// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
+			// I put it in its own function bc there are several write calls in this file and I did not
+			// wanna reuse the same code in each location.
 			success := exponentialBackoffWrite(key, chunk, cli)
+
 			end := time.Now()
 			writeEnd := time.Since(start)
 			//checkError(err)
@@ -313,8 +332,10 @@ func doReduce(
 		}
 		num_chunks_serialized, err3 := json.Marshal(num_chunks)
 		checkError(err3)
-		//err := redis_client.Set(fileName, num_chunks_serialized, 0).Err()
-		//_, ok := cli.EcSet(fileName, num_chunks_serialized)
+
+		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
+		// I put it in its own function bc there are several write calls in this file and I did not
+		// wanna reuse the same code in each location.		
 		success := exponentialBackoffWrite(fileName, num_chunks_serialized, cli)
 		if !success {
 			log.Fatal("ERROR while storing value in storage, key is: \"", fileName, "\"")
@@ -323,13 +344,14 @@ func doReduce(
 	} else {
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
 		start := time.Now()
-		//err := redis_client.Set(fileName, marshalled_result, 0).Err()
-		//_, ok := cli.EcSet(fileName, marshalled_result)
+
+		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
+		// I put it in its own function bc there are several write calls in this file and I did not
+		// wanna reuse the same code in each location.		
 		success := exponentialBackoffWrite(fileName, marshalled_result, cli)
 		if !success {
 			log.Fatal("ERROR while storing value in storage with key \"", fileName, "\"")
 		}
-		//checkError(err)
 		end := time.Now()
 		writeEnd := time.Since(start)
 
@@ -347,15 +369,16 @@ func doReduce(
 		checkError(err2)
 	}
 
-	// Close all of the Redis clients now that we're
-	//redis_client.Close()
+	// Close the client when we're done with it.
 	cli.Close()
 }
 
+// Encapsulates a write operation. Currently, this is an InfiniStore write operation.
 func exponentialBackoffWrite(key string, value []byte, cli *client.Client) bool {
 	success := false
 	for current_attempt := 0; current_attempt < 10; current_attempt++ {
 		log.Printf("Attempt %d/%d for key \"%s\".\n", current_attempt, 5, key)
+		// Call the EcSet InfiniStore function to store 'value' at key 'key'.
 		_, ok := cli.EcSet(key, value)
 
 		if !ok {
