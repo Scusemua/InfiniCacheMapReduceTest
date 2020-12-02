@@ -6,7 +6,10 @@ import (
 	"bytes"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"encoding/gob"
+	"encoding/json"
+	"time"
 	"fmt"
+	"math/rand"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -55,6 +58,14 @@ type grepmService string
 type KeyValue struct {
 	Key   string
 	Value string
+}
+
+type IORecord struct {
+	TaskNum  int
+	RedisKey string
+	Bytes    int
+	Start    int64
+	End      int64
 }
 
 var pattern *regexp.Regexp
@@ -121,6 +132,12 @@ func doMap(
 	}
 
 	ioRecords := make([]IORecord, 0)
+
+	log.Printf("Creating storage client for IPs: %v\n", storageIPs)
+	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
+	cli.Dial(storageIPs)
+
+	log.Println("Successfully created storage client.")
 
 	log.Println("Storing results in storage now...")
 
