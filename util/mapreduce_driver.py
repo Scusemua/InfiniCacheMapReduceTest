@@ -166,10 +166,10 @@ def execute_command(
     ssh_clients = list()
     print(" ")
     for ip in ips:
-        ssh_redis = paramiko.SSHClient()
-        ssh_clients.append((ip, ssh_redis))
-        ssh_redis.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh_redis.connect(hostname = ip, username="ubuntu", pkey = keyfile) 
+        ssh_client = paramiko.SSHClient()
+        ssh_clients.append((ip, ssh_client))
+        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh_client.connect(hostname = ip, username="ubuntu", pkey = keyfile) 
     counter = 1
     for IP, ssh_redis_client in ssh_clients:
         print("Executing command for instance @ {}... ({}/{})".format(IP, counter, len(ips)))
@@ -680,6 +680,38 @@ def update_lambdas_prefixed(ips, prefix = "CacheNode", key_path = KEYFILE_PATH):
             key_path = key_path,
             get_pty = True 
         )    
+
+def retrieve_remote_log(public_ip, private_ip, port, key_path = KEYFILE_PATH):
+    """
+    Retrieve the logfile for the worker identified by the ip/port combination.
+
+    Arguments:
+        ip (string): The IPv4 of the VM on which the worker is/was running.
+        
+        port (int): The port on which the worker is/was listening.
+
+        key_path: Path to your SSH key.
+    
+    Writes WorkerLog-<private_ip>:<port>.out to /log/WorkerLog-<private_ip>:<port>.out.
+    """
+    keyfile = paramiko.RSAKey.from_private_key_file(key_path)
+    ssh_clients = list()
+    ssh_client = paramiko.SSHClient()
+    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh_client.connect(hostname = public_ip, username="ubuntu", pkey = keyfile) 
+
+    filename = "WorkerLog-{}:{}.out".format(private_ip, port)
+    sftp_client = ssh_client.open_sftp()
+    remote_file = sftp_client.open("{}/main/{}".format(MAPREDUCE_DIRECTORY, filename))
+    local_file = open("logs/%s" % filename, "w")
+    try:
+        for line in remote_file:
+            local_file.write(line)
+    finally:
+        remote_file.close()
+    local_file.close()
+
+    print("Successfully retrieved log \"%s\" from server @ %s (private ip = %s)" % (filename, public_ip, private_ip))
 
 def update_lambdas(ips, key_path = KEYFILE_PATH):
     """
