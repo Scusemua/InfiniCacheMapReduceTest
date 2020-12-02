@@ -100,6 +100,8 @@ import os
 # 100,000 records is 10MB.
 # 1,000,000 records is 100MB.
 # 10,000,000 records is 1GB.
+# 100,000,000 records is 10GB.
+# 1,000,000,000 records is 100GB.
 
 if __name__ == "__main__":
    parser = argparse.ArgumentParser()
@@ -108,6 +110,7 @@ if __name__ == "__main__":
    parser.add_argument("-incr", "--increment", dest = "increment", type = int, help = "Generate the data in partitions of this size.", default = 250)
    parser.add_argument("-file", "--filename", dest = "filename", type = str, help = "The prefix of the filename. The full name will be of the form <PREFIX>part-<x>-<y>-thru-<z>, where x identifies the chunk (chunk 1, chunk 2, etc.), y is the first key in this partition, and z is the last key in the partition.", default = "part")
    parser.add_argument("-threads", "--threads", dest = "threads", type = int, help = "Number of threads to use when generating the data.", default = 1)
+   parser.add_argument("--skip-merged", dest = "skip_merged", action = "store_true", help = "If this flag is passed, then we don't generate the merged data at the end.")
    
    args = parser.parse_args()
    starting_val = args.starting_value
@@ -127,10 +130,11 @@ if __name__ == "__main__":
       os.system(command)
       filenames.append(full_filename)
    
-   full_filename = "{}merged-{}-thru-{}".format(filename, 0, ending_val)
-   command = "gensort -a -b0 {} {}.dat".format(ending_val, full_filename)
-   print("Executing command: {}".format(command))
-   os.system(command)   
+   if not skip_merged:
+      full_filename = "{}merged-{}-thru-{}".format(filename, 0, ending_val)
+      command = "gensort -a -b0 {} {}.dat".format(ending_val, full_filename)
+      print("Executing command: {}".format(command))
+      os.system(command)   
 
    print("\n== S3 Keys ==")
    for s3_key in filenames:

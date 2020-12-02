@@ -651,7 +651,7 @@ def launch_workers(
         get_pty = True 
     )
 
-def update_lambdas_prefixed(ips, prefix = "CacheNode", key_path = KEYFILE_PATH):
+def update_lambdas_prefixed(ips : list, prefix = "CacheNode", key_path = KEYFILE_PATH):
     """
     This executes the ./update_function.sh InfiniStore script on each of the VMs specified by their
     IP address.
@@ -681,7 +681,7 @@ def update_lambdas_prefixed(ips, prefix = "CacheNode", key_path = KEYFILE_PATH):
             get_pty = True 
         )    
 
-def retrieve_remote_log(public_ip, private_ip, port, key_path = KEYFILE_PATH):
+def retrieve_remote_log(public_ip : str, private_ip : str, port : int, key_path = KEYFILE_PATH):
     """
     Retrieve the logfile for the worker identified by the ip/port combination.
 
@@ -695,25 +695,39 @@ def retrieve_remote_log(public_ip, private_ip, port, key_path = KEYFILE_PATH):
     Writes WorkerLog-<private_ip>:<port>.out to /log/WorkerLog-<private_ip>:<port>.out.
     """
     keyfile = paramiko.RSAKey.from_private_key_file(key_path)
+
+    print("Establishing SSH connection...")
     ssh_clients = list()
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh_client.connect(hostname = public_ip, username="ubuntu", pkey = keyfile) 
 
+    print("Connection established. Creating SFTP client...")
     filename = "WorkerLog-{}:{}.out".format(private_ip, port)
+    remote_path = "{}/main/{}".format(MAPREDUCE_DIRECTORY, filename)
+    local_path = "logs/{}".format(filename)
+
+    print("Remote path = %s\nLocal path = %s" % (remote_path, local_path))
+
     sftp_client = ssh_client.open_sftp()
-    remote_file = sftp_client.open("{}/main/{}".format(MAPREDUCE_DIRECTORY, filename))
-    local_file = open("logs/%s" % filename, "w")
-    try:
-        for line in remote_file:
-            local_file.write(line)
-    finally:
-        remote_file.close()
-    local_file.close()
+
+    print("SFTP Client created. Opening file and reading...")
+    #remote_file = sftp_client.open()
+    sftp_client.get(remote_path, local_path)
+    #local_file = open("logs/%s" % filename, "w+")
+    # try:
+    #     local_file.writelines(remote_file)
+    #     #for line in remote_file:
+    #     #    local_file.write(line)
+    # finally:
+    #     remote_file.close()
+    #local_file.close()
+    if sftp_client: sftp_client.close()
+    if ssh_client: ssh_client.close()
 
     print("Successfully retrieved log \"%s\" from server @ %s (private ip = %s)" % (filename, public_ip, private_ip))
 
-def update_lambdas(ips, key_path = KEYFILE_PATH):
+def update_lambdas(ips : list, key_path = KEYFILE_PATH):
     """
     This just executes the ./update_function.sh script on each VM specified by the ips list (list of str).
 
