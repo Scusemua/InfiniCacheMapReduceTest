@@ -93,7 +93,7 @@ func doReduce(
 
 	ioRecords := make([]IORecord, 0)
 
-	log.Println("Retrieving input data for reduce task #", reduceTaskNum)
+	log.Printf("Retrieving input data for reduce task #%d\n", reduceTaskNum)
 	inputs := make([]KeyValue, 0)
 	for i := 0; i < nMap; i++ {
 		// nMap is the number of Map tasks (i.e., the number of S3 keys or # of initial data partitions).
@@ -133,6 +133,7 @@ func doReduce(
 		if err != nil {
 			log.Printf("ERROR: storage encountered exception for key \"%s\"...", "addr", dataKey)
 			log.Printf("ERROR: Just skipping the key \"%s\"...", dataKey)
+			
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			continue
 		}

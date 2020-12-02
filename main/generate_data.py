@@ -2,6 +2,13 @@ import argparse
 import sys 
 import os 
 
+# 100 records is 10kB.
+# 1,000 records is 100kB.
+# 10,000 records is 1MB.
+# 100,000 records is 10MB.
+# 1,000,000 records is 100MB.
+# 10,000,000 records is 1GB.
+
 if __name__ == "__main__":
    parser = argparse.ArgumentParser()
    parser.add_argument("-start", "--starting_value", dest = "starting_value", type=int, help = "Value of the first key.", default = 0)
