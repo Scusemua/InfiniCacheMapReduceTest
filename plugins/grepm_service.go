@@ -89,10 +89,7 @@ func doMap(
 	var b []byte
 	var s3KeyFile *os.File
 	var ioData *os.File
-
-	keyTest := "mr.srt-res-1"
-	fmt.Printf("[TEST] srtm doMap -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
-
+	
 	// The session the S3 Downloader will use
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1")},

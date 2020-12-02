@@ -7,7 +7,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/md5"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -16,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/cespare/xxhash"
 	"math/rand"
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
@@ -97,9 +95,6 @@ func doMap(
 	var s3KeyFile *os.File
 	var ioData *os.File
 
-	keyTest := "mr.srt-res-1"
-	fmt.Printf("[TEST] srtm doMap -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
-
 	// The session the S3 Downloader will use
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1")},
@@ -152,8 +147,6 @@ func doMap(
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f \n", k, float64(len(marshalled_result))/float64(1e6))
 		writeStart := time.Now()
 		//err = redis_client.Set(k, marshalled_result, 0).Err()
-		log.Printf("Hash of key \"%s\": %v\n", k, xxhash.Sum64([]byte(k)))
-		log.Printf("md5 of key \"%s\": %v\n", k, md5.Sum([]byte(k)))
 
 		// Exponential backoff.
 		success := false
@@ -215,9 +208,6 @@ func (s srtmService) DoService(raw []byte) error {
 		return err
 	}
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
-
-	//keyTest := "mr.srt-res-1"
-	//fmt.Printf("[TEST] srtr DoService -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
 
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
 

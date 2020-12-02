@@ -4,12 +4,10 @@ package main
 
 import (
 	"bytes"
-	"crypto/md5"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
-	"github.com/cespare/xxhash"
 	"math/rand"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
@@ -106,10 +104,6 @@ func doReduce(
 		var kvs []KeyValue
 		start := time.Now()
 		log.Printf("storage READ START. Key: \"%s\", Reduce Task #: %d.", dataKey, reduceTaskNum)
-
-		log.Printf("Hash of key \"%s\": %v\n", dataKey, xxhash.Sum64([]byte(dataKey)))
-		log.Printf("md5 of key \"%s\": %v\n", dataKey, md5.Sum([]byte(dataKey)))
-
 		var readAllCloser client.ReadAllCloser
 		var ok bool
 		success := false
@@ -152,7 +146,7 @@ func doReduce(
 			inputs = append(inputs, kv)
 		}
 	}
-	
+
 	sort.Slice(inputs, func(i, j int) bool { return inputs[i].Key < inputs[j].Key })
 
 	fileName := serverless.MergeName(jobName, reduceTaskNum)
@@ -197,8 +191,6 @@ func doReduce(
 			log.Printf("storage WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
 			start := time.Now()
 			//err := redis_client.Set(key, chunk, 0).Err()
-			log.Printf("Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
-			log.Printf("md5 of key \"%s\": %v\n", key, md5.Sum([]byte(key)))
 			//_, ok := cli.EcSet(key, chunk)
 			success := exponentialBackoffWrite(key, chunk, cli)
 			end := time.Now()
@@ -215,8 +207,6 @@ func doReduce(
 		num_chunks_serialized, err3 := json.Marshal(num_chunks)
 		checkError(err3)
 		//err := redis_client.Set(fileName, num_chunks_serialized, 0).Err()
-		log.Printf("Hash of key \"%s\": %v\n", fileName, xxhash.Sum64([]byte(fileName)))
-		log.Printf("md5 of key \"%s\": %v\n", fileName, md5.Sum([]byte(fileName)))
 		//_, ok := cli.EcSet(fileName, num_chunks_serialized)
 		success := exponentialBackoffWrite(fileName, num_chunks_serialized, cli)
 		if !success {
@@ -227,8 +217,6 @@ func doReduce(
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
 		start := time.Now()
 		//err := redis_client.Set(fileName, marshalled_result, 0).Err()
-		log.Printf("Hash of key \"%s\": %v\n", fileName, xxhash.Sum64([]byte(fileName)))
-		log.Printf("md5 of key \"%s\": %v\n", fileName, md5.Sum([]byte(fileName)))
 		//_, ok := cli.EcSet(fileName, marshalled_result)
 		success := exponentialBackoffWrite(fileName, marshalled_result, cli)
 		if !success {
