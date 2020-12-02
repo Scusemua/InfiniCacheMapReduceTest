@@ -19,7 +19,7 @@ PATTERN="(.)\1{4,}" # Regular expression pattern for grep.
 while getopts "h?vf:" opt; do
     case "$opt" in
     h|\?)
-        show_help
+        echo "-p <pattern> for regex pattern, -f <key_file> for s3 key file (input data stored in AWS S3)"
         exit 0
         ;;
     p)  PATTERN=$OPTARG
