@@ -3,6 +3,10 @@ DATE=`date "+%Y%m%d%H%M"`
 
 START=`date +"%Y-%m-%d %H:%M:%S"`
 
+GET_IP_CMD="curl http://169.254.169.254/latest/meta-data/local-ipv4"
+
+IP=$(eval $GET_IP_CMD)
+
 echo "========== GREP =========="
 echo "Launching MapReduce client."
 
@@ -15,6 +19,7 @@ OPTIND=1         # Reset in case getopts has been used previously in the shell.
 # Initialize our variables:
 KEY_FILE=/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt # S3 key of input data.
 PATTERN="[a-zA-Z]+" # Regular expression pattern for grep.
+NUM_WORKERS=1
 
 while getopts "h?vf:" opt; do
     case "$opt" in
@@ -25,6 +30,8 @@ while getopts "h?vf:" opt; do
     p)  PATTERN=$OPTARG
         ;;
     f)  KEY_FILE=$OPTARG
+        ;;
+    n)  NUM_WORKERS=$OPTARG
         ;;
     esac
 done
@@ -40,30 +47,42 @@ go run client.go -driverHostname 127.0.0.1:1234 -jobName grep -nReduce 10 -sampl
 pids[0]=$!
 
 echo "Client launched."
-echo "Launching worker #1."
 
-go run worker.go localhost:1235 localhost:1234 999999 & 
-pids[1]=$!
+port=1235
 
-echo "Launching worker #2."
+echo "Launching $NUM_WORKERS workers..."
 
-go run worker.go localhost:1236 localhost:1234 999999 & 
-pids[2]=$!
+for ((i = 1;i<=$NUM_WORKERS;i++)); do
+    echo "Launching worker #$i @ $IP:$port, driver @ 127.0.0.1:1234"
+    /usr/local/go/bin/go run worker.go $IP:$port "127.0.0.1:1234" 999999 & 
+    pids[$i]=$!
+    port=$((port + 1))
+done 
 
-echo "Launching worker #3."
+# echo "Launching worker #1."
 
-go run worker.go localhost:1237 localhost:1234 999999 & 
-pids[3]=$!
+# go run worker.go localhost:1235 localhost:1234 999999 & 
+# pids[1]=$!
 
-echo "Launching worker #4."
+# echo "Launching worker #2."
 
-go run worker.go localhost:1238 localhost:1234 999999 & 
-pids[4]=$!
+# go run worker.go localhost:1236 localhost:1234 999999 & 
+# pids[2]=$!
 
-echo "Launching worker #5."
+# echo "Launching worker #3."
 
-go run worker.go localhost:1239 localhost:1234 999999 & 
-pids[5]=$!vals
+# go run worker.go localhost:1237 localhost:1234 999999 & 
+# pids[3]=$!
+
+# echo "Launching worker #4."
+
+# go run worker.go localhost:1238 localhost:1234 999999 & 
+# pids[4]=$!
+
+# echo "Launching worker #5."
+
+# go run worker.go localhost:1239 localhost:1234 999999 & 
+# pids[5]=$!vals
 
 echo "[Test]: waiting for client and worker to finish..." > /dev/stderr
 for pid in ${pids[*]}; do

@@ -20,6 +20,7 @@ go run client.go -driverHostname 127.0.0.1:1234 -jobName srt -nReduce 10 -sample
 pids[0]=$!
 
 echo "Client launched."
+
 echo "Launching worker #1."
 
 go run worker.go localhost:1235 localhost:1234 999999 & 
