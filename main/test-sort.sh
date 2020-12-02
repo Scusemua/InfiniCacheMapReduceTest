@@ -1,9 +1,49 @@
 #!/bin/bash
-go run client.go localhost:1234 srt 1 data100000.dat data.dat &
+DATE=`date "+%Y%m%d%H%M"`
+
+START=`date +"%Y-%m-%d %H:%M:%S"`
+
+echo "======== TeraSort ========"
+echo "Launching MapReduce client."
+
+# Commandline Arguments 
+# (1) The S3 key file (OPTIONAL, defaults to 1MB problem size).
+
+KEY_FILE=/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt
+
+if [ "$1" != "" ] ; then
+  KEY_FILE=$1
+fi
+
+go run client.go -driverHostname 127.0.0.1:1234 -jobName srt -nReduce 10 -sampleDataKey sample_data.dat -s3KeyFile "$KEY_FILE" -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps "127.0.0.1:6378" & 
+#go run client.go localhost:1234 srt 10 sample_data.dat /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt 10 2 32 &
 pids[0]=$!
 
-go run worker.go localhost:1235 localhost:1234 100 & 
+echo "Client launched."
+echo "Launching worker #1."
+
+go run worker.go localhost:1235 localhost:1234 999999 & 
 pids[1]=$!
+
+echo "Launching worker #2."
+
+go run worker.go localhost:1236 localhost:1234 999999 & 
+pids[2]=$!
+
+echo "Launching worker #3."
+
+go run worker.go localhost:1237 localhost:1234 999999 & 
+pids[3]=$!
+
+echo "Launching worker #4."
+
+go run worker.go localhost:1238 localhost:1234 999999 & 
+pids[4]=$!
+
+echo "Launching worker #5."
+
+go run worker.go localhost:1239 localhost:1234 999999 & 
+pids[5]=$!vals
 
 echo "[Test]: waiting for client and worker to finish..." > /dev/stderr
 for pid in ${pids[*]}; do
@@ -23,3 +63,8 @@ done
 
 # clean up generated intermediate and output files
 rm mrtmp.* mr.srt-res* #mr-final.srt.out
+
+END=`date +"%Y-%m-%d %H:%M:%S"`
+
+echo "Start time: $START"
+echo "End time: $END"

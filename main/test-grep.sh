@@ -3,18 +3,41 @@ DATE=`date "+%Y%m%d%H%M"`
 
 START=`date +"%Y-%m-%d %H:%M:%S"`
 
+echo "========== GREP =========="
 echo "Launching MapReduce client."
 
 # Commandline Arguments 
 # (1) The S3 key file (OPTIONAL, defaults to 1MB problem size).
 
-KEY_FILE=/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt
+# A POSIX variable
+OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
-if [ "$1" != "" ] ; then
-  KEY_FILE=$1
-fi
+# Initialize our variables:
+KEY_FILE=/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt # S3 key of input data.
+PATTERN="(.)\1{4,}" # Regular expression pattern for grep.
 
-go run client.go -driverHostname 127.0.0.1:1234 -jobName srt -nReduce 10 -sampleDataKey sample_data.dat -s3KeyFile "$KEY_FILE" -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps "127.0.0.1:6378" & 
+while getopts "h?vf:" opt; do
+    case "$opt" in
+    h|\?)
+        show_help
+        exit 0
+        ;;
+    p)  PATTERN=$OPTARG
+        ;;
+    f)  KEY_FILE=$OPTARG
+        ;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+[ "${1:-}" = "--" ] && shift
+
+echo "PATTERN=$PATTERN, KEY_FILE='$KEY_FILE', Leftovers: $@"
+
+EOF 
+
+go run client.go -driverHostname 127.0.0.1:1234 -jobName grep -nReduce 10 -sampleDataKey sample_data.dat -s3KeyFile "$KEY_FILE" -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps "127.0.0.1:6378" & 
 #go run client.go localhost:1234 srt 10 sample_data.dat /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt 10 2 32 &
 pids[0]=$!
 
