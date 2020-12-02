@@ -60,7 +60,7 @@ func main() {
 	dataShards := flag.Int("dataShards", 10, "InfiniStore proxy data shards parameter.")
 	parityShards := flag.Int("parityShards", 2, "InfiniStore proxy parity shards parameter.")
 	maxGoRoutines := flag.Int("maxGoRoutines", 32, "InfiniStore proxy max goroutines parameter.")
-	pattern := flag.String("pattern", "(.)\\1{4,}", "Regular expression pattern for Grep. Default is matching any character repeated 5 times or more.")
+	pattern := flag.String("pattern", "[a-zA-Z]+", "Regular expression pattern for Grep. Default is matching one or more letters (uppercase or lowercase) in a row.")
 	flag.Var(&myFlags, "storageIps", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
 	flag.Parse()
 
