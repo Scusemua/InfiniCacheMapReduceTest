@@ -125,6 +125,10 @@ func doMap(
 
 	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
 
+	Debug("Reading data for S3 key \"%s\" from downloaded file now...\n", S3Key)
+	b, err = ioutil.ReadFile(S3Key)
+	checkError(err)
+
 	log.Println("Performing grep map function now...")
 	results := make(map[string][]KeyValue)
 	for idx, result := range mapF(S3Key, string(b)) {
