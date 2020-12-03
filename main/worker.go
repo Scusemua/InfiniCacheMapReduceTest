@@ -130,6 +130,7 @@ func (wk *Worker) InvokeService(args serverless.RPCArgs, _ *struct{}) error {
 func (wk *Worker) Shutdown(_ *struct{}, _ *struct{}) error {
 	// Shut down the client pools.
 	for serviceName, svc := range serviceMap {
+		log.Printf("Closing pool for worker service \"%s\" now...\n", serviceName)
 		svc.interf.ClosePool()
 	}
 
