@@ -7,7 +7,6 @@ import (
 	//"github.com/go-redis/redis/v7"
 	"crypto/md5"
 	"github.com/cespare/xxhash"
-	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
 	"math/rand"
@@ -166,8 +165,8 @@ func readExponentialBackoff(key string, cli *client.Client) (client.ReadAllClose
 	var ok bool
 	success := false
 	// Exponential backoff.
-	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
-		log.Printf("Attempt %d/%d for read to key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
+	for current_attempt := 0; current_attempt < MaxAttemptsDuringBackoff; current_attempt++ {
+		log.Printf("Attempt %d/%d for read to key \"%s\".\n", current_attempt, MaxAttemptsDuringBackoff, key)
 		readAllCloser, ok = cli.Get(key)
 
 		// Check for failure, and backoff exponentially on-failure.
