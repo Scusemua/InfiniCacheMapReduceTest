@@ -248,6 +248,8 @@ func (s srtmService) ClosePool() error {
 		log.Printf("Closing the srtm_service client pool...")
 		clientPool.Close()
 	}
+
+	return nil 
 }
 
 // DON'T MODIFY THIS FUNCTION
