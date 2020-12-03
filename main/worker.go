@@ -15,7 +15,6 @@ package main
 import (
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
-	"github.com/cespare/xxhash"
 	"io"
 	"log"
 	"net"
@@ -130,8 +129,8 @@ func (wk *Worker) InvokeService(args serverless.RPCArgs, _ *struct{}) error {
 // No response needed.
 func (wk *Worker) Shutdown(_ *struct{}, _ *struct{}) error {
 	// Shut down the client pools.
-	for serviceName, serviceInterface := range serviceMap {
-		
+	for serviceName, svc := range serviceMap {
+		svc.interf.Close
 	}
 
 	log.Printf("Worker shutdown %s\n", wk.address)
