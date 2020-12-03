@@ -56,11 +56,11 @@ func MergeName(jobName string, reduceTask int) string {
 }
 
 // Maximum number of retry attempts during exponential backoff.
-MaxAttemptsDuringBackoff := 10
+const MaxAttemptsDuringBackoff = 10
 // Maximum amount of time workers/clients can sleep during an exponentially backed-off read.
-MaxBackoffSleepReads := 10000
+const MaxBackoffSleepReads = 10000
 // Maximum amount of time workers/clients can sleep during an exponentially backed-off write.
-MaxBackoffSleepWrites := 10000
+const MaxBackoffSleepWrites = 10000
 
 var phaseServiceMap = map[jobPhase]string{
 	mapPhase:    "m",
