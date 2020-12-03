@@ -36,7 +36,7 @@ var clientPool *serverless.Pool
 func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []string) {
 	clientPool = serverless.InitPool(&serverless.Pool{
 		New: func() interface{} {
-			cli = client.NewClient(dataShard, parityShard, ecMaxGoroutine)
+			cli := client.NewClient(dataShard, parityShard, ecMaxGoroutine)
 			cli.(*client.Client).Dial(addrArr)
 			return cli
 		},
