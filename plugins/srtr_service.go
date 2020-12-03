@@ -83,7 +83,7 @@ var poolCreated = false
 
 var clientPool *serverless.Pool
 
-func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []string) {
+func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []string, clientPoolCapacity int) {
 	clientPool = serverless.InitPool(&serverless.Pool{
 		New: func() interface{} {
 			cli := client.NewClient(dataShard, parityShard, ecMaxGoroutine)
@@ -93,7 +93,7 @@ func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []stri
 		Finalize: func(c interface{}) {
 			c.(*client.Client).Close()
 		},
-	}, 32, serverless.PoolForStrictConcurrency)
+	}, clientPoolCapacity, serverless.PoolForStrictConcurrency)
 }
 
 // func CreateInfiniStoreClient(taskNum int, dataShards int, parityShards int, maxGoRoutines int) {
@@ -463,7 +463,7 @@ func (s srtrService) DoService(raw []byte) error {
 	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
 
 	if !poolCreated {
-		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs)
+		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 	}
 
 	// if !clientCreated {

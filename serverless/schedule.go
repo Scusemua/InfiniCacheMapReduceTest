@@ -26,6 +26,7 @@ func (drv *Driver) schedule(
 	dataShards int,
 	parityShards int,
 	maxGoRoutines int,
+	clientPoolCapacity int,
 	pattern string,
 ) {
 	Debug("Driver: schedule %s\n", phase)
@@ -66,6 +67,7 @@ func (drv *Driver) schedule(
 			arg.NReduce = drv.nReduce
 			arg.SampleKeys = drv.sampleKeys
 			arg.DataShards = dataShards
+			arg.ClientPoolCapacity = clientPoolCapacity
 			arg.ParityShards = parityShards
 			arg.MaxGoroutines = maxGoRoutines
 			arg.Pattern = pattern
@@ -85,6 +87,7 @@ func (drv *Driver) schedule(
 			arg.SampleKeys = drv.sampleKeys
 			arg.DataShards = dataShards
 			arg.ParityShards = parityShards
+			arg.ClientPoolCapacity = clientPoolCapacity
 			arg.MaxGoroutines = maxGoRoutines
 			arg.Pattern = pattern
 			jobChan <- arg

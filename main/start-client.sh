@@ -17,6 +17,8 @@ DRIVER_HOST="$IP:1234"
 # (5) Data shards (InfiniStore-related)
 # (6) Parity shards (InfiniStore-related)
 # (7) Max goroutines (InfiniStore-related)
+# (8) Pattern.
+# (9) Max size of InfiniStore client pool.
 
 # ./start-client srt 36 sample_data.dat /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt 10 2 32 -storageIps "127.0.0.1:6378"
 
@@ -24,7 +26,7 @@ DRIVER_HOST="$IP:1234"
 # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt
 # /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt
 
-go run client.go -driverHostname $DRIVER_HOST -jobName $1 -nReduce $2 -sampleDataKey $3 -s3KeyFile $4 -dataShards $5 -parityShards $6 -maxGoRoutines $7 -storageIps "127.0.0.1:6378"
+go run client.go -driverHostname $DRIVER_HOST -jobName $1 -nReduce $2 -sampleDataKey $3 -s3KeyFile $4 -dataShards $5 -parityShards $6 -maxGoRoutines $7 -storageIps "127.0.0.1:6378" -pattern $8 -clientPoolCapacity $9
 
 #go run client.go $DRIVER_HOST srt $1 sample_data.dat $2 10 2 32 &
 #go run client.go $DRIVER_HOST:1234 srt 10 sample_data.dat /home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt 10 2 32 &

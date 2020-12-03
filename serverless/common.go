@@ -84,5 +84,6 @@ type MapReduceArgs struct {
 	DataShards    int			// InfiniStore parameter.
 	ParityShards  int			// InfiniStore parameter.
 	MaxGoroutines int			// InfiniStore parameter.
+	ClientPoolCapacity int 		// Maximum capacity of the pool of InfiniStore clients.
 	Pattern 	  string 		// Regex, used for Grep.
 }

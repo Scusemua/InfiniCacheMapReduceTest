@@ -56,6 +56,7 @@ func main() {
 	parityShards := flag.Int("parityShards", 2, "InfiniStore proxy parity shards parameter.")
 	maxGoRoutines := flag.Int("maxGoRoutines", 32, "InfiniStore proxy max goroutines parameter.")
 	pattern := flag.String("pattern", "[a-zA-Z]+", "Regular expression pattern for Grep. Default is matching one or more letters (uppercase or lowercase) in a row.")
+	clientPoolCapacity := flag.Int("clientPoolCapacity", 32, "Maximum capacity for the pool of InfiniStore clients.")
 	flag.Var(&myFlags, "storageIps", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
 	flag.Parse()
 
@@ -95,7 +96,7 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	go drv.Run(*jobName, *s3KeyFile, *sampleDataKey, *nReduce, *dataShards, *parityShards, *maxGoRoutines, *pattern, myFlags)
+	go drv.Run(*jobName, *s3KeyFile, *sampleDataKey, *nReduce, *dataShards, *parityShards, *maxGoRoutines, *pattern, *clientPoolCapacity, myFlags)
 
 	drv.Wait()
 }
