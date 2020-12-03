@@ -26,7 +26,7 @@ import (
 	"time"
 )
 
-var cli *client.Client		// The InfiniStore client.
+//var cli *client.Client		// The InfiniStore client.
 var clientCreated = false 		// Has this InfiniStore client been created yet?
 var clientDialed = false 		// Have we called the client's Dial function yet?
 
@@ -142,8 +142,8 @@ func doMap(
 	// In theory, you would create whatever clients that Pocket uses here...
 	// =====================================================================
 	// log.Printf("Creating storage client for IPs: %v\n", storageIPs)
-	//cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
-	//cli.Dial(storageIPs)
+	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
+	cli.Dial(storageIPs)
 
 	log.Println("Successfully created storage client.")
 
@@ -213,7 +213,7 @@ func doMap(
 	}
 
 	//redis_client.Close()
-	//cli.Close()
+	cli.Close()
 }
 
 // We supply you an ihash function to help with mapping of a given
@@ -237,13 +237,13 @@ func (s srtmService) DoService(raw []byte) error {
 
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
 
-	if !clientCreated {
-		CreateInfiniStoreClient(args.TaskNum, args.DataShards, args.ParityShards, args.MaxGoroutines)
-	}
+	// if !clientCreated {
+	// 	CreateInfiniStoreClient(args.TaskNum, args.DataShards, args.ParityShards, args.MaxGoroutines)
+	// }
 
-	if !clientDialed {
-		DialInfiniStoreClient(args.TaskNum, args.StorageIPs)
-	}
+	// if !clientDialed {
+	// 	DialInfiniStoreClient(args.TaskNum, args.StorageIPs)
+	// }
 
 	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, args.ParityShards, args.MaxGoroutines, trie)
 

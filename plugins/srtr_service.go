@@ -76,7 +76,7 @@ func Debug(format string, a ...interface{}) (n int, err error) {
 	return 0, nil
 }
 
-var cli *client.Client		// The InfiniStore client.
+//var cli *client.Client		// The InfiniStore client.
 var clientCreated = false 		// Has this InfiniStore client been created yet?
 var clientDialed = false 		// Have we called the client's Dial function yet?
 
@@ -210,10 +210,10 @@ func doReduce(
 	// =====================================================================
 
 	// This creates a new InfiniStore EcClient object.
-	//cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
+	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
 	
 	// This effectively connects the InfiniStore EcClient to all of the proxies.
-	//cli.Dial(storageIps)
+	cli.Dial(storageIps)
 
 	log.Println("Successfully created storage client")
 
@@ -393,7 +393,7 @@ func doReduce(
 	}
 
 	// Close the client when we're done with it.
-	// cli.Close()
+	cli.Close()
 }
 
 // Encapsulates a write operation. Currently, this is an InfiniStore write operation.
@@ -435,13 +435,13 @@ func (s srtrService) DoService(raw []byte) error {
 	}
 	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
 
-	if !clientCreated {
-		CreateInfiniStoreClient(args.TaskNum, args.DataShards, args.ParityShards, args.MaxGoroutines)
-	}
+	// if !clientCreated {
+	// 	CreateInfiniStoreClient(args.TaskNum, args.DataShards, args.ParityShards, args.MaxGoroutines)
+	// }
 
-	if !clientDialed {
-		DialInfiniStoreClient(args.TaskNum, args.StorageIPs)
-	}
+	// if !clientDialed {
+	// 	DialInfiniStoreClient(args.TaskNum, args.StorageIPs)
+	// }
 
 	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines)
 
