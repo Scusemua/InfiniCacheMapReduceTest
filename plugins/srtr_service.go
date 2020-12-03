@@ -337,8 +337,8 @@ func doReduce(
 			// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 			// I put it in its own function bc there are several write calls in this file and I did not
 			// wanna reuse the same code in each location.
-			//success := exponentialBackoffWrite(key, chunk, cli)
-			success := exponentialBackoffWrite(key, chunk)
+			success := exponentialBackoffWrite(key, chunk, cli)
+			//success := exponentialBackoffWrite(key, chunk)
 
 			end := time.Now()
 			writeEnd := time.Since(start)
@@ -357,8 +357,8 @@ func doReduce(
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
 		// wanna reuse the same code in each location.		
-		//success := exponentialBackoffWrite(fileName, num_chunks_serialized, cli)
-		success := exponentialBackoffWrite(fileName, num_chunks_serialized)
+		success := exponentialBackoffWrite(fileName, num_chunks_serialized, cli)
+		//success := exponentialBackoffWrite(fileName, num_chunks_serialized)
 		if !success {
 			log.Fatal("ERROR while storing value in storage, key is: \"", fileName, "\"")
 		}
@@ -370,8 +370,8 @@ func doReduce(
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
 		// wanna reuse the same code in each location.		
-		//success := exponentialBackoffWrite(fileName, marshalled_result, cli)
-		success := exponentialBackoffWrite(fileName, marshalled_result)
+		success := exponentialBackoffWrite(fileName, marshalled_result, cli)
+		//success := exponentialBackoffWrite(fileName, marshalled_result)
 		if !success {
 			log.Fatal("ERROR while storing value in storage with key \"", fileName, "\"")
 		}
@@ -393,17 +393,17 @@ func doReduce(
 	}
 
 	// Close the client when we're done with it.
-	cli.Close()
+	// cli.Close()
 }
 
 // Encapsulates a write operation. Currently, this is an InfiniStore write operation.
-//func exponentialBackoffWrite(key string, value []byte, cli *client.Client) bool {
-func exponentialBackoffWrite(key string, value []byte) bool {
+func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) bool {
+//func exponentialBackoffWrite(key string, value []byte) bool {
 	success := false
 	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
 		// Call the EcSet InfiniStore function to store 'value' at key 'key'.
-		_, ok := cli.EcSet(key, value)
+		_, ok := ecClient.EcSet(key, value)
 
 		if !ok {
 			max_duration := (2 << uint(current_attempt + 4)) - 1

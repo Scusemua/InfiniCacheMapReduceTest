@@ -142,8 +142,8 @@ func doMap(
 	// In theory, you would create whatever clients that Pocket uses here...
 	// =====================================================================
 	// log.Printf("Creating storage client for IPs: %v\n", storageIPs)
-	// cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
-	// cli.Dial(storageIPs)
+	//cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
+	//cli.Dial(storageIPs)
 
 	log.Println("Successfully created storage client.")
 

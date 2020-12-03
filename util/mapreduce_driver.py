@@ -819,18 +819,27 @@ def print_time():
 # They are commented out bc otherwise they would be executed when we import 
 # mapreduce_driver.py into our Python terminal session.
 
+# Clean-up:
 # mrd.clear_redis_instances(flushall = True, hostnames = hostnames)
 # mrd.clean_workers(worker_ips = worker_ips)
 # mrd.kill_go_processes(ips = worker_ips + [client_ip])
+
+# Pulling from Github:
 # mrd.pull_from_github_infinistore(worker_ips)
 # mrd.pull_from_github_infinistore(worker_ips + [client_ip])
 # mrd.pull_from_github_mapreduce(worker_ips + [client_ip])
+
+# Updating
 # mrd.build_mapreduce(worker_ips + [client_ip])
+# mrd.update_lambdas(worker_ips + [client_ip])
+# mrd.update_lambdas_prefixed(worker_ips + [client_ip])
+# mrd.update_lambdas(worker_ips) # Workers only, so we can do manually on client to see progress.
+# mrd.update_lambdas_prefixed(worker_ips) # Workers only, so we can do manually on client to see progress.
+
+# Launching 
 # experiment_prefix = mrd.launch_infinistore_proxies(worker_ips + [client_ip])
 # experiment_prefix = mrd.launch_infinistore_proxies([client_ip])
 # print("experiment_prefix = " + str(experiment_prefix))
-# mrd.update_lambdas(worker_ips + [client_ip])
-# mrd.update_lambdas_prefixed(worker_ips + [client_ip])
 if __name__ == "__main__":
 
     # I usually copy-and-paste this entire block of text into a terminal. Make sure you
@@ -886,7 +895,7 @@ if __name__ == "__main__":
     # Sometimes needed, sometimes not. Used to update the InfiniStore repos on the VMs.
     mrd.pull_from_github_infinistore([client_ip] + worker_ips, reset_first = True)
 
-    # =======================================================
+    # ==================================================================================================
     # We use this block to start all the InfiniStore proxies.
     # 
     # First, we get the start time of the experiment. We'll need to pass this value to export_ubuntu.sh
@@ -936,8 +945,10 @@ if __name__ == "__main__":
 # that I stop and start but never terminate) so its private IPv4 is basically static. You use the VM's
 # private IPv4 for the 'driverHostname' parameter, along with port 1234.
 
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.66.27:6378 -storageIps 10.0.67.93:6378 -storageIps 10.0.91.133:6378 -storageIps 10.0.69.185:6378 -storageIps 10.0.83.1:6378 -storageIps 10.0.90.33:6378
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.66.27:6378 -storageIps 10.0.67.93:6378 -storageIps 10.0.91.133:6378 -storageIps 10.0.69.185:6378 -storageIps 10.0.83.1:6378 -storageIps 10.0.90.33:6378
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.74.253:6378
+
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.76.16:6378 -storageIps 10.0.86.144:6378 -storageIps 10.0.88.62:6378 -storageIps 10.0.87.191:6378 -storageIps 10.0.83.103:6378 -storageIps 10.0.79.10:6378
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.76.16:6378 -storageIps 10.0.86.144:6378 -storageIps 10.0.88.62:6378 -storageIps 10.0.87.191:6378 -storageIps 10.0.83.103:6378 -storageIps 10.0.79.10:6378
 
 # Change the 'jobName' parameter depending on what job you want to run. For TeraSort, it is 'srt'.
 # For grep, it is 'grep'. For Word Count, it is 'wc'. Basically, it is the prefix of the two service
