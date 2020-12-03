@@ -464,6 +464,8 @@ func (s srtrService) DoService(raw []byte) error {
 
 	if !poolCreated {
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
+
+		poolCreated = true 
 	}
 
 	// if !clientCreated {
