@@ -155,12 +155,16 @@ func doMap(
 
 		// Exponential backoff.
 		success := false
-		for current_attempt := 0; current_attempt < 10; current_attempt++ {
-			log.Printf("Attempt %d/%d for key \"%s\".\n", current_attempt, 5, k)
+		max_attempts := 10
+		for current_attempt := 0; current_attempt < max_attempts; current_attempt++ {
+			log.Printf("Attempt %d/%d for key \"%s\".\n", current_attempt, max_attempts, k)
 			_, ok := cli.EcSet(k, marshalled_result)
 
 			if !ok {
-				max_duration := (2 << uint(current_attempt)) - 1
+				max_duration := (2 << uint(current_attempt + 4)) - 1
+				if max_duration > 5000 { // Cap at 5000 (which is 5000ms or 5sec)
+					max_duration = 5000
+				}
 				duration := rand.Intn(max_duration + 1)
 				log.Printf("[ERROR] Failed to write key \"%s\". Backing off for %d ms.\n", k, duration)
 				time.Sleep(time.Duration(duration) * time.Millisecond)

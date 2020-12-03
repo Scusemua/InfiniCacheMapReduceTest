@@ -934,7 +934,7 @@ if __name__ == "__main__":
 # that I stop and start but never terminate) so its private IPv4 is basically static. You use the VM's
 # private IPv4 for the 'driverHostname' parameter, along with port 1234.
 
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.93.17:6378 -storageIps 10.0.65.243:6378 -storageIps 10.0.76.170:6378 -storageIps 10.0.95.158:6378 -storageIps 10.0.73.135:6378 -storageIps 10.0.72.9:6378
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.66.27:6378 -storageIps 10.0.67.93:6378 -storageIps 10.0.91.133:6378 -storageIps 10.0.69.185:6378 -storageIps 10.0.83.1:6378 -storageIps 10.0.90.33:6378
 
 # Change the 'jobName' parameter depending on what job you want to run. For TeraSort, it is 'srt'.
 # For grep, it is 'grep'. For Word Count, it is 'wc'. Basically, it is the prefix of the two service
