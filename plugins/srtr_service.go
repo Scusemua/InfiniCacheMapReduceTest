@@ -76,6 +76,24 @@ func Debug(format string, a ...interface{}) (n int, err error) {
 	return 0, nil
 }
 
+var cli *client.Client		// The InfiniStore client.
+var clientCreated = false 		// Has this InfiniStore client been created yet?
+var clientDialed = false 		// Have we called the client's Dial function yet?
+
+func CreateInfiniStoreClient(taskNum int, dataShards int, parityShards int, maxGoRoutines int) {
+	log.Printf("[Mapper #%d] Creating InfiniStore client now...\n", taskNum)
+	cli = client.NewClient(dataShards, parityShards, maxGoRoutines)
+
+	clientCreated = true 
+}
+
+func DialInfiniStoreClient(taskNum int, storageIps []string) {
+	log.Printf("[Mapper #%d] Dialing InfiniStore client now...\n", taskNum)
+	cli.Dial(storageIps)
+
+	clientDialed = true
+}
+
 // func mergeSort(arr []string) []string {
 // 	var arr_length = len(arr)
 
@@ -192,10 +210,10 @@ func doReduce(
 	// =====================================================================
 
 	// This creates a new InfiniStore EcClient object.
-	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
+	//cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
 	
 	// This effectively connects the InfiniStore EcClient to all of the proxies.
-	cli.Dial(storageIps)
+	//cli.Dial(storageIps)
 
 	log.Println("Successfully created storage client")
 
@@ -318,7 +336,8 @@ func doReduce(
 			// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 			// I put it in its own function bc there are several write calls in this file and I did not
 			// wanna reuse the same code in each location.
-			success := exponentialBackoffWrite(key, chunk, cli)
+			//success := exponentialBackoffWrite(key, chunk, cli)
+			success := exponentialBackoffWrite(key, chunk)
 
 			end := time.Now()
 			writeEnd := time.Since(start)
@@ -337,7 +356,8 @@ func doReduce(
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
 		// wanna reuse the same code in each location.		
-		success := exponentialBackoffWrite(fileName, num_chunks_serialized, cli)
+		//success := exponentialBackoffWrite(fileName, num_chunks_serialized, cli)
+		success := exponentialBackoffWrite(fileName, num_chunks_serialized)
 		if !success {
 			log.Fatal("ERROR while storing value in storage, key is: \"", fileName, "\"")
 		}
@@ -349,7 +369,8 @@ func doReduce(
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
 		// wanna reuse the same code in each location.		
-		success := exponentialBackoffWrite(fileName, marshalled_result, cli)
+		//success := exponentialBackoffWrite(fileName, marshalled_result, cli)
+		success := exponentialBackoffWrite(fileName, marshalled_result)
 		if !success {
 			log.Fatal("ERROR while storing value in storage with key \"", fileName, "\"")
 		}
@@ -375,7 +396,8 @@ func doReduce(
 }
 
 // Encapsulates a write operation. Currently, this is an InfiniStore write operation.
-func exponentialBackoffWrite(key string, value []byte, cli *client.Client) bool {
+//func exponentialBackoffWrite(key string, value []byte, cli *client.Client) bool {
+func exponentialBackoffWrite(key string, value []byte) bool {
 	success := false
 	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
@@ -411,6 +433,14 @@ func (s srtrService) DoService(raw []byte) error {
 		return err
 	}
 	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
+
+	if !clientCreated {
+		CreateInfiniStoreClient(args.TaskNum, args.DataShards, args.ParityShards, args.MaxGoroutines)
+	}
+
+	if !clientDialed {
+		DialInfiniStoreClient(args.TaskNum, args.StorageIPs)
+	}
 
 	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines)
 
