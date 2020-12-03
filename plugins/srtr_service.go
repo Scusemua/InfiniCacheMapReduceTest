@@ -441,7 +441,7 @@ func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) 
 	return success
 }
 
-func (s srtrService) ClosePool(raw []byte) error {
+func (s srtrService) ClosePool() error {
 	if clientPool != nil {
 		log.Printf("Closing the srtm_service client pool...")
 		clientPool.Close()
