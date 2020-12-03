@@ -27,8 +27,8 @@ import (
 )
 
 var cli *client.Client		// The InfiniStore client.
-clientCreated := false 		// Has this InfiniStore client been created yet?
-clientDialed := false 		// Have we called the client's Dial function yet?
+var clientCreated = false 		// Has this InfiniStore client been created yet?
+var clientDialed = false 		// Have we called the client's Dial function yet?
 
 func CreateInfiniStoreClient(taskNum int, dataShards int, parityShards int, maxGoRoutines int) {
 	log.Printf("[Mapper #%d] Creating InfiniStore client now...\n", taskNum)
