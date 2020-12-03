@@ -80,19 +80,19 @@ func Debug(format string, a ...interface{}) (n int, err error) {
 var clientCreated = false 		// Has this InfiniStore client been created yet?
 var clientDialed = false 		// Have we called the client's Dial function yet?
 
-func CreateInfiniStoreClient(taskNum int, dataShards int, parityShards int, maxGoRoutines int) {
-	log.Printf("[Mapper #%d] Creating InfiniStore client now...\n", taskNum)
-	cli = client.NewClient(dataShards, parityShards, maxGoRoutines)
+// func CreateInfiniStoreClient(taskNum int, dataShards int, parityShards int, maxGoRoutines int) {
+// 	log.Printf("[Mapper #%d] Creating InfiniStore client now...\n", taskNum)
+// 	cli = client.NewClient(dataShards, parityShards, maxGoRoutines)
 
-	clientCreated = true 
-}
+// 	clientCreated = true 
+// }
 
-func DialInfiniStoreClient(taskNum int, storageIps []string) {
-	log.Printf("[Mapper #%d] Dialing InfiniStore client now...\n", taskNum)
-	cli.Dial(storageIps)
+// func DialInfiniStoreClient(taskNum int, storageIps []string) {
+// 	log.Printf("[Mapper #%d] Dialing InfiniStore client now...\n", taskNum)
+// 	cli.Dial(storageIps)
 
-	clientDialed = true
-}
+// 	clientDialed = true
+// }
 
 // func mergeSort(arr []string) []string {
 // 	var arr_length = len(arr)
