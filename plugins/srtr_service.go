@@ -463,7 +463,7 @@ func (s srtrService) DoService(raw []byte) error {
 	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
 
 	if !poolCreated {
-		clientPool = InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs)
+		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs)
 	}
 
 	// if !clientCreated {
