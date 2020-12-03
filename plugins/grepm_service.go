@@ -160,7 +160,7 @@ func doMap(
 		// Exponential backoff.
 		success := false
 		for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
-			log.Printf("Attempt %d/%d for write to key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
+			log.Printf("Attempt %d/%d for write to key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, k)
 			_, ok := cli.EcSet(k, marshalled_result)
 
 			if !ok {
