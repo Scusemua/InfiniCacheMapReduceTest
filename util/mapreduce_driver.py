@@ -442,7 +442,7 @@ def build_mapreduce(ips, count_limit = 1, key_path = KEYFILE_PATH):
         key_path (str): Path to your SSH key.
     """
     print("Executing /plugins/build.sh for the MapReduce framework on %d VMs." % len(ips))
-    command = "cd %s/plugins; ./build.sh" % MAPREDUCE_DIRECTORY
+    command = "cd %s/plugins; export PATH=$PATH:/usr/local/go/bin; ./build.sh" % MAPREDUCE_DIRECTORY
     execute_command(command, count_limit, get_pty = True, ips = ips, key_path = key_path)   
 
 def pull_from_github_mapreduce(ips, reset_first = False, key_path = KEYFILE_PATH):
@@ -824,6 +824,8 @@ def print_time():
 # mrd.kill_go_processes(ips = worker_ips + [client_ip])
 # mrd.pull_from_github_infinistore(worker_ips)
 # mrd.pull_from_github_infinistore(worker_ips + [client_ip])
+# mrd.pull_from_github_mapreduce(worker_ips + [client_ip])
+# mrd.build_mapreduce(worker_ips + [client_ip])
 # experiment_prefix = mrd.launch_infinistore_proxies(worker_ips + [client_ip])
 # experiment_prefix = mrd.launch_infinistore_proxies([client_ip])
 # print("experiment_prefix = " + str(experiment_prefix))
