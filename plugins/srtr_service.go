@@ -79,6 +79,22 @@ func Debug(format string, a ...interface{}) (n int, err error) {
 //var cli *client.Client		// The InfiniStore client.
 var clientCreated = false 		// Has this InfiniStore client been created yet?
 var clientDialed = false 		// Have we called the client's Dial function yet?
+var poolCreated = false 
+
+var clientPool *serverless.Pool
+
+func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []string) {
+	clientPool = serverless.InitPool(&serverless.Pool{
+		New: func() interface{} {
+			cli = client.NewClient(dataShard, parityShard, ecMaxGoroutine)
+			cli.(*client.Client).Dial(addrArr)
+			return cli
+		},
+		Finalize: func(c interface{}) {
+			c.(*client.Client).Close()
+		},
+	}, 32, serverless.PoolForStrictConcurrency)
+}
 
 // func CreateInfiniStoreClient(taskNum int, dataShards int, parityShards int, maxGoRoutines int) {
 // 	log.Printf("[Mapper #%d] Creating InfiniStore client now...\n", taskNum)
@@ -210,7 +226,8 @@ func doReduce(
 	// =====================================================================
 
 	// This creates a new InfiniStore EcClient object.
-	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
+	// cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
+	cli := clientPool.Get().(*client.Client)
 	
 	// This effectively connects the InfiniStore EcClient to all of the proxies.
 	cli.Dial(storageIps)
@@ -393,7 +410,8 @@ func doReduce(
 	}
 
 	// Close the client when we're done with it.
-	cli.Close()
+	// cli.Close()
+	clientPool.Put(cli)
 }
 
 // Encapsulates a write operation. Currently, this is an InfiniStore write operation.
@@ -423,6 +441,13 @@ func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) 
 	return success
 }
 
+func (s srtrService) ClosePool(raw []byte) error {
+	if clientPool != nil {
+		log.Printf("Closing the srtm_service client pool...")
+		clientPool.Close()
+	}
+}
+
 // DON'T MODIFY THIS FUNCTION
 func (s srtrService) DoService(raw []byte) error {
 	var args serverless.MapReduceArgs
@@ -434,6 +459,10 @@ func (s srtrService) DoService(raw []byte) error {
 		return err
 	}
 	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
+
+	if !poolCreated {
+		clientPool = InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs)
+	}
 
 	// if !clientCreated {
 	// 	CreateInfiniStoreClient(args.TaskNum, args.DataShards, args.ParityShards, args.MaxGoroutines)

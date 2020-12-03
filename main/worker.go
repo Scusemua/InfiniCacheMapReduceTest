@@ -94,7 +94,7 @@ func (svc *Service) openPlugin() error {
 	return nil
 }
 
-// RegisterService is caled by the driver to plugin a new service that has already been
+// RegisterService is called by the driver to plugin a new service that has already been
 // compiled into a .so static object library.
 func (wk *Worker) RegisterService(args *serverless.ServiceRegisterArgs, _ *struct{}) error {
 	log.Printf("Register called for %s\n", args.ServiceName)
@@ -129,6 +129,11 @@ func (wk *Worker) InvokeService(args serverless.RPCArgs, _ *struct{}) error {
 // Shutdown is called by the driver when all work has been completed.
 // No response needed.
 func (wk *Worker) Shutdown(_ *struct{}, _ *struct{}) error {
+	// Shut down the client pools.
+	for serviceName, serviceInterface := range serviceMap {
+		
+	}
+
 	log.Printf("Worker shutdown %s\n", wk.address)
 	close(wk.shutdown)
 	wk.l.Close()
@@ -203,9 +208,6 @@ loop:
 
 // The main entrance of worker.go
 func main() {
-	key := "mr.srt-res-1"
-	fmt.Printf("[TEST] Worker Start -- Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
-
 	wk := new(Worker)
 	wk.address = os.Args[1]               // the 1st cmd-line argument: worker hostname and ip addr
 	wk.masterAddr = os.Args[2]            // the 2nd cmd-line argument: driver hostname and ip addr

@@ -75,4 +75,5 @@ const (
 // plugin Service library.
 type Interface interface {
 	DoService(args []byte) error
+	ClosePool() error 
 }

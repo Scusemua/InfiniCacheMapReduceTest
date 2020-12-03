@@ -29,6 +29,22 @@ import (
 //var cli *client.Client		// The InfiniStore client.
 var clientCreated = false 		// Has this InfiniStore client been created yet?
 var clientDialed = false 		// Have we called the client's Dial function yet?
+var poolCreated = false 
+
+var clientPool *serverless.Pool
+
+func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []string) {
+	clientPool = serverless.InitPool(&serverless.Pool{
+		New: func() interface{} {
+			cli = client.NewClient(dataShard, parityShard, ecMaxGoroutine)
+			cli.(*client.Client).Dial(addrArr)
+			return cli
+		},
+		Finalize: func(c interface{}) {
+			c.(*client.Client).Close()
+		},
+	}, 32, serverless.PoolForStrictConcurrency)
+}
 
 // func CreateInfiniStoreClient(taskNum int, dataShards int, parityShards int, maxGoRoutines int) {
 // 	log.Printf("[Mapper #%d] Creating InfiniStore client now...\n", taskNum)
@@ -142,8 +158,10 @@ func doMap(
 	// In theory, you would create whatever clients that Pocket uses here...
 	// =====================================================================
 	// log.Printf("Creating storage client for IPs: %v\n", storageIPs)
-	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
-	cli.Dial(storageIPs)
+	//cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
+	//cli.Dial(storageIPs)
+
+	cli := clientPool.Get().(*client.Client)
 
 	log.Println("Successfully created storage client.")
 
@@ -213,7 +231,8 @@ func doMap(
 	}
 
 	//redis_client.Close()
-	cli.Close()
+	// cli.Close()
+	clientPool.Put(cli)
 }
 
 // We supply you an ihash function to help with mapping of a given
@@ -222,6 +241,13 @@ func ihash(s string, trie serverless.TrieNode) int {
 	partition := serverless.GetPartition(s, trie)
 	//fmt.Printf("Partition for key \"%s\": %d\n", s, partition)
 	return partition
+}
+
+func (s srtmService) ClosePool() error {
+	if clientPool != nil {
+		log.Printf("Closing the srtm_service client pool...")
+		clientPool.Close()
+	}
 }
 
 // DON'T MODIFY THIS FUNCTION
@@ -236,6 +262,10 @@ func (s srtmService) DoService(raw []byte) error {
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
 
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
+
+	if !poolCreated {
+		clientPool = InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs)
+	}
 
 	// if !clientCreated {
 	// 	CreateInfiniStoreClient(args.TaskNum, args.DataShards, args.ParityShards, args.MaxGoroutines)
