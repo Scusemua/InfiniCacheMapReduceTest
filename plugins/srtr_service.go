@@ -264,6 +264,7 @@ func doReduce(
 			log.Fatal("ERROR: Failed to retrieve data from storage with key \"" + dataKey + "\" in allotted number of attempts.\n")
 		}
 
+		log.Printf("Calling .ReadAll() on ReadAllCloser for key \"%s\" now...\n", dataKey)
 		// To get the data from the read, we call ReadAll() on the ReadAllCloser object. This is still
 		// InfiniStore specific. That's just how it works. After reading, we call Close().
 		marshalled_result, err := readAllCloser.ReadAll()
