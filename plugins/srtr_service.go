@@ -218,11 +218,12 @@ func doReduce(
 		var ok bool
 		success := false
 		// Exponential backoff.
-		for current_attempt := 0; current_attempt < 10; current_attempt++ {
+		for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 			// This is a read operation from InfiniStore. The code that follows is also related.
 			// Basically, the Get function returns a tuple where the first element of the tuple is 
 			// an object of type ReadAllCloser, and the second element of the tuple is a boolean
 			// which indicates whether or not the read operation went well.
+			log.Printf("Attempt %d/%d for read key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, dataKey)
 			readAllCloser, ok = cli.Get(dataKey)
 
 			// Check for failure, and backoff exponentially on-failure.
@@ -376,16 +377,15 @@ func doReduce(
 // Encapsulates a write operation. Currently, this is an InfiniStore write operation.
 func exponentialBackoffWrite(key string, value []byte, cli *client.Client) bool {
 	success := false
-	max_attempts := 10
-	for current_attempt := 0; current_attempt < max_attempts; current_attempt++ {
-		log.Printf("Attempt %d/%d for key \"%s\".\n", current_attempt, max_attempts, key)
+	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
+		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
 		// Call the EcSet InfiniStore function to store 'value' at key 'key'.
 		_, ok := cli.EcSet(key, value)
 
 		if !ok {
 			max_duration := (2 << uint(current_attempt + 4)) - 1
-			if max_duration > 5000 { // Cap at 5000 (which is 5000ms or 5sec)
-				max_duration = 5000
+			if max_duration > serverless.MaxBackoffSleepWrites { 
+				max_duration = serverless.MaxBackoffSleepWrites
 			}
 			duration := rand.Intn(max_duration + 1)
 			log.Printf("[ERROR] Failed to write key \"%s\". Backing off for %d ms.\n", key, duration)

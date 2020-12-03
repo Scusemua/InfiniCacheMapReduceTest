@@ -55,6 +55,13 @@ func MergeName(jobName string, reduceTask int) string {
 	return "mr." + jobName + "-res-" + strconv.Itoa(reduceTask)
 }
 
+// Maximum number of retry attempts during exponential backoff.
+MaxAttemptsDuringBackoff := 10
+// Maximum amount of time workers/clients can sleep during an exponentially backed-off read.
+MaxBackoffSleepReads := 10000
+// Maximum amount of time workers/clients can sleep during an exponentially backed-off write.
+MaxBackoffSleepWrites := 10000
+
 var phaseServiceMap = map[jobPhase]string{
 	mapPhase:    "m",
 	reducePhase: "r",

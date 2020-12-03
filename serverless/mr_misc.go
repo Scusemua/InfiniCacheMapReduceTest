@@ -165,7 +165,8 @@ func readExponentialBackoff(key string, cli *client.Client) (client.ReadAllClose
 	var ok bool
 	success := false
 	// Exponential backoff.
-	for current_attempt := 0; current_attempt < 10; current_attempt++ {
+	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
+		log.Printf("Attempt %d/%d for read to key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
 		readAllCloser, ok = cli.Get(key)
 
 		// Check for failure, and backoff exponentially on-failure.
