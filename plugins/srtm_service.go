@@ -26,6 +26,24 @@ import (
 	"time"
 )
 
+var cli *client.Client		// The InfiniStore client.
+clientCreated := false 		// Has this InfiniStore client been created yet?
+clientDialed := false 		// Have we called the client's Dial function yet?
+
+func CreateInfiniStoreClient(taskNum int, dataShards int, parityShards int, maxGoRoutines int) {
+	log.Printf("[Mapper #%d] Creating InfiniStore client now...\n", taskNum)
+	cli = client.NewClient(dataShards, parityShards, maxGoRoutines)
+
+	clientCreated = true 
+}
+
+func DialInfiniStoreClient(taskNum int, storageIps []string) {
+	log.Printf("[Mapper #%d] Dialing InfiniStore client now...\n", taskNum)
+	cli.Dial(storageIps)
+
+	clientDialed = true
+}
+
 const debugEnabled = true
 
 func Debug(format string, a ...interface{}) (n int, err error) {
@@ -123,9 +141,9 @@ func doMap(
 	// ---------------------------------------------------------------------
 	// In theory, you would create whatever clients that Pocket uses here...
 	// =====================================================================
-	log.Printf("Creating storage client for IPs: %v\n", storageIPs)
-	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
-	cli.Dial(storageIPs)
+	// log.Printf("Creating storage client for IPs: %v\n", storageIPs)
+	// cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
+	// cli.Dial(storageIPs)
 
 	log.Println("Successfully created storage client.")
 
@@ -195,7 +213,7 @@ func doMap(
 	}
 
 	//redis_client.Close()
-	cli.Close()
+	//cli.Close()
 }
 
 // We supply you an ihash function to help with mapping of a given
@@ -218,6 +236,14 @@ func (s srtmService) DoService(raw []byte) error {
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
 
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
+
+	if !clientCreated {
+		CreateInfiniStoreClient(args.TaskNum, args.DataShards, args.ParityShards, args.MaxGoroutines)
+	}
+
+	if !clientDialed {
+		DialInfiniStoreClient(args.TaskNum, args.StorageIPs)
+	}
 
 	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, args.ParityShards, args.MaxGoroutines, trie)
 

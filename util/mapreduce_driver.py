@@ -508,7 +508,7 @@ def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
         lambda_prefix = "CacheNode%d-" % i 
         print("Assigning lambda prefix \"%s\" to proxy at ip %s." % (lambda_prefix, ip))
         command = "cd {}/evaluation; export PATH=$PATH:/usr/local/go/bin; go run $PWD/../proxy/proxy.go -debug=true -prefix={} -lambda-prefix={} -disable-color >./log 2>&1".format(INFINISTORE_DIRECTORY, prefix, lambda_prefix)
-        execute_command(command, 3, get_pty = True, ips = [ip], key_path = key_path)
+        execute_command(command, 1, get_pty = True, ips = [ip], key_path = key_path)
 
     return prefix
 
@@ -675,7 +675,7 @@ def update_lambdas_prefixed(ips : list, prefix = "CacheNode", key_path = KEYFILE
         print("Full command: {}".format(command))
         execute_command(
             command = command,
-            count_limit = 3,
+            count_limit = 1,
             ips = [ip],
             key_path = key_path,
             get_pty = True 
@@ -936,6 +936,7 @@ if __name__ == "__main__":
 # that I stop and start but never terminate) so its private IPv4 is basically static. You use the VM's
 # private IPv4 for the 'driverHostname' parameter, along with port 1234.
 
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.66.27:6378 -storageIps 10.0.67.93:6378 -storageIps 10.0.91.133:6378 -storageIps 10.0.69.185:6378 -storageIps 10.0.83.1:6378 -storageIps 10.0.90.33:6378
 # go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.66.27:6378 -storageIps 10.0.67.93:6378 -storageIps 10.0.91.133:6378 -storageIps 10.0.69.185:6378 -storageIps 10.0.83.1:6378 -storageIps 10.0.90.33:6378
 
 # Change the 'jobName' parameter depending on what job you want to run. For TeraSort, it is 'srt'.
