@@ -7,6 +7,7 @@ import (
 	//"github.com/go-redis/redis/v7"
 	"crypto/md5"
 	"github.com/cespare/xxhash"
+	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
 	"math/rand"
