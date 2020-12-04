@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
+	"crypto/md5"
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/aws/aws-sdk-go/aws"
