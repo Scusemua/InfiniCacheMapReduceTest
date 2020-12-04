@@ -164,7 +164,8 @@ func readExponentialBackoff(key string, cli *client.Client) (client.ReadAllClose
 			log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", key, duration)
 			time.Sleep(time.Duration(duration) * time.Millisecond)
 		} else {
-			log.Printf("Successfully ")
+			readAllCloserLength := readAllCloser.Len()
+			log.Printf("Successfully read data with key \"%s\" on attempt %d. Length = %d.\n", key, current_attempt, readAllCloserLength)
 			success = true
 			break
 		}
