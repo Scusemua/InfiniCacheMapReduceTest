@@ -8,7 +8,7 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
-	"encoding/json"
+	//"encoding/json"
 	"crypto/md5"
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
@@ -183,8 +183,13 @@ func doMap(
 	log.Println("Storing results in storage now...")
 
 	for k, v := range results {
-		marshalled_result, err := json.Marshal(v)
+		byte_buffer := bytes.Buffer{}
+		gobEncoder := gob.NewEncoder(&byte_buffer)
+		err := gobEncoder.Encode(v)		
 		checkError(err)
+		marshalled_result := byte_buffer.Bytes() // should be of type []byte now.
+		//marshalled_result, err := json.Marshal(v)
+		//checkError(err)
 		start := time.Now()
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f \n", k, float64(len(marshalled_result))/float64(1e6))
 		writeStart := time.Now()

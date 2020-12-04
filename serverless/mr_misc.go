@@ -3,7 +3,8 @@ package serverless
 import (
 	"bufio"
 	"crypto/md5"
-	"encoding/json"
+	//"encoding/json"
+	"encoding/gob"
 	"fmt"
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
@@ -71,19 +72,28 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 		firstReadDuration := time.Since(start)
 
-		var res_int int
+		var res_int int	// If wecoding to []KeyValue fails, we'll try to decode an int in case everything was chunked.
 		results := make([]KeyValue, 0)
 
 		log.Println("Unmarshalling data retrieved from storage now...")
 
 		log.Printf("md5 of data with key \"%s\": %x\n", p, md5.Sum(result))
 
+		byte_buffer_res := bytes.Buffer{}
+		byte_buffer_res.Write(result)
+		gobDecoder := gob.NewDecoder(&byte_buffer_res)
+		err := gobDecoder.Decode(&results)
+
 		// Try to deserialize into a list of KeyValue. If it breaks, then try to deserialize to an int.
 		// If that works, then eveyrthing was chunked so grab all the pieces and combine them.
-		err := json.Unmarshal([]byte(result), &results)
+		// err := json.Unmarshal([]byte(result), &results)
 
 		if err != nil {
-			err = json.Unmarshal([]byte(result), &res_int)
+			byte_buffer_res := bytes.Buffer{}
+			byte_buffer_res.Write(result)
+			gobDecoder := gob.NewDecoder(&byte_buffer_res)
+			err := gobDecoder.Decode(&res_int)			
+			//err = json.Unmarshal([]byte(result), &res_int)
 
 			if err != nil {
 				panic(err)
@@ -121,7 +131,11 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 				log.Printf("All data for \"%s\":\n%s\n", p, string(all_bytes))
 
-				err = json.Unmarshal(all_bytes, &results)
+				byte_buffer_res := bytes.Buffer{}
+				byte_buffer_res.Write(all_bytes)
+				gobDecoder := gob.NewDecoder(&byte_buffer_res)
+				err = gobDecoder.Decode(&results)	
+				//err = json.Unmarshal(all_bytes, &results)
 
 				if err != nil {
 					log.Fatal("Merge: ", err)

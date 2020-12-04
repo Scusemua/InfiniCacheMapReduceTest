@@ -10,7 +10,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/gob"
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"math/rand"
@@ -294,7 +294,7 @@ func doReduce(
 		log.Printf("Calling .ReadAll() on ReadAllCloser for key \"%s\" now...\n", dataKey)
 		// To get the data from the read, we call ReadAll() on the ReadAllCloser object. This is still
 		// InfiniStore specific. That's just how it works. After reading, we call Close().
-		marshalled_result, err := readAllCloser.ReadAll()
+		encoded_result, err := readAllCloser.ReadAll()
 		readAllCloser.Close()
 		if err != nil {
 			log.Fatal("Unexpected exception during ReadAll() for key \"%s\".\n", dataKey)
@@ -305,10 +305,18 @@ func doReduce(
 		}
 		end := time.Now()
 		readDuration := time.Since(start)
-		log.Printf("storage READ END. Key: \"%s\", Reduce Task #: %d, Bytes read: %f, Time: %d ms", dataKey, reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
-		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
+		log.Printf("storage READ END. Key: \"%s\", Reduce Task #: %d, Bytes read: %f, Time: %d ms", dataKey, reduceTaskNum, float64(len(encoded_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(encoded_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
-		json.Unmarshal([]byte(marshalled_result), &kvs)
+
+		byte_buffer_res := bytes.Buffer{}
+		byte_buffer_res.Write(encoded_result)
+		gobDecoder := gob.NewDecoder(&byte_buffer_res)
+		err = gobDecoder.Decode(&kvs)
+
+		checkError(err)
+
+		//json.Unmarshal([]byte(encoded_result), &kvs)
 		for _, kv := range kvs {
 			inputs = append(inputs, kv)
 		}
@@ -344,8 +352,14 @@ func doReduce(
 	}
 	doReduce(lastKey, values)
 
-	marshalled_result, err := json.Marshal(results)
+	byte_buffer := bytes.Buffer{}
+	gobEncoder := gob.NewEncoder(&byte_buffer)
+	err := gobEncoder.Encode(results)		
 	checkError(err)
+	marshalled_result := byte_buffer.Bytes() // should be of type []byte now.
+
+	//marshalled_result, err := json.Marshal(results)
+	//checkError(err)
 	log.Printf("Writing final result to Redis at key \"%s\". Size: %f MB.\n", fileName, float64(len(marshalled_result))/float64(1e6))
 
 	/* Chunk up the final results if necessary. */
@@ -396,14 +410,20 @@ func doReduce(
 
 			counter = counter + 1
 		}
-		num_chunks_serialized, err3 := json.Marshal(num_chunks)
+		byte_buffer := bytes.Buffer{}
+		gobEncoder := gob.NewEncoder(&byte_buffer)
+		err3 := gobEncoder.Encode(num_chunks)		
+		checkError(err3)
+		numberOfChunksSerialized := byte_buffer.Bytes() // should be of type []byte now.		
+		
+		//numberOfChunksSerialized, err3 := json.Marshal(num_chunks)
 		checkError(err3)
 
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
 		// wanna reuse the same code in each location.
-		success := exponentialBackoffWrite(fileName, num_chunks_serialized, cli)
-		//success := exponentialBackoffWrite(fileName, num_chunks_serialized)
+		success := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli)
+		//success := exponentialBackoffWrite(fileName, numberOfChunksSerialized)
 		if !success {
 			log.Fatal("ERROR while storing value in storage, key is: \"", fileName, "\"")
 		}
