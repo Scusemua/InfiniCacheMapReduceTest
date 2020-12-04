@@ -121,7 +121,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 					log.Printf("md5 of chunk with key \"%s\": %x\n", key, md5.Sum(all_bytes))
 
-					log.Printf("Chunk \"%s\":\n%s\n", key, string(res))
+					//log.Printf("Chunk \"%s\":\n%s\n", key, string(res))
 
 					all_bytes = append(all_bytes, res...)
 				}
@@ -130,7 +130,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 				log.Printf("Final size of all %d chunks for key \"%s\" combined together: %f MB.\n", res_int, p, float64(len(all_bytes))/float64(1e6))
 
-				log.Printf("All data for \"%s\":\n%s\n", p, string(all_bytes))
+				//log.Printf("All data for \"%s\":\n%s\n", p, string(all_bytes))
 
 				byte_buffer_res := bytes.Buffer{}
 				byte_buffer_res.Write(all_bytes)
