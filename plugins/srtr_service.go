@@ -207,7 +207,7 @@ func doReduce(
 	dataShards int,
 	parityShards int,
 	maxEcGoroutines int,
-	chunkThresholdMB int, 
+	chunkThreshold int, 
 ) {
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
@@ -338,13 +338,11 @@ func doReduce(
 	checkError(err)
 	log.Printf("Writing final result to Redis at key \"%s\". Size: %f MB.\n", fileName, float64(len(marshalled_result))/float64(1e6))
 
-	chunk_threshold_bytes := chunkThresholdMB * 1e6
-
 	/* Chunk up the final results if necessary. */
-	if len(marshalled_result) > int(chunk_threshold_bytes) {
-		log.Printf("Data for final result \"%s\" is larger than %dMB. Storing it in pieces...\n", fileName, chunkThresholdMB)
+	if len(marshalled_result) > int(chunkThreshold) {
+		log.Printf("Data for final result \"%s\" is larger than %d bytes. Storing it in pieces...\n", fileName, chunkThreshold)
 		log.Printf("marshalled_result = %v\n", marshalled_result)
-		chunks := split(marshalled_result, int(chunk_threshold_bytes))
+		chunks := split(marshalled_result, int(chunkThreshold))
 		num_chunks := len(chunks)
 		log.Printf("Created %d chunks for final result.\n", num_chunks)
 		base_key := fileName + "-part"

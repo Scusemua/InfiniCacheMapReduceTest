@@ -57,7 +57,7 @@ func main() {
 	maxGoRoutines := flag.Int("maxGoRoutines", 32, "InfiniStore proxy max goroutines parameter.")
 	pattern := flag.String("pattern", "[a-zA-Z]+", "Regular expression pattern for Grep. Default is matching one or more letters (uppercase or lowercase) in a row.")
 	clientPoolCapacity := flag.Int("clientPoolCapacity", 10, "Maximum capacity for the pool of InfiniStore clients.")
-	chunkThreshold := flag.Int("chunkThreshold", 512, "The size (in MB) above which we break a piece of data up into chunk-sized pieces and read/write those chunks rather than the entire piece of data all at once.")
+	chunkThreshold := flag.Int("chunkThreshold", 512000000, "The size (in bytes) above which we break a piece of data up into chunk-sized pieces and read/write those chunks rather than the entire piece of data all at once.")
 	flag.Var(&myFlags, "storageIps", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
 	flag.Parse()
 
