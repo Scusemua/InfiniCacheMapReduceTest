@@ -309,9 +309,9 @@ func doReduce(
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(encoded_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 
-		byte_buffer_res := bytes.Buffer{}
-		byte_buffer_res.Write(encoded_result)
-		gobDecoder := gob.NewDecoder(&byte_buffer_res)
+		byte_buffer_res := bytes.NewBuffer(encoded_result)
+		//byte_buffer_res.Write(encoded_result)
+		gobDecoder := gob.NewDecoder(byte_buffer_res)
 		err = gobDecoder.Decode(&kvs)
 
 		checkError(err)
@@ -352,7 +352,7 @@ func doReduce(
 	}
 	doReduce(lastKey, values)
 
-	byte_buffer := bytes.Buffer{}
+	var byte_buffer bytes.Buffer
 	gobEncoder := gob.NewEncoder(&byte_buffer)
 	err := gobEncoder.Encode(results)		
 	checkError(err)
@@ -410,7 +410,7 @@ func doReduce(
 
 			counter = counter + 1
 		}
-		byte_buffer := bytes.Buffer{}
+		var byte_buffer bytes.Buffer
 		gobEncoder := gob.NewEncoder(&byte_buffer)
 		err3 := gobEncoder.Encode(num_chunks)		
 		checkError(err3)

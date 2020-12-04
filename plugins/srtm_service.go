@@ -183,7 +183,7 @@ func doMap(
 	log.Println("Storing results in storage now...")
 
 	for k, v := range results {
-		byte_buffer := bytes.Buffer{}
+		var byte_buffer bytes.Buffer
 		gobEncoder := gob.NewEncoder(&byte_buffer)
 		err := gobEncoder.Encode(v)		
 		checkError(err)
