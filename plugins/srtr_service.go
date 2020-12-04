@@ -284,7 +284,7 @@ func doReduce(
 		}
 
 		// If the ReadAllCloser is nil but there was no error, then that means the key was not found.
-		if reader == nil {
+		if readAllCloser == nil {
 			log.Printf("WARNING: Key \"%s\" does not exist in intermediate storage.\n", dataKey)
 			log.Printf("WARNING: Skipping key \"%s\"...\n", dataKey)
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
