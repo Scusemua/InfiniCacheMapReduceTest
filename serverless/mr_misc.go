@@ -79,7 +79,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 			if err != nil {
 				panic(err)
 			} else {
-				log.Println("Obtained integer for final result. Result must've been chunked.\n")
+				log.Printf("Obtained integer %d for final result. Result must've been chunked.\n", res_int)
 
 				all_bytes := make([]byte, 0)
 				base_key := p + "-part"
@@ -95,10 +95,6 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					res, err2 := reader.ReadAll()
 					reader.Close()
 					readDuration := time.Since(chunkStart)
-					if err2 != nil {
-						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while calling ReadAll.\n", key)
-						log.Fatal(err2)
-					}
 					checkError(err2)
 
 					log.Printf("storage READ CHUNK END. Key: \"%s\", Chunk #: %d, Bytes read: %f, Time: %d ms\n", key, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
@@ -106,7 +102,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					all_bytes = append(all_bytes, []byte(res)...)
 				}
 
-				log.Println("Final size of all chunks combined together: %f MB", float64(len(all_bytes))/float64(1e6))
+				log.Printf("Final size of all %d chunks for key \"%s\" combined together: %f MB.\n", res_int, p, float64(len(all_bytes))/float64(1e6))
 
 				err = json.Unmarshal([]byte(all_bytes), &results)
 
@@ -164,8 +160,8 @@ func readExponentialBackoff(key string, cli *client.Client) (client.ReadAllClose
 			log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", key, duration)
 			time.Sleep(time.Duration(duration) * time.Millisecond)
 		} else {
-			readAllCloserLength := readAllCloser.Len()
-			log.Printf("Successfully read data with key \"%s\" on attempt %d. Length = %d.\n", key, current_attempt, readAllCloserLength)
+			readAllCloserSizeMB := float64(readAllCloser.Len()) / float64(1e6)
+			log.Printf("Successfully read data with key \"%s\" on attempt %d. Size = %f MB.\n", key, current_attempt, readAllCloserSizeMB)
 			success = true
 			break
 		}

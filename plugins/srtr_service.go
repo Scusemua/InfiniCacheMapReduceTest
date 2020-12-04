@@ -336,13 +336,13 @@ func doReduce(
 
 	marshalled_result, err := json.Marshal(results)
 	checkError(err)
-	log.Println("Writing final result to Redis at key \"%s\". Size: %f MB.\n", fileName, float64(len(marshalled_result))/float64(1e6))
+	log.Printf("Writing final result to Redis at key \"%s\". Size: %f MB.\n", fileName, float64(len(marshalled_result))/float64(1e6))
 
 	chunk_threshold_bytes := chunkThresholdMB * 1e6
 
 	/* Chunk up the final results if necessary. */
 	if len(marshalled_result) > int(chunk_threshold_bytes) {
-		log.Printf("Final result is larger than %dMB. Storing it in pieces...\n", chunkThresholdMB)
+		log.Printf("Data for final result \"%s\" is larger than %dMB. Storing it in pieces...\n", fileName, chunkThresholdMB)
 		chunks := split(marshalled_result, int(chunk_threshold_bytes))
 		num_chunks := len(chunks)
 		log.Printf("Created %d chunks for final result.\n", num_chunks)
@@ -366,7 +366,7 @@ func doReduce(
 				log.Fatal("\n\nERROR while storing value in storage, key is: \"", chunk_key, "\"")
 			}
 
-			log.Printf("SUCCESSFULLY wrote chunk #d, \"%s\", to storage. Size: %f MB, Time: %v ms.\n", counter, chunk_key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+			log.Printf("SUCCESSFULLY wrote chunk #%d, \"%s\", to storage. Size: %f MB, Time: %v ms.\n", counter, chunk_key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: chunk_key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
