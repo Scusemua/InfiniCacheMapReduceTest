@@ -266,6 +266,7 @@ func (s srtmService) DoService(raw []byte) error {
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
 
 	if !poolCreated {
+		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
 		poolCreated = true 

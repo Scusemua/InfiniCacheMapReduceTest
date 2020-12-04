@@ -274,8 +274,6 @@ func (drv *Driver) run(
 	dataShards int,
 	parityShards int,
 	maxGoRoutines int,
-	pattern string,
-	clientPoolCapacity int,
 	storageIps []string,
 	schedule func(phase jobPhase, serviceName string),
 	finish func(),
@@ -353,6 +351,7 @@ func (drv *Driver) Run(
 	maxGoRoutines int, 
 	pattern string,
 	clientPoolCapacity int,
+	chunkThreshold int,
 	storageIps []string,
 ) {
 	Debug("%s: Starting driver RPC server\n", drv.address)
@@ -407,12 +406,11 @@ func (drv *Driver) Run(
 
 	log.Printf("Number of S3 keys: %d\n", len(s3Keys))
 
-	go drv.run(jobName, s3Keys, nReduce, sampleKeys, dataShards, parityShards, maxGoRoutines, pattern, 
-		clientPoolCapacity, storageIps,
+	go drv.run(jobName, s3Keys, nReduce, sampleKeys, dataShards, parityShards, maxGoRoutines, storageIps,
 		func(phase jobPhase, serviceName string) { // func schedule()
 			registerChan := make(chan string)
 			go drv.prepareService(registerChan, ServiceName(serviceName, phase))
-			drv.schedule(phase, serviceName, registerChan, dataShards, parityShards, maxGoRoutines, clientPoolCapacity, pattern)
+			drv.schedule(phase, serviceName, registerChan, dataShards, parityShards, maxGoRoutines, clientPoolCapacity, pattern, chunkThreshold)
 		},
 		func() { // func finish()
 			drv.killWorkers()

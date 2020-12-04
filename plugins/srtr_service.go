@@ -207,6 +207,7 @@ func doReduce(
 	dataShards int,
 	parityShards int,
 	maxEcGoroutines int,
+	chunkThresholdMB int, 
 ) {
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
@@ -337,12 +338,12 @@ func doReduce(
 	checkError(err)
 	log.Println("Writing final result to Redis at key", fileName, ". Size:", float64(len(marshalled_result))/float64(1e6), "MB.")
 
-	chunk_threshold := 512 * 1e6
+	chunk_threshold_bytes := chunkThresholdMB * 1e6
 
 	/* Chunk up the final results if necessary. */
-	if len(marshalled_result) > int(chunk_threshold) {
-		log.Printf("Final result is larger than %dMB. Storing it in pieces...", int(chunk_threshold/1e6))
-		chunks := split(marshalled_result, int(chunk_threshold))
+	if len(marshalled_result) > int(chunk_threshold_bytes) {
+		log.Printf("Final result is larger than %dMB. Storing it in pieces...\n", chunkThresholdMB)
+		chunks := split(marshalled_result, int(chunk_threshold_bytes))
 		num_chunks := len(chunks)
 		log.Println("Created", num_chunks, " chunks for final result", fileName)
 		base_key := fileName + "-part"
@@ -463,6 +464,7 @@ func (s srtrService) DoService(raw []byte) error {
 	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
 
 	if !poolCreated {
+		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
 		poolCreated = true 
@@ -476,7 +478,7 @@ func (s srtrService) DoService(raw []byte) error {
 	// 	DialInfiniStoreClient(args.TaskNum, args.StorageIPs)
 	// }
 
-	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines)
+	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines, args.chunkThresholdMB)
 
 	return nil
 }
