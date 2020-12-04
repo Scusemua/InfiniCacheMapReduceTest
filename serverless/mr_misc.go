@@ -2,9 +2,9 @@ package serverless
 
 import (
 	"bufio"
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"crypto/md5"
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
@@ -70,6 +70,8 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 		log.Println("Unmarshalling data retrieved from storage now...")
 
+		log.Printf("md5 of data with key \"%s\": %x\n", p, md5.Sum([]byte(result)))
+
 		// Try to deserialize into a list of KeyValue. If it breaks, then try to deserialize to an int.
 		// If that works, then eveyrthing was chunked so grab all the pieces and combine them.
 		err := json.Unmarshal([]byte(result), &results)
@@ -99,7 +101,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					checkError(err2)
 
 					log.Printf("storage READ CHUNK END. Key: \"%s\", Chunk #: %d, Bytes read: %f, Time: %d ms\n", key, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
-					
+
 					log.Printf("md5 of chunk with key \"%s\": %x\n", key, md5.Sum(all_bytes))
 
 					all_bytes = append(all_bytes, []byte(res)...)
