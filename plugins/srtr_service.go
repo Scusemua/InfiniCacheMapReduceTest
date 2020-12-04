@@ -345,30 +345,30 @@ func doReduce(
 		log.Printf("Final result is larger than %dMB. Storing it in pieces...\n", chunkThresholdMB)
 		chunks := split(marshalled_result, int(chunk_threshold_bytes))
 		num_chunks := len(chunks)
-		log.Printf("Created %d chunks for final result.\n", fileName)
+		log.Printf("Created %d chunks for final result.\n", num_chunks)
 		base_key := fileName + "-part"
 		counter := 0
 		for _, chunk := range chunks {
-			key := base_key + string(counter)
-			log.Printf("Writing chunk #%d with key \"%s\" (size = %f MB) to storage.\n", counter, key, float64(len(chunk))/float64(1e6))
+			chunk_key := base_key + strconv.Itoa(counter)
+			log.Printf("Writing chunk #%d with key \"%s\" (size = %f MB) to storage.\n", counter, chunk_key, float64(len(chunk))/float64(1e6))
 			start := time.Now()
 
 			// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 			// I put it in its own function bc there are several write calls in this file and I did not
 			// wanna reuse the same code in each location.
-			success := exponentialBackoffWrite(key, chunk, cli)
-			//success := exponentialBackoffWrite(key, chunk)
+			success := exponentialBackoffWrite(chunk_key, chunk, cli)
+			//success := exponentialBackoffWrite(chunk_key, chunk)
 
 			end := time.Now()
 			writeEnd := time.Since(start)
 			//checkError(err)
 			if !success {
-				log.Fatal("\n\nERROR while storing value in storage, key is: \"", key, "\"")
+				log.Fatal("\n\nERROR while storing value in storage, key is: \"", chunk_key, "\"")
 			}
 
-			log.Printf("SUCCESSFULLY wrote chunk #d, \"%s\", to storage. Size: %f MB, Time: %v ms.\n", counter, key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+			log.Printf("SUCCESSFULLY wrote chunk #d, \"%s\", to storage. Size: %f MB, Time: %v ms.\n", counter, chunk_key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
-			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
+			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: chunk_key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
 
 			counter = counter + 1 
