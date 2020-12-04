@@ -381,6 +381,8 @@ func doReduce(
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: chunk_key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
 
+			log.Printf("Chunk \"%s\":\n%s", chunk_key, string(chunk))
+
 			// readAllCloser2, ok := cli.Get(chunk_key)
 
 			// if !ok {

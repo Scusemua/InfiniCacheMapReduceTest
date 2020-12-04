@@ -110,14 +110,18 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 					log.Printf("md5 of chunk with key \"%s\": %x\n", key, md5.Sum(all_bytes))
 
-					all_bytes = append(all_bytes, []byte(res)...)
+					log.Printf("Chunk \"%s\":\n%s\n", key, string(res))
+
+					all_bytes = append(all_bytes, res...)
 				}
 
 				log.Printf("md5 of all bytes for key \"%s\": %x\n", p, md5.Sum(all_bytes))
 
 				log.Printf("Final size of all %d chunks for key \"%s\" combined together: %f MB.\n", res_int, p, float64(len(all_bytes))/float64(1e6))
 
-				err = json.Unmarshal([]byte(all_bytes), &results)
+				log.Printf("All data for \"%s\":\n%s\n", p, string(all_bytes))
+
+				err = json.Unmarshal(all_bytes, &results)
 
 				if err != nil {
 					log.Fatal("Merge: ", err)
