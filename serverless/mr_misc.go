@@ -82,7 +82,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 		byte_buffer_res := bytes.NewBuffer(result)
 		gobDecoder := gob.NewDecoder(byte_buffer_res)
-		err = gobDecoder.Decode(&results)
+		err := gobDecoder.Decode(&results)
 
 		// Try to deserialize into a list of KeyValue. If it breaks, then try to deserialize to an int.
 		// If that works, then eveyrthing was chunked so grab all the pieces and combine them.
@@ -132,7 +132,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 				byte_buffer_res := bytes.NewBuffer(all_bytes)
 				gobDecoder := gob.NewDecoder(byte_buffer_res)
-				err = gobDecoder.Decode(&results)		
+				err := gobDecoder.Decode(&results)		
 				//err = json.Unmarshal(all_bytes, &results)
 
 				if err != nil {
