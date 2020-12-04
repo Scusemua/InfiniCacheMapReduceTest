@@ -102,6 +102,8 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					all_bytes = append(all_bytes, []byte(res)...)
 				}
 
+				log.Printf("all_bytes = %v\n", all_bytes)
+
 				log.Printf("Final size of all %d chunks for key \"%s\" combined together: %f MB.\n", res_int, p, float64(len(all_bytes))/float64(1e6))
 
 				err = json.Unmarshal([]byte(all_bytes), &results)
