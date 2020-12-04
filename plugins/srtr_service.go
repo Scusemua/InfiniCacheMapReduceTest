@@ -8,8 +8,8 @@ package main
 
 import (
 	"bytes"
-	"encoding/gob"
 	"crypto/md5"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
@@ -36,18 +36,18 @@ type srtrService string
 
 // MapReduceArgs defines this plugin's argument format
 //type MapReduceArgs struct {
-	// 	JobName       string
-	// 	S3Key         string
-	// 	TaskNum       int
-	// 	NReduce       int
-	// 	NOthers       int
-	// 	SampleKeys    []string
-	// 	StorageIPs    []string
-	// 	DataShards    int
-	// 	ParityShards  int
-	// 	MaxGoroutines int
-	// 	Pattern 	  string 
-	// }
+// 	JobName       string
+// 	S3Key         string
+// 	TaskNum       int
+// 	NReduce       int
+// 	NOthers       int
+// 	SampleKeys    []string
+// 	StorageIPs    []string
+// 	DataShards    int
+// 	ParityShards  int
+// 	MaxGoroutines int
+// 	Pattern 	  string
+// }
 
 type KeyValue struct {
 	Key   string
@@ -78,9 +78,9 @@ func Debug(format string, a ...interface{}) (n int, err error) {
 }
 
 //var cli *client.Client		// The InfiniStore client.
-var clientCreated = false 		// Has this InfiniStore client been created yet?
-var clientDialed = false 		// Have we called the client's Dial function yet?
-var poolCreated = false 
+var clientCreated = false // Has this InfiniStore client been created yet?
+var clientDialed = false  // Have we called the client's Dial function yet?
+var poolCreated = false
 
 var clientPool *serverless.Pool
 
@@ -101,7 +101,7 @@ func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []stri
 // 	log.Printf("[Mapper #%d] Creating InfiniStore client now...\n", taskNum)
 // 	cli = client.NewClient(dataShards, parityShards, maxGoRoutines)
 
-// 	clientCreated = true 
+// 	clientCreated = true
 // }
 
 // func DialInfiniStoreClient(taskNum int, storageIps []string) {
@@ -208,7 +208,7 @@ func doReduce(
 	dataShards int,
 	parityShards int,
 	maxEcGoroutines int,
-	chunkThreshold int, 
+	chunkThreshold int,
 ) {
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
@@ -230,7 +230,7 @@ func doReduce(
 	// This creates a new InfiniStore EcClient object.
 	// cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
 	cli := clientPool.Get().(*client.Client)
-	
+
 	// This effectively connects the InfiniStore EcClient to all of the proxies.
 	cli.Dial(storageIps)
 
@@ -238,7 +238,7 @@ func doReduce(
 
 	ioRecords := make([]IORecord, 0)
 
-	log.Println("Retrieving input data for reduce task #", reduceTaskNum)
+	log.Printf("Retrieving input data for reduce task #%d\n", reduceTaskNum)
 	inputs := make([]KeyValue, 0)
 	for i := 0; i < nMap; i++ {
 		// nMap is the number of Map tasks (i.e., the number of S3 keys or # of initial data partitions).
@@ -257,15 +257,15 @@ func doReduce(
 		// Exponential backoff.
 		for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 			// This is a read operation from InfiniStore. The code that follows is also related.
-			// Basically, the Get function returns a tuple where the first element of the tuple is 
+			// Basically, the Get function returns a tuple where the first element of the tuple is
 			// an object of type ReadAllCloser, and the second element of the tuple is a boolean
 			// which indicates whether or not the read operation went well.
 			log.Printf("Attempt %d/%d for read key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, dataKey)
 			readAllCloser, ok = cli.Get(dataKey)
 
 			// Check for failure, and backoff exponentially on-failure.
-			// If either the bool is false or the ReadAllCloser object is nil (null), then the read failed.
-			if !ok || readAllCloser == nil {
+			// If the bool is false, then there was an error. If the key was not found, then readAllCloser will be null.
+			if !ok {
 				max_duration := (2 << uint(current_attempt)) - 1
 				duration := rand.Intn(max_duration + 1)
 				log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
@@ -276,11 +276,19 @@ func doReduce(
 				break
 			}
 		}
-		
+
 		// If ultimately the read failed after multiple attempts during exponential backoff,
 		// we log the error with log.Fatal(), which prints the error and then exits.
 		if !success {
 			log.Fatal("ERROR: Failed to retrieve data from storage with key \"" + dataKey + "\" in allotted number of attempts.\n")
+		}
+
+		// If the ReadAllCloser is nil but there was no error, then that means the key was not found.
+		if reader == nil {
+			log.Printf("WARNING: Key \"%s\" does not exist in intermediate storage.\n", dataKey)
+			log.Printf("WARNING: Skipping key \"%s\"...\n", dataKey)
+			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
+			continue
 		}
 
 		log.Printf("Calling .ReadAll() on ReadAllCloser for key \"%s\" now...\n", dataKey)
@@ -289,8 +297,9 @@ func doReduce(
 		marshalled_result, err := readAllCloser.ReadAll()
 		readAllCloser.Close()
 		if err != nil {
-			log.Printf("ERROR: storage encountered exception for key \"%s\"...", "addr", dataKey)
-			log.Printf("ERROR: Just skipping the key \"%s\"...", dataKey)
+			log.Fatal("Unexpected exception during ReadAll() for key \"%s\".\n", dataKey)
+			//log.Printf("ERROR: storage encountered exception for key \"%s\"...", dataKey)
+			//log.Printf("ERROR: Just skipping the key \"%s\"...", dataKey)
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			continue
 		}
@@ -372,14 +381,14 @@ func doReduce(
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: chunk_key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
 
-			counter = counter + 1 
+			counter = counter + 1
 		}
 		num_chunks_serialized, err3 := json.Marshal(num_chunks)
 		checkError(err3)
 
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
-		// wanna reuse the same code in each location.		
+		// wanna reuse the same code in each location.
 		success := exponentialBackoffWrite(fileName, num_chunks_serialized, cli)
 		//success := exponentialBackoffWrite(fileName, num_chunks_serialized)
 		if !success {
@@ -392,7 +401,7 @@ func doReduce(
 
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
-		// wanna reuse the same code in each location.		
+		// wanna reuse the same code in each location.
 		success := exponentialBackoffWrite(fileName, marshalled_result, cli)
 		//success := exponentialBackoffWrite(fileName, marshalled_result)
 		if !success {
@@ -422,7 +431,7 @@ func doReduce(
 
 // Encapsulates a write operation. Currently, this is an InfiniStore write operation.
 func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) bool {
-//func exponentialBackoffWrite(key string, value []byte) bool {
+	//func exponentialBackoffWrite(key string, value []byte) bool {
 	success := false
 	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
@@ -430,8 +439,8 @@ func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) 
 		_, ok := ecClient.EcSet(key, value)
 
 		if !ok {
-			max_duration := (2 << uint(current_attempt + 4)) - 1
-			if max_duration > serverless.MaxBackoffSleepWrites { 
+			max_duration := (2 << uint(current_attempt+4)) - 1
+			if max_duration > serverless.MaxBackoffSleepWrites {
 				max_duration = serverless.MaxBackoffSleepWrites
 			}
 			duration := rand.Intn(max_duration + 1)
@@ -453,7 +462,7 @@ func (s srtrService) ClosePool() error {
 		clientPool.Close()
 	}
 
-	return nil 
+	return nil
 }
 
 // DON'T MODIFY THIS FUNCTION
@@ -472,7 +481,7 @@ func (s srtrService) DoService(raw []byte) error {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
-		poolCreated = true 
+		poolCreated = true
 	}
 
 	// if !clientCreated {
