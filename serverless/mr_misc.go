@@ -70,7 +70,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 		log.Println("Unmarshalling data retrieved from storage now...")
 
-		log.Printf("md5 of data with key \"%s\": %x\n", p, md5.Sum([]byte(result)))
+		log.Printf("md5 of data with key \"%s\": %x\n", p, md5.Sum(result))
 
 		// Try to deserialize into a list of KeyValue. If it breaks, then try to deserialize to an int.
 		// If that works, then eveyrthing was chunked so grab all the pieces and combine them.

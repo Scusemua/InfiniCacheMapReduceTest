@@ -381,6 +381,17 @@ func doReduce(
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: chunk_key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
 
+			readAllCloser, ok = cli.Get(chunk_key)
+
+			if !ok {
+				log.Fatal("Got error reading back chunk \"", chunk_key, "\" after writing it.\n")
+			}
+
+			marshalled_result2, err2 := readAllCloser.ReadAll()
+			checkError(err2)
+
+			log.Printf("md5 of chunk \"%s\" read back immediately after writing: %x\n", md5.Sum(marshalled_result2))
+
 			counter = counter + 1
 		}
 		num_chunks_serialized, err3 := json.Marshal(num_chunks)
