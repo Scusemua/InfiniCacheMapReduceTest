@@ -8,7 +8,7 @@ package main
 
 import (
 	"bytes"
-	"crypto/md5"
+	//"crypto/md5"
 	"encoding/gob"
 	//"encoding/json"
 	"fmt"
@@ -367,7 +367,7 @@ func doReduce(
 	/* Chunk up the final results if necessary. */
 	if len(marshalled_result) > int(chunkThreshold) {
 		log.Printf("Data for final result \"%s\" is larger than %d bytes. Storing it in pieces...\n", fileName, chunkThreshold)
-		log.Printf("md5 of marshalled_result with key \"%s\": %x\n", fileName, md5.Sum(marshalled_result))
+		//log.Printf("md5 of marshalled_result with key \"%s\": %x\n", fileName, md5.Sum(marshalled_result))
 		chunks := split(marshalled_result, int(chunkThreshold))
 		num_chunks := len(chunks)
 		log.Printf("Created %d chunks for final result.\n", num_chunks)
@@ -376,7 +376,7 @@ func doReduce(
 		for _, chunk := range chunks {
 			chunk_key := base_key + strconv.Itoa(counter)
 			log.Printf("Writing chunk #%d with key \"%s\" (size = %f MB) to storage.\n", counter, chunk_key, float64(len(chunk))/float64(1e6))
-			log.Printf("md5 of chunk with key \"%s\": %x\n", chunk_key, md5.Sum(chunk))
+			//log.Printf("md5 of chunk with key \"%s\": %x\n", chunk_key, md5.Sum(chunk))
 			start := time.Now()
 
 			// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.

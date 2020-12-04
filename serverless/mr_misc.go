@@ -3,7 +3,7 @@ package serverless
 import (
 	"bufio"
 	"bytes"
-	"crypto/md5"
+	//"crypto/md5"
 	//"encoding/json"
 	"encoding/gob"
 	"fmt"
@@ -78,7 +78,7 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 		log.Println("Unmarshalling data retrieved from storage now...")
 
-		log.Printf("md5 of data with key \"%s\": %x\n", p, md5.Sum(result))
+		//log.Printf("md5 of data with key \"%s\": %x\n", p, md5.Sum(result))
 
 		byte_buffer_res := bytes.NewBuffer(result)
 		gobDecoder := gob.NewDecoder(byte_buffer_res)
@@ -117,14 +117,14 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 					log.Printf("storage READ CHUNK END. Key: \"%s\", Chunk #: %d, Bytes read: %f, Time: %d ms\n", key, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
 
-					log.Printf("md5 of chunk with key \"%s\": %x\n", key, md5.Sum(all_bytes))
+					//log.Printf("md5 of chunk with key \"%s\": %x\n", key, md5.Sum(all_bytes))
 
 					//log.Printf("Chunk \"%s\":\n%s\n", key, string(res))
 
 					all_bytes = append(all_bytes, res...)
 				}
 
-				log.Printf("md5 of all bytes for key \"%s\": %x\n", p, md5.Sum(all_bytes))
+				//log.Printf("md5 of all bytes for key \"%s\": %x\n", p, md5.Sum(all_bytes))
 
 				log.Printf("Final size of all %d chunks for key \"%s\" combined together: %f MB.\n", res_int, p, float64(len(all_bytes))/float64(1e6))
 
