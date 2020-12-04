@@ -182,10 +182,12 @@ func reduceF(key string, values []string) string {
 }
 
 func split(buf []byte, lim int) [][]byte {
-	var chunk []byte
 	chunks := make([][]byte, 0, len(buf)/lim+1)
 	for len(buf) >= lim {
-		chunk, buf = buf[:lim], buf[lim:]
+		chunk, rest := buf[:lim], buf[lim:]
+		newBuff := make([]byte, len(rest))
+		copy(newBuff, rest)
+		buf = newBuff
 		chunks = append(chunks, chunk)
 	}
 	if len(buf) > 0 {
