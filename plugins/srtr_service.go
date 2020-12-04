@@ -390,7 +390,7 @@ func doReduce(
 			marshalled_result2, err2 := readAllCloser2.ReadAll()
 			checkError(err2)
 
-			log.Printf("md5 of chunk \"%s\" read back immediately after writing: %x\n", md5.Sum(marshalled_result2))
+			log.Printf("md5 of chunk \"%s\" read back immediately after writing: %x\n", chunk_key, md5.Sum(marshalled_result2))
 
 			counter = counter + 1
 		}
