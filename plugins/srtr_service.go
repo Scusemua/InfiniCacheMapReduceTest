@@ -336,7 +336,7 @@ func doReduce(
 
 	marshalled_result, err := json.Marshal(results)
 	checkError(err)
-	log.Println("Writing final result to Redis at key", fileName, ". Size:", float64(len(marshalled_result))/float64(1e6), "MB.")
+	log.Println("Writing final result to Redis at key \"%s\". Size: %f MB.\n", fileName, float64(len(marshalled_result))/float64(1e6))
 
 	chunk_threshold_bytes := chunkThresholdMB * 1e6
 
@@ -345,11 +345,12 @@ func doReduce(
 		log.Printf("Final result is larger than %dMB. Storing it in pieces...\n", chunkThresholdMB)
 		chunks := split(marshalled_result, int(chunk_threshold_bytes))
 		num_chunks := len(chunks)
-		log.Println("Created", num_chunks, " chunks for final result", fileName)
+		log.Printf("Created %d chunks for final result.\n", fileName)
 		base_key := fileName + "-part"
-		for i, chunk := range chunks {
-			key := base_key + string(i)
-			log.Printf("storage WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
+		counter := 0
+		for _, chunk := range chunks {
+			key := base_key + string(counter)
+			log.Printf("Writing chunk #%d with key \"%s\" (size = %f MB) to storage.\n", counter, key, float64(len(chunk))/float64(1e6))
 			start := time.Now()
 
 			// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
@@ -364,10 +365,13 @@ func doReduce(
 			if !success {
 				log.Fatal("\n\nERROR while storing value in storage, key is: \"", key, "\"")
 			}
-			log.Printf("storage WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Size: %f, Time: %v ms \n", i, key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+
+			log.Printf("SUCCESSFULLY wrote chunk #d, \"%s\", to storage. Size: %f MB, Time: %v ms.\n", counter, key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
 
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
+
+			counter = counter + 1 
 		}
 		num_chunks_serialized, err3 := json.Marshal(num_chunks)
 		checkError(err3)
