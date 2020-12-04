@@ -50,9 +50,15 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 		reader, success := readExponentialBackoff(p, cli)
 
 		//if err2 != nil {
-		if reader == nil || !success {
+		if !success {
 			log.Printf("ERROR: Storage encountered exception for key \"%s\".\n", p)
 			log.Fatal("Cannot create sorted file if data is missing.")
+		}
+
+		if reader == nil {
+			log.Printf("WARNING: Key \"%s\" does not exist.\n", p)
+			log.Printf("Skipping for now...")
+			continue 
 		}
 
 		result, err2 := reader.ReadAll()
@@ -161,7 +167,7 @@ func readExponentialBackoff(key string, cli *client.Client) (client.ReadAllClose
 		readAllCloser, ok = cli.Get(key)
 
 		// Check for failure, and backoff exponentially on-failure.
-		if !ok || readAllCloser == nil {
+		if !ok {
 			max_duration := (2 << uint(current_attempt)) - 1
 			duration := rand.Intn(max_duration + 1)
 			log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", key, duration)
