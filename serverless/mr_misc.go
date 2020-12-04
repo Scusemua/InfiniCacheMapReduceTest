@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	//"github.com/go-redis/redis/v7"
-	"crypto/md5"
-	"github.com/cespare/xxhash"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
 	"math/rand"
 	"os"
 	"sort"
+	"strconv"
 	//"strings"
 	"time"
 )
@@ -22,9 +21,6 @@ import (
 func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, maxGoRoutines int) {
 	Debug("Merge phase\n")
 	now := time.Now()
-
-	keyTest := "mr.srt-res-1"
-	fmt.Printf("[TEST] Merge Start -- Hash of key \"%s\": %v\n", keyTest, xxhash.Sum64([]byte(keyTest)))
 
 	// redis_client := redis.NewClient(&redis.Options{
 	// 	Addr:         "127.0.0.1:6378",
@@ -50,10 +46,6 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 		log.Printf("InfiniStore READ START. Key: \"%s\"\n", p)
 		start := time.Now()
-		//result, err2 := redis_client.Get(p).Result()
-		log.Printf("Hash of key \"%s\": %v\n", p, xxhash.Sum64([]byte(p)))
-		log.Printf("md5 of key \"%s\": %v\n", p, md5.Sum([]byte(p)))
-		//reader, ok := cli.Get(p)
 		reader, success := readExponentialBackoff(p, cli)
 
 		//if err2 != nil {
@@ -92,14 +84,10 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 				all_bytes := make([]byte, 0)
 				base_key := p + "-part"
 				for i := 0; i < res_int; i++ {
-					key := base_key + string(i)
+					key := base_key + strconv.Itoa(i)
 
 					log.Printf("storage READ CHUNK START. Key: \"%s\", Chunk #: %d.\n", key, i)
 					chunkStart := time.Now()
-					//res, err2 := redis_client.Get(key).Result()
-					log.Printf("Hash of key \"%s\": %v\n", key, xxhash.Sum64([]byte(key)))
-					log.Printf("md5 of key \"%s\": %v\n", key, md5.Sum([]byte(key)))
-					//reader, ok := cli.Get(key)
 					reader, success := readExponentialBackoff(key, cli)
 					if reader == nil || !success {
 						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while retrieving chunks.\n", key)
