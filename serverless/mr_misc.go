@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"crypto/md5"
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
@@ -98,11 +99,13 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					checkError(err2)
 
 					log.Printf("storage READ CHUNK END. Key: \"%s\", Chunk #: %d, Bytes read: %f, Time: %d ms\n", key, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
+					
+					log.Printf("md5 of chunk with key \"%s\": %x\n", key, md5.Sum(all_bytes))
 
 					all_bytes = append(all_bytes, []byte(res)...)
 				}
 
-				log.Printf("all_bytes = %v\n", all_bytes)
+				log.Printf("md5 of all bytes for key \"%s\": %x\n", p, md5.Sum(all_bytes))
 
 				log.Printf("Final size of all %d chunks for key \"%s\" combined together: %f MB.\n", res_int, p, float64(len(all_bytes))/float64(1e6))
 
