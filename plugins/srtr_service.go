@@ -196,7 +196,7 @@ func split(buf []byte, lim int) [][]byte {
 // user-defined reduce function (reduceF) for each key, and writes
 // the output to disk. Each reduce generates an output file named
 // using serverless.MergeName(jobName, reduceTask).
-func doReduce(
+func doReduceDriver(
 	jobName string,
 	storageIps []string,
 	reduceTaskNum int,
@@ -215,7 +215,7 @@ func doReduce(
 	// 	WriteTimeout: 30 * time.Second,
 	// 	MaxRetries:   3,
 	// })
-	log.Printf("Reducer creating storage client for IPs %v.\n", storageIps)
+	log.Printf("[REDUCER #%d] Creating storage client for IPs %v.\n", reduceTaskNum, storageIps)
 
 	// =====================================================================
 	// Storage Client Creation
@@ -223,7 +223,7 @@ func doReduce(
 	// In theory, you would create whatever clients that Pocket uses here...
 	// =====================================================================
 
-	log.Printf("Reducer getting storage client from client pool now...\n")
+	log.Printf("[REDUCER #%d] Getting storage client from client pool now...\n", reduceTaskNum)
 
 	// This creates a new InfiniStore EcClient object.
 	// cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
@@ -232,11 +232,11 @@ func doReduce(
 	// This effectively connects the InfiniStore EcClient to all of the proxies.
 	//cli.Dial(storageIps)
 
-	log.Println("Successfully created storage client")
+	log.Printf("[REDUCER #%d] Successfully created storage client\n", reduceTaskNum)
 
 	ioRecords := make([]IORecord, 0)
 
-	log.Printf("Retrieving input data for reduce task #%d\n", reduceTaskNum)
+	log.Printf("[REDUCER #%d] Retrieving input data.\n", reduceTaskNum)
 	inputs := make([]KeyValue, 0)
 
 	// We flip this to true the first time we receive at least one element from a mapper.
@@ -263,7 +263,7 @@ func doReduce(
 			// Basically, the Get function returns a tuple where the first element of the tuple is
 			// an object of type ReadAllCloser, and the second element of the tuple is a boolean
 			// which indicates whether or not the read operation went well.
-			log.Printf("Attempt %d/%d for read key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, dataKey)
+			log.Printf("[REDUCER #%d] Attempt %d/%d for read key \"%s\".\n", reduceTaskNum, current_attempt, serverless.MaxAttemptsDuringBackoff, dataKey)
 			readAllCloser, ok = cli.Get(dataKey)
 
 			// Check for failure, and backoff exponentially on-failure.
@@ -274,7 +274,7 @@ func doReduce(
 				log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
 				time.Sleep(time.Duration(duration) * time.Millisecond)
 			} else {
-				log.Printf("Successfully read data with key \"%s\" on attempt %d.\n", dataKey, current_attempt)
+				log.Printf("[REDUCER #%d] Successfully read data with key \"%s\" on attempt %d.\n", reduceTaskNum, dataKey, current_attempt)
 				success = true
 				break
 			}
@@ -294,7 +294,7 @@ func doReduce(
 			continue
 		}
 
-		log.Printf("Calling .ReadAll() on ReadAllCloser for key \"%s\" now...\n", dataKey)
+		log.Printf("[REDUCER #%d] Calling .ReadAll() on ReadAllCloser for key \"%s\" now...\n", reduceTaskNum, dataKey)
 		// To get the data from the read, we call ReadAll() on the ReadAllCloser object. This is still
 		// InfiniStore specific. That's just how it works. After reading, we call Close().
 		encoded_result, err := readAllCloser.ReadAll()
@@ -312,7 +312,7 @@ func doReduce(
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(encoded_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 
-		log.Printf("Decoding data for key \"%s\" now...\n", dataKey)
+		log.Printf("[REDUCER #%d] Decoding data for key \"%s\" now...\n", reduceTaskNum, dataKey)
 		byte_buffer_res := bytes.NewBuffer(encoded_result)
 		//byte_buffer_res.Write(encoded_result)
 		gobDecoder := gob.NewDecoder(byte_buffer_res)
@@ -320,8 +320,8 @@ func doReduce(
 
 		checkError(err)
 
-		log.Printf("Successfully decoded data for key \"%s\".\n", dataKey)
-		log.Printf("Received %d KeyValue structs from mapper #%d.\n", len(kvs), i)
+		log.Printf("[REDUCER #%d] Successfully decoded data for key \"%s\".\n", reduceTaskNum, dataKey)
+		log.Printf("[REDUCER #%d] Received %d KeyValue structs from mapper #%d.\n", reduceTaskNum, len(kvs), i)
 
 		// If this is the first time we're obtaining data, I preemptively expand the length of the array
 		// equal to the number of elements we just received * nMap (this, of course, assumes we'll be
@@ -331,13 +331,13 @@ func doReduce(
 		// such as 100GB, the final size of inputs could grow to be as large as 10-10.5mil elements. We may be
 		// able to approximate that here, thereby avoiding a significant number of unnecessary memory reallocations.
 		if len(kvs) > 0 && !receivedDataForTheFirstTime {
-			log.Printf("Allocating slice of capacity %d for inputs.\n", len(kvs)*nMap)
+			log.Printf("[REDUCER #%d] Allocating slice of capacity %d for inputs.\n", reduceTaskNum, len(kvs)*nMap)
 
 			capacity := len(kvs) * nMap
 
 			// Don't allocate anything too absurd. 100GB uses at most 10-11M entries.
 			if capacity > 11000000 {
-				log.Printf("Capping capacity to 11,000,000 for inputs slice.\n")
+				log.Printf("[REDUCER #%d] Capping capacity to 11,000,000 for inputs slice.\n", reduceTaskNum)
 				capacity = 11000000
 			}
 
@@ -349,10 +349,10 @@ func doReduce(
 
 		inputs = append(inputs, kvs...)
 
-		log.Printf("Finished adding decoded data to inputs list. Added %d entries.\n", len(kvs))
+		log.Printf("[REDUCER #%d] Finished adding decoded data to inputs list. Added %d entries.\n", reduceTaskNum, len(kvs))
 	}
 
-	log.Printf("Sorting the inputs. There are %d inputs to sort.\n", len(inputs))
+	log.Printf("[REDUCER #%d] Sorting the inputs. There are %d inputs to sort.\n", reduceTaskNum, len(inputs))
 
 	sort.Slice(inputs, func(i, j int) bool { return inputs[i].Key < inputs[j].Key })
 
@@ -361,19 +361,21 @@ func doReduce(
 	results := make([]KeyValue, 0, len(inputs))
 
 	doReduce := func(k string, v []string, i int, max int) {
-		log.Printf("Reduce %d/%d: key = \"%s\"...\n", i, max, k)
+		log.Printf("[REDUCER #%d] Reduce %d/%d: key = \"%s\"...\n", reduceTaskNum, i, max, k)
 		output := reduceF(k, v)
-		log.Printf("Reduce() for key \"%s\" SUCCESS.\n", k)
+		log.Printf("[REDUCER #%d] Reduce() for key \"%s\" SUCCESS.\n", reduceTaskNum, k)
 		new_kv := new(KeyValue)
 		new_kv.Key = k
 		new_kv.Value = output
-		//Debug("Output:\n%s\n", output)
-		//err = enc.Encode(&new_kv)
-		//checkError(err)
-		results = append(results, *new_kv)
+
+		// The value of i passed is actually one higher than it should be. This is because we basically process
+		// the key from the LAST iteration of the for-loop calling doReduce. On the first (0th) iteration of the
+		// for-loop, we don't call doReduce, we just set value of lastKey. Then on second iteration, we call
+		// doReduce for the FIRST (0th) input. 
+		results[i-1] = *new_kv // = append(results, *new_kv)
 	}
 
-	log.Printf("Performing Reduce() function now. There are %d inputs.\n", len(inputs))
+	log.Printf("[REDUCER #%d] Performing Reduce() function now. There are %d inputs.\n", reduceTaskNum, len(inputs))
 
 	var lastKey string
 	values := make([]string, 0, 10)
@@ -570,7 +572,7 @@ func (s srtrService) DoService(raw []byte) error {
 	// 	DialInfiniStoreClient(args.TaskNum, args.StorageIPs)
 	// }
 
-	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines, args.ChunkThreshold)
+	doReduceDriver(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines, args.ChunkThreshold)
 
 	return nil
 }
