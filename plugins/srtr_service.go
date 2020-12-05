@@ -351,7 +351,10 @@ func doReduce(
 		lastKey = kv.Key
 		values = append(values, kv.Value)
 	}
-	doReduce(lastKey, values)
+	// If inputs is length 0, then lastKey was never set to a value and thus we should just skip this...
+	if len(inputs) > 0 {
+		doReduce(lastKey, values)
+	}
 
 	log.Printf("Completed reduce operations. Encoding the results now...\n")
 
