@@ -163,6 +163,7 @@ func merge(left []string, right []string) (merged []string) {
 // with a list of that key's string value (merged across all inputs).
 // The return value should be a single output value for that key.
 func reduceF(key string, values []string) string {
+	log.Printf("REDUCE: Joining %d strings for key \"%s\" now...\n", len(values), key)
 	return strings.Join(values, "\n")
 }
 
