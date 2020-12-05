@@ -163,22 +163,7 @@ func merge(left []string, right []string) (merged []string) {
 // with a list of that key's string value (merged across all inputs).
 // The return value should be a single output value for that key.
 func reduceF(key string, values []string) string {
-	// Just sort and count the documents. Output as value.
-	//sort.Slice(values, func(i, j int) bool { return values[i] < values[j] })
-	// fmt.Printf("Values (in Reducer):\n")
-	// for i, s := range values[0] {
-	// 	fmt.Printf("%d: %s\n", i, s)
-	// }
-
-	// Perform merge sort.
-	//sorted := mergeSort(values[0])
 	return strings.Join(values, "\n")
-
-	//Debug("Merge-sort completed. Sorted values:\n")
-	//for _, s := range sorted {
-	//	Debug("%s\n", s)
-	//}
-	//return sorted //fmt.Sprintf("%s", strings.Join(sorted, ","))
 }
 
 func split(buf []byte, lim int) [][]byte {
@@ -325,9 +310,12 @@ func doReduce(
 		for _, kv := range kvs {
 			inputs = append(inputs, kv)
 		}
+
+		log.Printf("Finished adding decoded data to inputs list. Added %d entries.\n", len(kvs))
 	}
-	//fmt.Println("inputs =")
-	//fmt.Println(inputs)
+
+	log.Printf("Sorting the inputs. There are %d inputs to sort.\n", len(inputs))
+
 	sort.Slice(inputs, func(i, j int) bool { return inputs[i].Key < inputs[j].Key })
 
 	fileName := serverless.MergeName(jobName, reduceTaskNum)
@@ -335,7 +323,9 @@ func doReduce(
 	var results []KeyValue
 
 	doReduce := func(k string, v []string) {
+		log.Printf("Calling reduce() for key \"%s\"...\n", k)
 		output := reduceF(k, v)
+		log.Printf("Reduce() for key \"%s\" SUCCESS.\n", k)
 		new_kv := new(KeyValue)
 		new_kv.Key = k
 		new_kv.Value = output
@@ -344,6 +334,8 @@ func doReduce(
 		//checkError(err)
 		results = append(results, *new_kv)
 	}
+
+	log.Printf("Performing Reduce() function now.\n")
 
 	var lastKey string
 	values := make([]string, 0)
@@ -357,6 +349,8 @@ func doReduce(
 	}
 	doReduce(lastKey, values)
 
+	log.Printf("Completed reduce operations. Encoding the results now...\n")
+
 	var byte_buffer bytes.Buffer
 	gobEncoder := gob.NewEncoder(&byte_buffer)
 	err := gobEncoder.Encode(results)		
@@ -365,7 +359,7 @@ func doReduce(
 
 	//marshalled_result, err := json.Marshal(results)
 	//checkError(err)
-	log.Printf("Writing final result to Redis at key \"%s\". Size: %f MB.\n", fileName, float64(len(marshalled_result))/float64(1e6))
+	log.Printf("Results encoded successfully. Writing final result to Redis at key \"%s\". Size: %f MB.\n", fileName, float64(len(marshalled_result))/float64(1e6))
 
 	/* Chunk up the final results if necessary. */
 	if len(marshalled_result) > int(chunkThreshold) {
