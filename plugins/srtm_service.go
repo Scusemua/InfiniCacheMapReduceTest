@@ -23,6 +23,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"sync"
 	"strings"
 	"time"
 )
@@ -32,13 +33,16 @@ var clientCreated = false // Has this InfiniStore client been created yet?
 var clientDialed = false  // Have we called the client's Dial function yet?
 var poolCreated = false
 
+var poolLock = &sync.Mutex{}
 var clientPool *serverless.Pool
 
 func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []string, clientPoolCapacity int) {
 	clientPool = serverless.InitPool(&serverless.Pool{
 		New: func() interface{} {
 			cli := client.NewClient(dataShard, parityShard, ecMaxGoroutine)
+			log.Printf("Client created. Dialing addresses now: %v\n", addrArr)
 			cli.Dial(addrArr)
+			log.Printf("Dialed successfully.\n")
 			return cli
 		},
 		Finalize: func(c interface{}) {
@@ -273,12 +277,14 @@ func (s srtmService) DoService(raw []byte) error {
 
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
 
+	poolLock.Lock() 
 	if !poolCreated {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
 		poolCreated = true
 	}
+	poolLock.Unlock()
 
 	// if !clientCreated {
 	// 	CreateInfiniStoreClient(args.TaskNum, args.DataShards, args.ParityShards, args.MaxGoroutines)

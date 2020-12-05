@@ -36,6 +36,7 @@ func (p *Pool) Get() interface{} {
 	for {
 		select {
 		case i := <-p.pooled:
+			log.Printf("Retrieving available Client from ClientPool now. Allocated: %d, Capacity: %d\n", p.allocated, p.capacity)
 			return i
 		default:
 			if p.allocated < p.capacity {
