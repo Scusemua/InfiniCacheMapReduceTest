@@ -326,8 +326,8 @@ func doReduce(
 
 	var results []KeyValue
 
-	doReduce := func(k string, v []string) {
-		log.Printf("Calling reduce() for key \"%s\"...\n", k)
+	doReduce := func(k string, v []string, i int, max int) {
+		log.Printf("Reduce %d/%d: key = \"%s\"...\n", i, max, k)
 		output := reduceF(k, v)
 		log.Printf("Reduce() for key \"%s\" SUCCESS.\n", k)
 		new_kv := new(KeyValue)
@@ -343,9 +343,10 @@ func doReduce(
 
 	var lastKey string
 	values := make([]string, 0, 10)
+	num_inputs := len(inputs)
 	for i, kv := range inputs {
 		if kv.Key != lastKey && i > 0 {
-			doReduce(lastKey, values)
+			doReduce(lastKey, values, i, num_inputs)
 			values = values[:0]
 		}
 		lastKey = kv.Key
@@ -353,6 +354,7 @@ func doReduce(
 	}
 	// If inputs is length 0, then lastKey was never set to a value and thus we should just skip this...
 	if len(inputs) > 0 {
+		log.Printf("Calling doReduce() for the last time. lastKey = \"%s\".\n", lastKey)
 		doReduce(lastKey, values)
 	}
 
