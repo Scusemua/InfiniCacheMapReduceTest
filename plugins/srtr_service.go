@@ -210,7 +210,7 @@ func doReduce(
 	// 	WriteTimeout: 30 * time.Second,
 	// 	MaxRetries:   3,
 	// })
-	log.Printf("Creating storage client for IPs %v.\n", storageIps)
+	log.Printf("Reducer creating storage client for IPs %v.\n", storageIps)
 
 	// =====================================================================
 	// Storage Client Creation
@@ -218,14 +218,14 @@ func doReduce(
 	// In theory, you would create whatever clients that Pocket uses here...
 	// =====================================================================
 
-	log.Printf("Getting storage client from client pool now...\n")
+	log.Printf("Reducer getting storage client from client pool now...\n")
 
 	// This creates a new InfiniStore EcClient object.
 	// cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
 	cli := clientPool.Get().(*client.Client)
 
 	// This effectively connects the InfiniStore EcClient to all of the proxies.
-	cli.Dial(storageIps)
+	//cli.Dial(storageIps)
 
 	log.Println("Successfully created storage client")
 

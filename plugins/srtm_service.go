@@ -162,10 +162,10 @@ func doMap(
 	//cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
 	//cli.Dial(storageIPs)
 
-	log.Printf("Getting storage client from client pool now...\n")
+	log.Printf("Mapper getting storage client from client pool now...\n")
 	cli := clientPool.Get().(*client.Client)
 
-	log.Println("Successfully created storage client.")
+	log.Println("Mapper successfully created storage client.")
 
 	Debug("Reading data for S3 key \"%s\" from downloaded file now...\n", S3Key)
 	b, err = ioutil.ReadFile(S3Key)
