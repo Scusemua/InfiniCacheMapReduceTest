@@ -358,7 +358,7 @@ func doReduceDriver(
 
 	fileName := serverless.MergeName(jobName, reduceTaskNum)
 
-	results := make([]KeyValue, 0, len(inputs))
+	results := make([]KeyValue, len(inputs), len(inputs))
 
 	doReduce := func(k string, v []string, i int, max int) {
 		log.Printf("[REDUCER #%d] Reduce %d/%d: key = \"%s\"...\n", reduceTaskNum, i, max, k)
