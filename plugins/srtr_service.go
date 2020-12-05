@@ -339,7 +339,7 @@ func doReduce(
 		results = append(results, *new_kv)
 	}
 
-	log.Printf("Performing Reduce() function now.\n")
+	log.Printf("Performing Reduce() function now. There are %d inputs.\n", len(inputs))
 
 	var lastKey string
 	values := make([]string, 0, 10)
