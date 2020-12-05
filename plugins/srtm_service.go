@@ -28,9 +28,9 @@ import (
 )
 
 //var cli *client.Client		// The InfiniStore client.
-var clientCreated = false 		// Has this InfiniStore client been created yet?
-var clientDialed = false 		// Have we called the client's Dial function yet?
-var poolCreated = false 
+var clientCreated = false // Has this InfiniStore client been created yet?
+var clientDialed = false  // Have we called the client's Dial function yet?
+var poolCreated = false
 
 var clientPool *serverless.Pool
 
@@ -51,7 +51,7 @@ func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []stri
 // 	log.Printf("[Mapper #%d] Creating InfiniStore client now...\n", taskNum)
 // 	cli = client.NewClient(dataShards, parityShards, maxGoRoutines)
 
-// 	clientCreated = true 
+// 	clientCreated = true
 // }
 
 // func DialInfiniStoreClient(taskNum int, storageIps []string) {
@@ -185,7 +185,7 @@ func doMap(
 	for k, v := range results {
 		var byte_buffer bytes.Buffer
 		gobEncoder := gob.NewEncoder(&byte_buffer)
-		err := gobEncoder.Encode(v)		
+		err := gobEncoder.Encode(v)
 		checkError(err)
 		marshalled_result := byte_buffer.Bytes() // should be of type []byte now.
 		//marshalled_result, err := json.Marshal(v)
@@ -203,8 +203,8 @@ func doMap(
 			_, ok := cli.EcSet(k, marshalled_result)
 
 			if !ok {
-				max_duration := (2 << uint(current_attempt + 4)) - 1
-				if max_duration > serverless.MaxBackoffSleepWrites { 
+				max_duration := (2 << uint(current_attempt+4)) - 1
+				if max_duration > serverless.MaxBackoffSleepWrites {
 					max_duration = serverless.MaxBackoffSleepWrites
 				}
 				duration := rand.Intn(max_duration + 1)
@@ -256,7 +256,7 @@ func (s srtmService) ClosePool() error {
 		clientPool.Close()
 	}
 
-	return nil 
+	return nil
 }
 
 // DON'T MODIFY THIS FUNCTION
@@ -276,7 +276,7 @@ func (s srtmService) DoService(raw []byte) error {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
-		poolCreated = true 
+		poolCreated = true
 	}
 
 	// if !clientCreated {

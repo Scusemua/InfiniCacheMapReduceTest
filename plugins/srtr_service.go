@@ -231,6 +231,11 @@ func doReduce(
 
 	log.Printf("Retrieving input data for reduce task #%d\n", reduceTaskNum)
 	inputs := make([]KeyValue, 0)
+
+	// We flip this to true the first time we receive at least one element from a mapper.
+	// This is used when approximating the final size of the inputs slice.
+	receivedDataForTheFirstTime := false
+
 	for i := 0; i < nMap; i++ {
 		// nMap is the number of Map tasks (i.e., the number of S3 keys or # of initial data partitions).
 		// So the variable i here refers to the associated Map task/initial data partition, or where
@@ -309,11 +314,33 @@ func doReduce(
 		checkError(err)
 
 		log.Printf("Successfully decoded data for key \"%s\".\n", dataKey)
+		log.Printf("Received %d KeyValue structs from mapper #%d.\n", len(kvs), i)
 
-		//json.Unmarshal([]byte(encoded_result), &kvs)
-		for _, kv := range kvs {
-			inputs = append(inputs, kv)
+		// If this is the first time we're obtaining data, I preemptively expand the length of the array
+		// equal to the number of elements we just received * nMap (this, of course, assumes we'll be
+		// receiving approximately the same amount of data from all mappers, which or may not be true.)
+		//
+		// The goal here is to prevent a significant number of memory-reallocations. For larger problem sizes,
+		// such as 100GB, the final size of inputs could grow to be as large as 10-10.5mil elements. We may be
+		// able to approximate that here, thereby avoiding a significant number of unnecessary memory reallocations.
+		if len(kvs) > 0 && !receivedDataForTheFirstTime {
+			log.Printf("Allocating slice of capacity %d for inputs.\n", len(kvs)*nMap)
+
+			capacity := len(kvs) * nMap
+
+			// Don't allocate anything too absurd. 100GB uses at most 10-11M entries.
+			if capacity > 11000000 {
+				log.Printf("Capping capacity to 11,000,000 for inputs slice.\n")
+				capacity = 11000000
+			}
+
+			inputs := make([]KeyValue, 0, capacity)
+
+			// Now that we've received data for the first time, flip this to true.
+			receivedDataForTheFirstTime = true
 		}
+
+		inputs = append(inputs, kvs...)
 
 		log.Printf("Finished adding decoded data to inputs list. Added %d entries.\n", len(kvs))
 	}
@@ -324,7 +351,7 @@ func doReduce(
 
 	fileName := serverless.MergeName(jobName, reduceTaskNum)
 
-	var results []KeyValue
+	results := make([]KeyValue, 0, len(inputs))
 
 	doReduce := func(k string, v []string, i int, max int) {
 		log.Printf("Reduce %d/%d: key = \"%s\"...\n", i, max, k)
@@ -362,7 +389,7 @@ func doReduce(
 
 	var byte_buffer bytes.Buffer
 	gobEncoder := gob.NewEncoder(&byte_buffer)
-	err := gobEncoder.Encode(results)		
+	err := gobEncoder.Encode(results)
 	checkError(err)
 	marshalled_result := byte_buffer.Bytes() // should be of type []byte now.
 
@@ -420,10 +447,10 @@ func doReduce(
 		}
 		var byte_buffer bytes.Buffer
 		gobEncoder := gob.NewEncoder(&byte_buffer)
-		err3 := gobEncoder.Encode(num_chunks)		
+		err3 := gobEncoder.Encode(num_chunks)
 		checkError(err3)
-		numberOfChunksSerialized := byte_buffer.Bytes() // should be of type []byte now.		
-		
+		numberOfChunksSerialized := byte_buffer.Bytes() // should be of type []byte now.
+
 		//numberOfChunksSerialized, err3 := json.Marshal(num_chunks)
 		checkError(err3)
 
