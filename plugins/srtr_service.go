@@ -355,7 +355,7 @@ func doReduce(
 	// If inputs is length 0, then lastKey was never set to a value and thus we should just skip this...
 	if len(inputs) > 0 {
 		log.Printf("Calling doReduce() for the last time. lastKey = \"%s\".\n", lastKey)
-		doReduce(lastKey, values, len(inputs) - 1), num_inputs
+		doReduce(lastKey, values, len(inputs) - 1, num_inputs)
 	}
 
 	log.Printf("Completed reduce operations. Encoding the results now...\n")
