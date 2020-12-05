@@ -334,7 +334,7 @@ func doReduce(
 				capacity = 11000000
 			}
 
-			inputs := make([]KeyValue, 0, capacity)
+			inputs = make([]KeyValue, 0, capacity)
 
 			// Now that we've received data for the first time, flip this to true.
 			receivedDataForTheFirstTime = true
