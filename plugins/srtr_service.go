@@ -311,12 +311,15 @@ func doReduce(
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(encoded_result), Start: start.UnixNano(), End: end.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 
+		log.Printf("Decoding data for key \"%s\" now...\n", dataKey)
 		byte_buffer_res := bytes.NewBuffer(encoded_result)
 		//byte_buffer_res.Write(encoded_result)
 		gobDecoder := gob.NewDecoder(byte_buffer_res)
 		err = gobDecoder.Decode(&kvs)
 
 		checkError(err)
+
+		log.Printf("Successfully decoded data for key \"%s\".\n", dataKey)
 
 		//json.Unmarshal([]byte(encoded_result), &kvs)
 		for _, kv := range kvs {
