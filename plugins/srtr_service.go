@@ -346,7 +346,7 @@ func doReduce(
 	num_inputs := len(inputs)
 	for i, kv := range inputs {
 		if kv.Key != lastKey && i > 0 {
-			doReduce(lastKey, values, i+1, num_inputs)
+			doReduce(lastKey, values, i, num_inputs)
 			values = values[:0]
 		}
 		lastKey = kv.Key
