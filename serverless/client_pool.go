@@ -1,6 +1,7 @@
 package serverless 
 
 import "sync"
+import "log"
 
 var (
 	PoolForStrictConcurrency = PoolPerformanceOption(1)
@@ -42,9 +43,11 @@ func (p *Pool) Get() interface{} {
 				if p.New == nil {
 					return nil
 				} else {
+					log.Printf("Creating new Client in ClientPool now. Allocated: %d, Capacity: %d\n", p.allocated, p.capacity)
 					return p.New()
 				}
 			}
+			log.Printf("Waiting for Client to become available in ClientPool now. Allocated: %d, Capacity: %d\n", p.allocated, p.capacity)
 			p.cond.Wait()
 		}
 	}
@@ -54,6 +57,7 @@ func (p *Pool) Put(i interface{}) {
 	defer p.mu.Unlock()
 	select {
 	case p.pooled <- i:
+		log.Printf("Putting client back into ClientPool now. Allocated: %d, Capacity: %d\n", p.allocated, p.capacity)
 		p.cond.Signal()
 	default:
 		// Abandon. This is unlikely, but just in case.
@@ -65,6 +69,7 @@ func (p *Pool) Put(i interface{}) {
 func (p *Pool) Close() {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	log.Printf("Closing ClientPool now...\n")
 	finalize := p.Finalize
 	if finalize == nil {
 		finalize = p.defaultFinalizer

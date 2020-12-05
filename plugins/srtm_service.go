@@ -162,6 +162,7 @@ func doMap(
 	//cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
 	//cli.Dial(storageIPs)
 
+	log.Printf("Getting storage client from client pool now...\n")
 	cli := clientPool.Get().(*client.Client)
 
 	log.Println("Successfully created storage client.")
