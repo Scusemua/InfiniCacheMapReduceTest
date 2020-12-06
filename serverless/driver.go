@@ -413,8 +413,11 @@ func (drv *Driver) Run(
 			drv.schedule(phase, serviceName, registerChan, dataShards, parityShards, maxGoRoutines, clientPoolCapacity, pattern, chunkThreshold)
 		},
 		func() { // func finish()
+			log.Printf("Driver executing finish() function now. First, killing workers.\n")
 			drv.killWorkers()
+			log.Printf("Workers killed. Next, stopping RPC server.\n")
 			drv.stopRPCServer()
+			log.Printf("RPC server stopped.\n")
 		})
 }
 

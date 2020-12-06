@@ -176,6 +176,7 @@ loop:
 	for {
 		select {
 		case <-wk.shutdown:
+			log.Println("Worker received shutdown RPC.")
 			break loop
 		default:
 		}

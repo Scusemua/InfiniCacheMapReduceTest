@@ -153,8 +153,10 @@ func (drv *Driver) schedule(
 			// assign
 			select {
 			case worker = <-registerChan:
+				log.Printf("Registered worker %s. Invoking service now.\n", worker)
 				go invokeService(worker, arg)
 			case worker = <-readyChan:
+				log.Printf("Received 'ready' from worker %s. Invoking service now.\n", worker)
 				go invokeService(worker, arg)
 			}
 		}
