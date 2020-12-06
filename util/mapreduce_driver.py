@@ -1,11 +1,12 @@
 # I recommend copying-and-pasting these imports into your Python terminal session.
 import boto3   
-import time 
+from datetime import datetime
+import mapreduce_driver as mrd
 import paramiko
 import random
-from datetime import datetime
 import redis 
-import mapreduce_driver as mrd
+import subprocess
+import time 
 
 """
 This file contains scripts that I use to orchestrate workloads on remote clusters/virtual machines.
@@ -510,10 +511,14 @@ def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
         ip = ips[i]
         lambda_prefix = "CacheNode%d-" % i 
         print("Assigning lambda prefix \"%s\" to proxy at ip %s." % (lambda_prefix, ip))
-        command = "cd {}/evaluation; export PATH=$PATH:/usr/local/go/bin;go run $PWD/../proxy/proxy.go -debug=true -prefix={} -lambda-prefix={} -disable-color >./log 2>&1 &".format(INFINISTORE_DIRECTORY, prefix, lambda_prefix)
+        #command = "cd {}/evaluation; export PATH=$PATH:/usr/local/go/bin;go run $PWD/../proxy/proxy.go -debug=true -prefix={} -lambda-prefix={} -disable-color >./log 2>&1 &".format(INFINISTORE_DIRECTORY, prefix, lambda_prefix)
         #command = "nohup go run {}/proxy/proxy.go -debug=true -prefix={} -lambda-prefix={} -disable-color </dev/null >{}/evaluation/log 2>&1 &".format(INFINISTORE_DIRECTORY, prefix, lambda_prefix, INFINISTORE_DIRECTORY)
-        execute_command(command, 1, get_pty = True, ips = [ip], key_path = key_path)
+        #execute_command(command, 1, get_pty = True, ips = [ip], key_path = key_path)
 
+        #command = "launch_proxy_driver.sh -i \"%s\" -l \"%s\" -e \"%s\" -p \"%s\" -u \"%s\"" % (INFINISTORE_DIRECTORY, lambda_prefix, prefix, ip, "ubuntu")
+        command = "launch_proxy_driver.sh \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"" % (INFINISTORE_DIRECTORY, lambda_prefix, prefix, key_path, ip, "ubuntu")
+        print("About to execute command:\n %s" % command)
+        subprocess.run(command, shell=True)
     return prefix
 
 def export_cloudwatch_logs(ips, prefix, start, end, key_path = KEYFILE_PATH):

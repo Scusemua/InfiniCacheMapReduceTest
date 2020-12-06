@@ -21,7 +21,7 @@ KEY_FILE=/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt #
 PATTERN="[a-zA-Z]+" # Regular expression pattern for grep.
 NUM_WORKERS=1
 
-while getopts "h?vf:" opt; do
+while getopts "h?pfn:" opt; do
     case "$opt" in
     h|\?)
         echo "-p <pattern> for regex pattern, -f <key_file> for s3 key file (input data stored in AWS S3)"
