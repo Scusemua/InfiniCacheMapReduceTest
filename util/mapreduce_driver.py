@@ -196,6 +196,9 @@ def execute_command(
         else:
             print("ssh_stdout.channel.eof_received is still False... skipping...")
         counter += 1
+    for IP, ssh_client in ssh_clients:
+        print("Closing SSH client connected to IP %s" % IP)
+        ssh_client.close()
 
 def launch_redis_servers(
     connect_and_ping = True,
@@ -507,7 +510,8 @@ def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
         ip = ips[i]
         lambda_prefix = "CacheNode%d-" % i 
         print("Assigning lambda prefix \"%s\" to proxy at ip %s." % (lambda_prefix, ip))
-        command = "cd {}/evaluation; export PATH=$PATH:/usr/local/go/bin; go run $PWD/../proxy/proxy.go -debug=true -prefix={} -lambda-prefix={} -disable-color >./log 2>&1".format(INFINISTORE_DIRECTORY, prefix, lambda_prefix)
+        command = "cd {}/evaluation; export PATH=$PATH:/usr/local/go/bin;go run $PWD/../proxy/proxy.go -debug=true -prefix={} -lambda-prefix={} -disable-color >./log 2>&1 &".format(INFINISTORE_DIRECTORY, prefix, lambda_prefix)
+        #command = "nohup go run {}/proxy/proxy.go -debug=true -prefix={} -lambda-prefix={} -disable-color </dev/null >{}/evaluation/log 2>&1 &".format(INFINISTORE_DIRECTORY, prefix, lambda_prefix, INFINISTORE_DIRECTORY)
         execute_command(command, 1, get_pty = True, ips = [ip], key_path = key_path)
 
     return prefix
@@ -637,7 +641,7 @@ def launch_workers(
     """
 
     #post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234 {}".format(client_ip, workers_per_vm)
-    post_command = "cd {}/main/;./start-workers.sh {}:1234 {}".format(MAPREDUCE_DIRECTORY, client_ip, workers_per_vm)
+    post_command = "cd {}/main/;export PATH=$PATH:/usr/local/go/bin;./start-workers.sh {}:1234 {}".format(MAPREDUCE_DIRECTORY, client_ip, workers_per_vm)
 
     command = pre_command + post_command
 
@@ -848,8 +852,8 @@ if __name__ == "__main__":
     # In most code editors, you can highlight the whole block and press SHIFT+TAB to unindent all at once.
     public_ips, private_ips = mrd.get_ips() # Get the public & private IPv4 addresses of all running VMs.
     all_ips = public_ips + private_ips     # Creates a list of all the IPv4 addresses.
-    workers_per_vm = 3                     # Number of MapReduce workers per VM.
-    NUM_CORES_PER_WORKER = 5               # Number of cores that each worker gets.
+    workers_per_vm = 5                     # Number of MapReduce workers per VM.
+    NUM_CORES_PER_WORKER = 3               # Number of cores that each worker gets.
 
     # Generally my InfiniStore client VM is the first or last VM in the list public_ips. 
     # So depending on which it is, I then copy and paste this block or the next block to 
@@ -935,6 +939,7 @@ if __name__ == "__main__":
 
     # This function IS used. This is a pre-formatted function call to start the workers based on all the code we executed above.
     mrd.launch_workers(client_ip = client_ip_private, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
+    # mrd.launch_workers(client_ip = client_ip_private, worker_ips = [client_ip], workers_per_vm = workers_per_vm, count_limit = 1)
 
     # Make sure to print this at the end so you know when the job stopped (in the correct format).
     # This gets passed to export_ubuntu.sh if you export the AWS Lambda CloudWatch logs for this job.
@@ -951,13 +956,15 @@ if __name__ == "__main__":
 # Temp
 # go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 15 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.84.102:6378 -chunkThreshold 512000000
 
-# Six-node Commands
+# Six-node Commands ** REMEMBER TO CHANGE -nReduce PARAMETER **
+# 1 MB
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 15 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.74.253:6378
 # 100 MB
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.109.88:6378 -storageIps 10.0.84.102:6378 -storageIps 10.0.94.51:6378 -storageIps 10.0.88.95:6378 -storageIps 10.0.71.255:6378 -storageIps 10.0.81.222:6378 -storageIps 10.0.78.25:6378
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 15 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.74.253:6378
 # 10 GB
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.109.88:6378 -storageIps 10.0.84.102:6378 -storageIps 10.0.94.51:6378 -storageIps 10.0.88.95:6378 -storageIps 10.0.71.255:6378 -storageIps 10.0.81.222:6378 -storageIps 10.0.78.25:6378
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 15 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.74.253:6378
 # 100 GB
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.109.88:6378 -storageIps 10.0.84.102:6378 -storageIps 10.0.94.51:6378 -storageIps 10.0.88.95:6378 -storageIps 10.0.71.255:6378 -storageIps 10.0.81.222:6378 -storageIps 10.0.78.25:6378
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 15 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.74.253:6378
 
 # Change the 'jobName' parameter depending on what job you want to run. For TeraSort, it is 'srt'.
 # For grep, it is 'grep'. For Word Count, it is 'wc'. Basically, it is the prefix of the two service
@@ -976,5 +983,5 @@ if __name__ == "__main__":
 # These are two hard-coded functions to start InfiniStore proxies. The first uses CacheNode0
 # while the second uses CacheNode1. This is just for debugging, as the prefix values are old/outdated.
 
-#go run $PWD/../proxy/proxy.go -debug=true -prefix=202011291702 -lambda-prefix=CacheNode0- -disable-color >./log 2>&1
-#go run $PWD/../proxy/proxy.go -debug=true -prefix=202011291702 -lambda-prefix=CacheNode1- -disable-color >./log 2>&1
+#go run $PWD/../proxy/proxy.go -debug=true -prefix=202011291702/ -lambda-prefix=CacheNode0- -disable-color >./log 2>&1
+#go run $PWD/../proxy/proxy.go -debug=true -prefix=202011291702/ -lambda-prefix=CacheNode1- -disable-color >./log 2>&1
