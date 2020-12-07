@@ -461,6 +461,7 @@ def build_mapreduce(ips, count_limit = 1, key_path = KEYFILE_PATH):
     if parallel_ssh_enabled:
         client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
         client.run_command(command)
+        del client
     else:
         execute_command(command, count_limit, get_pty = True, ips = ips, key_path = key_path)   
 
@@ -487,6 +488,7 @@ def pull_from_github_mapreduce(ips, reset_first = False, key_path = KEYFILE_PATH
 
         if parallel_ssh_enabled:
             client.run_command(command_reset)
+            del client
         else:
             execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
     
@@ -520,6 +522,7 @@ def pull_from_github_infinistore(ips, reset_first = False, key_path = KEYFILE_PA
 
         if parallel_ssh_enabled:
             client.run_command(command_reset)
+            del client
         else:
             execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
     
@@ -598,6 +601,7 @@ def kill_go_processes(
     if parallel_ssh_enabled:
         client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
         client.run_command(kill_command)
+        del client
     else:
         execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
 
@@ -613,6 +617,7 @@ def kill_proxies(ips, key_path = KEYFILE_PATH):
     if parallel_ssh_enabled:
         client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
         client.run_command(kill_command)
+        del client
     else:
         execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
 
@@ -657,6 +662,7 @@ def clean_workers(
     if parallel_ssh_enabled:
         client = ParallelSSHClient(worker_ips, pkey = key_path, user = "ubuntu")
         client.run_command(command)
+        del client
     else:
         execute_command(
             command = command,
@@ -702,6 +708,7 @@ def launch_workers(
         print("Full command: {}".format(post_command))
         client = ParallelSSHClient(worker_ips, pkey = key_path, user = "ubuntu")
         client.run_command(post_command)
+        del client
     else:
         for ip in worker_ips:
             command = "launch_workers.sh \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"" % (MAPREDUCE_DIRECTORY, client_ip, workers_per_vm, key_path, ip, "ubuntu")
@@ -852,15 +859,15 @@ def format_parameter_storage_list(ips : list, port : int, parameter_name : str) 
         parameter_name (str): The name of the parameter for the client. Currently it is 'storageIps'.
     
     For example, let's say you have InfiniStore proxies running on two VMs. The first VM has private IPv4
-    10.0.109.88, and the second VM has private IPv4 10.0.255.255. The ips argument would be:
-    ["10.0.109.88", "10.0.255.255"]. port would be 6378. parameter_name would be 'storageIps'. This 
+    10.0.116.159, and the second VM has private IPv4 10.0.255.255. The ips argument would be:
+    ["10.0.116.159", "10.0.255.255"]. port would be 6378. parameter_name would be 'storageIps'. This 
     function would return the following:
 
-    "-storageIps 10.0.109.88:6378 -storageIps 10.0.255.255:6378"
+    "-storageIps 10.0.116.159:6378 -storageIps 10.0.255.255:6378"
 
     You could then copy and paste this to the end of your command to start MapReduce client
 
-    go run client.go -hostname 10.0.109.88:1234 ... ... ... -storageIps 10.0.109.88:6378 -storageIps 10.0.255.255:6378
+    go run client.go -hostname 10.0.116.159:1234 ... ... ... -storageIps 10.0.116.159:6378 -storageIps 10.0.255.255:6378
     """
     param = ""
     for ip in ips:
@@ -1012,24 +1019,24 @@ if __name__ == "__main__":
 # private IPv4 for the 'driverHostname' parameter, along with port 1234.
 
 # Instance1 and Instance2, this is for Ben's debugging.
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.127.209:6378 -storageIps 10.0.119.99:6378 -storageIps 10.0.121.183:6378 -storageIps 10.0.100.125:6378 -storageIps 10.0.100.240:6378 -storageIps 10.0.113.14:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.116.159:6378 -storageIps 10.0.81.136:6378 -storageIps 10.0.74.216:6378 -storageIps 10.0.70.136:6378 -storageIps 10.0.66.154:6378 -storageIps 10.0.72.93:6378 -storageIps 10.0.91.143:6378
 
 # Temp
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 15 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.109.88:6378 -storageIps 10.0.84.102:6378 -chunkThreshold 512000000
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 15 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.116.159:6378 -storageIps 10.0.84.102:6378 -chunkThreshold 512000000
 
 # Six-node Commands ** REMEMBER TO CHANGE -nReduce PARAMETER **
 # 1 MB
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.127.209:6378 -storageIps 10.0.119.99:6378 -storageIps 10.0.121.183:6378 -storageIps 10.0.100.125:6378 -storageIps 10.0.100.240:6378 -storageIps 10.0.113.14:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.116.159:6378 -storageIps 10.0.81.136:6378 -storageIps 10.0.74.216:6378 -storageIps 10.0.70.136:6378 -storageIps 10.0.66.154:6378 -storageIps 10.0.72.93:6378 -storageIps 10.0.91.143:6378
 # 100 MB
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.127.209:6378 -storageIps 10.0.119.99:6378 -storageIps 10.0.121.183:6378 -storageIps 10.0.100.125:6378 -storageIps 10.0.100.240:6378 -storageIps 10.0.113.14:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.116.159:6378 -storageIps 10.0.81.136:6378 -storageIps 10.0.74.216:6378 -storageIps 10.0.70.136:6378 -storageIps 10.0.66.154:6378 -storageIps 10.0.72.93:6378 -storageIps 10.0.91.143:6378
 # 10 GB
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.127.209:6378 -storageIps 10.0.119.99:6378 -storageIps 10.0.121.183:6378 -storageIps 10.0.100.125:6378 -storageIps 10.0.100.240:6378 -storageIps 10.0.113.14:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.116.159:6378 -storageIps 10.0.81.136:6378 -storageIps 10.0.74.216:6378 -storageIps 10.0.70.136:6378 -storageIps 10.0.66.154:6378 -storageIps 10.0.72.93:6378 -storageIps 10.0.91.143:6378
 # 20 GB
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.127.209:6378 -storageIps 10.0.119.99:6378 -storageIps 10.0.121.183:6378 -storageIps 10.0.100.125:6378 -storageIps 10.0.100.240:6378 -storageIps 10.0.113.14:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.116.159:6378 -storageIps 10.0.81.136:6378 -storageIps 10.0.74.216:6378 -storageIps 10.0.70.136:6378 -storageIps 10.0.66.154:6378 -storageIps 10.0.72.93:6378 -storageIps 10.0.91.143:6378
 # 50 GB
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/50GB_50Partitions_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.127.209:6378 -storageIps 10.0.119.99:6378 -storageIps 10.0.121.183:6378 -storageIps 10.0.100.125:6378 -storageIps 10.0.100.240:6378 -storageIps 10.0.113.14:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/50GB_50Partitions_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.116.159:6378 -storageIps 10.0.81.136:6378 -storageIps 10.0.74.216:6378 -storageIps 10.0.70.136:6378 -storageIps 10.0.66.154:6378 -storageIps 10.0.72.93:6378 -storageIps 10.0.91.143:6378
 # 100 GB
-# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.127.209:6378 -storageIps 10.0.119.99:6378 -storageIps 10.0.121.183:6378 -storageIps 10.0.100.125:6378 -storageIps 10.0.100.240:6378 -storageIps 10.0.113.14:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.116.159:6378 -storageIps 10.0.81.136:6378 -storageIps 10.0.74.216:6378 -storageIps 10.0.70.136:6378 -storageIps 10.0.66.154:6378 -storageIps 10.0.72.93:6378 -storageIps 10.0.91.143:6378
 
 # Change the 'jobName' parameter depending on what job you want to run. For TeraSort, it is 'srt'.
 # For grep, it is 'grep'. For Word Count, it is 'wc'. Basically, it is the prefix of the two service
