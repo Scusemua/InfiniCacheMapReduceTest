@@ -3,7 +3,11 @@ import boto3
 from datetime import datetime
 import mapreduce_driver as mrd
 import paramiko
-from pssh.clients import ParallelSSHClient
+try:
+    from pssh.clients import ParallelSSHClient
+    parallel_ssh_enabled = True 
+except:
+    parallel_ssh_enabled = False 
 import random
 import redis 
 import subprocess
@@ -309,15 +313,16 @@ def launch_client(
 
     # TODO: THIS DOES NOT CURRENTLY WORK. COMMAND IS NOT FORMATTED PROPERLY.
 
-    post_command = "cd /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main;./start-client.sh {} {}".format(MAPREDUCE_DIRECTORY, nReducers, s3_key_file)
+    #post_command = "cd /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main;./start-client.sh {} {}".format(MAPREDUCE_DIRECTORY, nReducers, s3_key_file)
 
-    command = pre_command + post_command
+    # command = pre_command + post_command
 
-    execute_command(
-        command = command,
-        ips = [client_ip],
-        key_path = key_path
-    )    
+    # execute_command(
+    #     command = command,
+    #     ips = [client_ip],
+    #     key_path = key_path
+    # )    
+    raise NotImplementedError("Not implemented.")
 
 def wondershape(
     ips = None,
@@ -447,10 +452,13 @@ def build_mapreduce(ips, count_limit = 1, key_path = KEYFILE_PATH):
         key_path (str): Path to your SSH key.
     """
     print("Executing /plugins/build.sh for the MapReduce framework on %d VMs." % len(ips))
-    client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
     command = "cd %s/plugins; export PATH=$PATH:/usr/local/go/bin; ./build.sh" % MAPREDUCE_DIRECTORY
-    client.run_command(command)
-    #execute_command(command, count_limit, get_pty = True, ips = ips, key_path = key_path)   
+
+    if parallel_ssh_enabled:
+        client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
+        client.run_command(command)
+    else:
+        execute_command(command, count_limit, get_pty = True, ips = ips, key_path = key_path)   
 
 def pull_from_github_mapreduce(ips, reset_first = False, key_path = KEYFILE_PATH):
     """
@@ -466,17 +474,24 @@ def pull_from_github_mapreduce(ips, reset_first = False, key_path = KEYFILE_PATH
 
         key_path (str): Path to your SSH key.
     """
-    client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
+    if parallel_ssh_enabled:
+        client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
+    
     if reset_first:
         print("Resetting the MapReduce repo first, before pulling.")
         command_reset = "cd %s; git reset --hard %s" % (MAPREDUCE_DIRECTORY, MAPREDUCE_BRANCH)
-        client.run_command(command_reset)
-        #execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
+
+        if parallel_ssh_enabled:
+            client.run_command(command_reset)
+        else:
+            execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
     
     print("Now pulling latest code from GitHub for MapReduce repo.")
     command = "cd %s; git pull" % MAPREDUCE_DIRECTORY
-    client.run_command(command)
-    #execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)    
+    if parallel_ssh_enabled:
+        client.run_command(command)
+    else:
+        execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)    
 
 def pull_from_github_infinistore(ips, reset_first = False, key_path = KEYFILE_PATH):
     """
@@ -492,20 +507,25 @@ def pull_from_github_infinistore(ips, reset_first = False, key_path = KEYFILE_PA
 
         key_path (str): Path to your SSH key.
     """
-    client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
+    if parallel_ssh_enabled:
+        client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
 
     if reset_first:
         print("Resetting the InfiniStore repo first, before pulling.")
         command_reset = "cd %s/evaluation; git reset --hard %s" % (INFINISTORE_DIRECTORY, INFINISTORE_BRANCH)
-        client.run_command(command_reset)
-        #execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
+
+        if parallel_ssh_enabled:
+            client.run_command(command_reset)
+        else:
+            execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
     
     print("Now pulling latest code from GitHub for InfiniStore repo.")
     command = "cd %s/evaluation; git pull" % INFINISTORE_DIRECTORY
 
-    client.run_command(command)
-
-    #execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
+    if parallel_ssh_enabled:
+        client.run_command(command)
+    else:
+        execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
 
 def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
     """
@@ -571,10 +591,11 @@ def kill_go_processes(
     """  
     kill_command = "sudo ps aux | grep go"  #| awk '{print $2}' | xargs kill -9 $1"
 
-    client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
-    client.run_command(kill_command)
-
-    #execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
+    if parallel_ssh_enabled:
+        client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
+        client.run_command(kill_command)
+    else:
+        execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
 
 def kill_proxies(ips, key_path = KEYFILE_PATH):
     """
@@ -625,17 +646,17 @@ def clean_workers(
     """
     command = "cd %s/main/;sudo rm WorkerLog*; sudo rm *.dat" % MAPREDUCE_DIRECTORY
 
-    client = ParallelSSHClient(worker_ips, pkey = key_path, user = "ubuntu")
-
-    client.run_command(command)
-
-    # execute_command(
-    #     command = command,
-    #     count_limit = 2,
-    #     ips = worker_ips,
-    #     key_path = key_path,
-    #     get_pty = True 
-    # )     
+    if parallel_ssh_enabled:
+        client = ParallelSSHClient(worker_ips, pkey = key_path, user = "ubuntu")
+        client.run_command(command)
+    else:
+        execute_command(
+            command = command,
+            count_limit = 2,
+            ips = worker_ips,
+            key_path = key_path,
+            get_pty = True 
+        )     
 
 def launch_workers(
     client_ip = None,
@@ -661,27 +682,23 @@ def launch_workers(
     """
     print("Key path = {}".format(key_path))
 
-    pre_command = """
-    . ~/.profile;
-    . ~/.bashrc;
-    """
+    # pre_command = """
+    # . ~/.profile;
+    # . ~/.bashrc;
+    # """
 
     #post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234 {}".format(client_ip, workers_per_vm)
     post_command = "cd {}/main/;export PATH=$PATH:/usr/local/go/bin;./start-workers.sh {}:1234 {} > /dev/null".format(MAPREDUCE_DIRECTORY, client_ip, workers_per_vm)
 
-    #command = pre_command + post_command
-
-    print("Full command: {}".format(post_command))
-
-
-    client = ParallelSSHClient(worker_ips, pkey = key_path, user = "ubuntu")
-
-    client.run_command(post_command)
-
-    # for ip in worker_ips:
-    #     command = "launch_workers.sh \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"" % (MAPREDUCE_DIRECTORY, client_ip, workers_per_vm, key_path, ip, "ubuntu")
-    #     print("About to execute command:\n %s" % command)
-    #     subprocess.run(command, shell=True)
+    if parallel_ssh_enabled:
+        print("Full command: {}".format(post_command))
+        client = ParallelSSHClient(worker_ips, pkey = key_path, user = "ubuntu")
+        client.run_command(post_command)
+    else:
+        for ip in worker_ips:
+            command = "launch_workers.sh \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"" % (MAPREDUCE_DIRECTORY, client_ip, workers_per_vm, key_path, ip, "ubuntu")
+            print("About to execute command:\n %s" % command)
+            subprocess.run(command, shell=True)
 
     # execute_command(
     #     command = command,
@@ -777,7 +794,7 @@ def update_lambdas(ips : list, key_path = KEYFILE_PATH):
 
     I usually just use update_lambdas_prefixed.
     """
-    command = "cd %s/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {}".format(INFINISTORE_DIRECTORY, random.randint(600, 900))
+    command = "cd {}/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {}".format(INFINISTORE_DIRECTORY, random.randint(600, 900))
     print("Full command: {}".format(command))
     execute_command(
         command = command,
