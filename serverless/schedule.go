@@ -111,12 +111,12 @@ func (drv *Driver) schedule(
 	}
 	Debug("Driver: Creating jobs\n")
 
-	map_jobs := make([]int, 0, len(drv.s3Keys)) 
+	map_jobs := make([]int, len(drv.s3Keys), len(drv.s3Keys)) 
 	for i := 0; i < len(drv.s3Keys); i++ {
 		map_jobs[i] = i
 	}
 
-	reduce_jobs := make([]int, 0, drv.nReduce)
+	reduce_jobs := make([]int, drv.nReduce, drv.nReduce)
 	for i := 0; i < drv.nReduce; i++ {
 		reduce_jobs[i] = i
 	}
