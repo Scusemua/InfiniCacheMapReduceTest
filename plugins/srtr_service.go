@@ -426,7 +426,7 @@ func doReduceDriver(
 		counter := 0
 		for _, chunk := range chunks {
 			chunk_key := base_key + strconv.Itoa(counter)
-			log.Printf("Writing chunk #%d with key \"%s\" (size = %f MB) to storage. MD5: \n", counter, chunk_key, float64(len(chunk))/float64(1e6), md5.Sum(chunk))
+			log.Printf("Writing chunk #%d with key \"%s\" (size = %f MB) to storage. MD5: %x\n", counter, chunk_key, float64(len(chunk))/float64(1e6), md5.Sum(chunk))
 			start := time.Now()
 
 			// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
