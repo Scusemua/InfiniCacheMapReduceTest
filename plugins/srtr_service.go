@@ -375,7 +375,7 @@ func doReduceDriver(
 		// Print a message every increment of 5%.
 		if i%five_percent == 0 {
 			percent_done := float64(i) / float64(max)
-			log.Printf("Completed %d PERCENT (%d/%d) of REDUCE operations.\n", i, max, percent_done)
+			log.Printf("Completed %f%% (%d/%d) of REDUCE operations.\n", percent_done, i, max)
 		}
 
 		// The value of i passed is actually one higher than it should be. This is because we basically process

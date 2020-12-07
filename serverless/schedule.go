@@ -18,12 +18,17 @@ import (
 	"log"
 )
 
-func remove(a []int, element int) {
+// Remove the first occurrence specified element (not an index).
+// Returns true if element was present and was removed. 
+// Else returns false.
+func remove(a []int, element int) bool {
 	for i := 0; i < len(a); i++ {
 		if a[i] == element {
 			a = append(a[:i], a[i+1:]...)
+			return true 
 		}
 	}
+	return false 
 }
 
 // schedule starts and waits for all tasks in the given phase (Map or Reduce).
@@ -108,12 +113,12 @@ func (drv *Driver) schedule(
 
 	map_jobs := make([]int, 0, len(drv.s3Keys)) 
 	for i := 0; i < len(drv.s3Keys); i++ {
-		map_jobs = append(map_jobs, i)
+		map_jobs[i] = i
 	}
 
 	reduce_jobs := make([]int, 0, drv.nReduce)
 	for i := 0; i < drv.nReduce; i++ {
-		reduce_jobs = append(reduce_jobs, i)
+		reduce_jobs[i] = i
 	}
 
 	// readyChan is a bounded buffer that is used to notify the

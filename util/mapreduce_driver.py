@@ -479,25 +479,26 @@ def pull_from_github_mapreduce(ips, reset_first = False, key_path = KEYFILE_PATH
 
         key_path (str): Path to your SSH key.
     """
-    if parallel_ssh_enabled:
-        client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
+    #if parallel_ssh_enabled:
+    #    client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
     
     if reset_first:
         print("Resetting the MapReduce repo first, before pulling.")
         command_reset = "cd %s; git reset --hard %s" % (MAPREDUCE_DIRECTORY, MAPREDUCE_BRANCH)
 
-        if parallel_ssh_enabled:
-            client.run_command(command_reset)
-            del client
-        else:
-            execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
+    #    if parallel_ssh_enabled:
+    #         client.run_command(command_reset)
+            # Do not delete client here, wait until after second half of this command.
+    #    else:
+        execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
     
     print("Now pulling latest code from GitHub for MapReduce repo.")
     command = "cd %s; git pull" % MAPREDUCE_DIRECTORY
-    if parallel_ssh_enabled:
-        client.run_command(command)
-    else:
-        execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)    
+    #if parallel_ssh_enabled:
+    #    client.run_command(command)
+    #    del client
+    #else:
+    execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)    
 
 def pull_from_github_infinistore(ips, reset_first = False, key_path = KEYFILE_PATH):
     """
@@ -513,26 +514,27 @@ def pull_from_github_infinistore(ips, reset_first = False, key_path = KEYFILE_PA
 
         key_path (str): Path to your SSH key.
     """
-    if parallel_ssh_enabled:
-        client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
+    #if parallel_ssh_enabled:
+    #    client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
 
     if reset_first:
         print("Resetting the InfiniStore repo first, before pulling.")
         command_reset = "cd %s/evaluation; git reset --hard %s" % (INFINISTORE_DIRECTORY, INFINISTORE_BRANCH)
 
-        if parallel_ssh_enabled:
-            client.run_command(command_reset)
-            del client
-        else:
-            execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
+        #if parallel_ssh_enabled:
+        #    client.run_command(command_reset)
+            # Do not delete client here, wait until after second half of this command.
+        #else:
+        execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
     
     print("Now pulling latest code from GitHub for InfiniStore repo.")
     command = "cd %s/evaluation; git pull" % INFINISTORE_DIRECTORY
 
-    if parallel_ssh_enabled:
-        client.run_command(command)
-    else:
-        execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
+    #if parallel_ssh_enabled:
+    #    client.run_command(command)
+    #    del client
+    #else:
+    execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
 
 def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
     """
@@ -899,8 +901,8 @@ def print_time():
 
 # Pulling from Github:
 # mrd.pull_from_github_infinistore(worker_ips)
-# mrd.pull_from_github_infinistore(worker_ips + [client_ip])
-# mrd.pull_from_github_mapreduce(worker_ips + [client_ip])
+# mrd.pull_from_github_infinistore(worker_ips + [client_ip], reset_first = True)
+# mrd.pull_from_github_mapreduce(worker_ips + [client_ip], reset_first = True)
 
 # Updating
 # mrd.build_mapreduce(worker_ips + [client_ip])
