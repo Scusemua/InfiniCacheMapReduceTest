@@ -3,6 +3,7 @@ import boto3
 from datetime import datetime
 import mapreduce_driver as mrd
 import paramiko
+from pssh.clients import ParallelSSHClient
 import random
 import redis 
 import subprocess
@@ -446,8 +447,10 @@ def build_mapreduce(ips, count_limit = 1, key_path = KEYFILE_PATH):
         key_path (str): Path to your SSH key.
     """
     print("Executing /plugins/build.sh for the MapReduce framework on %d VMs." % len(ips))
+    client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
     command = "cd %s/plugins; export PATH=$PATH:/usr/local/go/bin; ./build.sh" % MAPREDUCE_DIRECTORY
-    execute_command(command, count_limit, get_pty = True, ips = ips, key_path = key_path)   
+    client.run_command(command)
+    #execute_command(command, count_limit, get_pty = True, ips = ips, key_path = key_path)   
 
 def pull_from_github_mapreduce(ips, reset_first = False, key_path = KEYFILE_PATH):
     """
@@ -463,14 +466,17 @@ def pull_from_github_mapreduce(ips, reset_first = False, key_path = KEYFILE_PATH
 
         key_path (str): Path to your SSH key.
     """
+    client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
     if reset_first:
         print("Resetting the MapReduce repo first, before pulling.")
         command_reset = "cd %s; git reset --hard %s" % (MAPREDUCE_DIRECTORY, MAPREDUCE_BRANCH)
-        execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
+        client.run_command(command_reset)
+        #execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
     
     print("Now pulling latest code from GitHub for MapReduce repo.")
     command = "cd %s; git pull" % MAPREDUCE_DIRECTORY
-    execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)    
+    client.run_command(command)
+    #execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)    
 
 def pull_from_github_infinistore(ips, reset_first = False, key_path = KEYFILE_PATH):
     """
@@ -486,14 +492,20 @@ def pull_from_github_infinistore(ips, reset_first = False, key_path = KEYFILE_PA
 
         key_path (str): Path to your SSH key.
     """
+    client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
+
     if reset_first:
         print("Resetting the InfiniStore repo first, before pulling.")
         command_reset = "cd %s/evaluation; git reset --hard %s" % (INFINISTORE_DIRECTORY, INFINISTORE_BRANCH)
-        execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
+        client.run_command(command_reset)
+        #execute_command(command_reset, 2, get_pty = True, ips = ips, key_path = key_path)
     
     print("Now pulling latest code from GitHub for InfiniStore repo.")
     command = "cd %s/evaluation; git pull" % INFINISTORE_DIRECTORY
-    execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
+
+    client.run_command(command)
+
+    #execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
 
 def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
     """
@@ -505,7 +517,7 @@ def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
         key_path (str): Path to your SSH key.
     """
     prefix = datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M') + "/"
-    
+
     # Each proxy needs a slightly different command as each proxy uses different Lambdas.
     for i in range(0, len(ips)):
         ip = ips[i]
@@ -558,7 +570,12 @@ def kill_go_processes(
     Kills all GO processes running on the VMs (specified via their IPv4 addresses).
     """  
     kill_command = "sudo ps aux | grep go | awk '{print $2}' | xargs kill -9 $1"
-    execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
+
+    client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
+
+    client.run_command(kill_command)
+
+    #execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
 
 def kill_proxies(ips, key_path = KEYFILE_PATH):
     """
@@ -608,13 +625,18 @@ def clean_workers(
         worker_ips: IPv4 addresses of worker VMs.
     """
     command = "cd %s/main/;sudo rm WorkerLog*; sudo rm *.dat" % MAPREDUCE_DIRECTORY
-    execute_command(
-        command = command,
-        count_limit = 2,
-        ips = worker_ips,
-        key_path = key_path,
-        get_pty = True 
-    )     
+
+    client = ParallelSSHClient(worker_ips, pkey = key_path, user = "ubuntu")
+
+    client.run_command(command)
+
+    # execute_command(
+    #     command = command,
+    #     count_limit = 2,
+    #     ips = worker_ips,
+    #     key_path = key_path,
+    #     get_pty = True 
+    # )     
 
 def launch_workers(
     client_ip = None,
@@ -646,16 +668,21 @@ def launch_workers(
     """
 
     #post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234 {}".format(client_ip, workers_per_vm)
-    # post_command = "cd {}/main/;export PATH=$PATH:/usr/local/go/bin;./start-workers.sh {}:1234 {}".format(MAPREDUCE_DIRECTORY, client_ip, workers_per_vm)
+    post_command = "cd {}/main/;export PATH=$PATH:/usr/local/go/bin;./start-workers.sh {}:1234 {} > /dev/null".format(MAPREDUCE_DIRECTORY, client_ip, workers_per_vm)
 
-    # command = pre_command + post_command
+    #command = pre_command + post_command
 
-    # print("Full command: {}".format(command))
+    print("Full command: {}".format(post_command))
 
-    for ip in worker_ips:
-        command = "launch_workers.sh \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"" % (MAPREDUCE_DIRECTORY, client_ip, workers_per_vm, key_path, ip, "ubuntu")
-        print("About to execute command:\n %s" % command)
-        subprocess.run(command, shell=True)
+
+    client = ParallelSSHClient(worker_ips, pkey = key_path, user = "ubuntu")
+
+    client.run_command(post_command)
+
+    # for ip in worker_ips:
+    #     command = "launch_workers.sh \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"" % (MAPREDUCE_DIRECTORY, client_ip, workers_per_vm, key_path, ip, "ubuntu")
+    #     print("About to execute command:\n %s" % command)
+    #     subprocess.run(command, shell=True)
 
     # execute_command(
     #     command = command,

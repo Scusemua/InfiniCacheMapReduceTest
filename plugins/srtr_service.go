@@ -360,13 +360,23 @@ func doReduceDriver(
 
 	results := make([]KeyValue, len(inputs), len(inputs))
 
+	// Calculate five percent of the inputs. We'll print an update every five percent
+	// during reduce operations (e.g., 0% done, 5% done, 10% done, ...., 90% done, 95% done, 100% done).
+	five_percent := int(len(inputs) * 0.05)
+
 	doReduce := func(k string, v []string, i int, max int) {
-		log.Printf("[REDUCER #%d] Reduce %d/%d: key = \"%s\"...\n", reduceTaskNum, i, max, k)
+		//log.Printf("[REDUCER #%d] Reduce %d/%d: key = \"%s\"...\n", reduceTaskNum, i, max, k)
 		output := reduceF(k, v)
-		log.Printf("[REDUCER #%d] Reduce() for key \"%s\" SUCCESS.\n", reduceTaskNum, k)
+		//log.Printf("[REDUCER #%d] Reduce() for key \"%s\" SUCCESS.\n", reduceTaskNum, k)
 		new_kv := new(KeyValue)
 		new_kv.Key = k
 		new_kv.Value = output
+
+		// Print a message every increment of 5%.
+		if i % five_percent == 0 {
+			percent_done := float64(i) / float64(max)
+			log.Printf("Completed %d PERCENT (%d/%d) of REDUCE operations.\n", i, max, percent_done)
+		}
 
 		// The value of i passed is actually one higher than it should be. This is because we basically process
 		// the key from the LAST iteration of the for-loop calling doReduce. On the first (0th) iteration of the
