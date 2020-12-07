@@ -362,7 +362,8 @@ func doReduceDriver(
 
 	// Calculate five percent of the inputs. We'll print an update every five percent
 	// during reduce operations (e.g., 0% done, 5% done, 10% done, ...., 90% done, 95% done, 100% done).
-	five_percent := int(len(inputs) * 0.05)
+	five_percent_float := len(inputs) * 0.05
+	five_percent := int(five_percent_float)
 
 	doReduce := func(k string, v []string, i int, max int) {
 		//log.Printf("[REDUCER #%d] Reduce %d/%d: key = \"%s\"...\n", reduceTaskNum, i, max, k)
