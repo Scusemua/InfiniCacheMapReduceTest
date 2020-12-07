@@ -44,7 +44,7 @@ pids[4]=$!
 echo "Launching worker #5."
 
 go run worker.go localhost:1239 localhost:1234 999999 & 
-pids[5]=$!vals
+pids[5]=$!
 
 echo "[Test]: waiting for client and worker to finish..." > /dev/stderr
 for pid in ${pids[*]}; do
