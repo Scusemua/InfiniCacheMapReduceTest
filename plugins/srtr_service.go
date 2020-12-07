@@ -374,7 +374,7 @@ func doReduceDriver(
 
 		// Print a message every increment of 5%.
 		if i%five_percent == 0 {
-			percent_done := float64(i) / float64(max)
+			percent_done := (float64(i) / float64(max)) * 100
 			log.Printf("Completed %f%% (%d/%d) of REDUCE operations.\n", percent_done, i, max)
 		}
 
