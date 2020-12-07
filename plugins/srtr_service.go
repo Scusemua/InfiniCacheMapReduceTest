@@ -20,10 +20,10 @@ import (
 	//"io"
 	"log"
 	"os"
-	"sync"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	//"unsafe"
 )
@@ -168,7 +168,7 @@ func merge(left []string, right []string) (merged []string) {
 // with a list of that key's string value (merged across all inputs).
 // The return value should be a single output value for that key.
 func reduceF(key string, values []string) string {
-	log.Printf("REDUCE: Joining %d strings for key \"%s\" now...\n", len(values), key)
+	//log.Printf("REDUCE: Joining %d strings for key \"%s\" now...\n", len(values), key)
 	if len(values) == 1 {
 		return values[0]
 	}
@@ -371,9 +371,9 @@ func doReduceDriver(
 		new_kv := new(KeyValue)
 		new_kv.Key = k
 		new_kv.Value = output
-		
+
 		// Print a message every increment of 5%.
-		if i % five_percent == 0 {
+		if i%five_percent == 0 {
 			percent_done := float64(i) / float64(max)
 			log.Printf("Completed %d PERCENT (%d/%d) of REDUCE operations.\n", i, max, percent_done)
 		}
@@ -381,7 +381,7 @@ func doReduceDriver(
 		// The value of i passed is actually one higher than it should be. This is because we basically process
 		// the key from the LAST iteration of the for-loop calling doReduce. On the first (0th) iteration of the
 		// for-loop, we don't call doReduce, we just set value of lastKey. Then on second iteration, we call
-		// doReduce for the FIRST (0th) input. 
+		// doReduce for the FIRST (0th) input.
 		results[i-1] = *new_kv // = append(results, *new_kv)
 	}
 
@@ -563,9 +563,9 @@ func (s srtrService) DoService(raw []byte) error {
 		return err
 	}
 	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
-	
+
 	// Make sure only one worker at a time can check this in order to ensure that the pool has been created.
-	poolLock.Lock() 
+	poolLock.Lock()
 	if !poolCreated {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
