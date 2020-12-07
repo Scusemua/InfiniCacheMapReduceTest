@@ -103,6 +103,9 @@ import os
 # 100,000,000 records is 10GB.
 # 1,000,000,000 records is 100GB.
 
+def get_num_samples(size_bytes):
+   return (10000000 * size_bytes) / (1000000000)
+
 if __name__ == "__main__":
    parser = argparse.ArgumentParser()
    parser.add_argument("-start", "--starting_value", dest = "starting_value", type=int, help = "Value of the first key.", default = 0)
@@ -111,13 +114,20 @@ if __name__ == "__main__":
    parser.add_argument("-file", "--filename", dest = "filename", type = str, help = "The prefix of the filename. The full name will be of the form <PREFIX>part-<x>-<y>-thru-<z>, where x identifies the chunk (chunk 1, chunk 2, etc.), y is the first key in this partition, and z is the last key in the partition.", default = "part")
    parser.add_argument("-threads", "--threads", dest = "threads", type = int, help = "Number of threads to use when generating the data.", default = 1)
    parser.add_argument("--skip-merged", dest = "skip_merged", action = "store_true", help = "If this flag is passed, then we don't generate the merged data at the end.")
-   
+   parser.add_argument("-c", "--calc", dest = "desired_size", type = int, default = -1, help = "Supply a size in bytes; this will print the number of samples needed.")
+
    args = parser.parse_args()
    starting_val = args.starting_value
    ending_val = args.ending_value
    increment = args.increment 
    filename = args.filename 
    threads = args.threads
+   desired_size = args.desired_size 
+
+   if (desired_size > 0):
+      print("For {} bytes (i.e., {:.2f} KB, {:.2f} MB, {:.2f} GB), you need {} samples."
+         .format(desired_size, desired_size / 1000.0, desired_size / 1000000.0, desired_size / 1000000000.0, get_num_samples(desired_size)))
+      exit(0)
    
    filenames = []
 
