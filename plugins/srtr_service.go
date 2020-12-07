@@ -371,7 +371,7 @@ func doReduceDriver(
 		new_kv := new(KeyValue)
 		new_kv.Key = k
 		new_kv.Value = output
-
+		
 		// Print a message every increment of 5%.
 		if i % five_percent == 0 {
 			percent_done := float64(i) / float64(max)

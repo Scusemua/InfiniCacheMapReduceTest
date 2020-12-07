@@ -569,10 +569,9 @@ def kill_go_processes(
     """
     Kills all GO processes running on the VMs (specified via their IPv4 addresses).
     """  
-    kill_command = "sudo ps aux | grep go | awk '{print $2}' | xargs kill -9 $1"
+    kill_command = "sudo ps aux | grep go"  #| awk '{print $2}' | xargs kill -9 $1"
 
     client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
-
     client.run_command(kill_command)
 
     #execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
