@@ -19,16 +19,13 @@ import (
 )
 
 // Remove the first occurrence specified element (not an index).
-// Returns true if element was present and was removed. 
-// Else returns false.
-func remove(a []int, element int) bool {
+func remove(a []int, element int) []int {
 	for i := 0; i < len(a); i++ {
 		if a[i] == element {
-			a = append(a[:i], a[i+1:]...)
-			return true 
+			return append(a[:i], a[i+1:]...)
 		}
 	}
-	return false 
+	return a
 }
 
 // schedule starts and waits for all tasks in the given phase (Map or Reduce).
@@ -44,20 +41,6 @@ func (drv *Driver) schedule(
 	chunkThreshold int,
 ) {
 	Debug("Driver: schedule %s\n", phase)
-	// MapReduceArgs defines the format of your MapReduce service plugins.
-	// type MapReduceArgs struct {
-	// 	JobName       string
-	// 	S3Key         string
-	// 	TaskNum       int
-	// 	NReduce       int
-	// 	NOthers       int
-	// 	SampleKeys    []string
-	// 	StorageIPs    []string
-	// 	DataShards    int
-	// 	ParityShards  int
-	// 	MaxGoroutines int
-	// 	Pattern 	  string 
-	// }
 
 	// Make, for example, serviceName "wc", and phase "Map", into
 	// a valid service, like, for example, "wcm_service".
@@ -121,6 +104,9 @@ func (drv *Driver) schedule(
 		reduce_jobs[i] = i
 	}
 
+	log.Printf("Map tasks remaining: %v\n", map_jobs)
+	log.Printf("Reduce tasks remaining: %v\n", reduce_jobs)
+
 	// readyChan is a bounded buffer that is used to notify the
 	// scheduler of workers that are *TRULY* ready for executing the
 	// service tasks.
@@ -160,10 +146,10 @@ func (drv *Driver) schedule(
 			log.Printf("Schedule: %s task #%d executed successfully on worker %v.\n", phase, args.TaskNum, worker)
 
 			if phase == mapPhase {
-				remove(map_jobs, args.TaskNum)
+				map_jobs = remove(map_jobs, args.TaskNum)
 				log.Printf("Remaining %s tasks: %v\n", phase, map_jobs)
 			} else {
-				remove(reduce_jobs, args.TaskNum)
+				reduce_jobs = remove(reduce_jobs, args.TaskNum)
 				log.Printf("Remaining %s tasks: %v\n", phase, reduce_jobs)
 			}
 		} else {
