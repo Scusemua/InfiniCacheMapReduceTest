@@ -14,6 +14,9 @@ import redis
 import subprocess
 import time 
 
+import importlib
+rl = importlib.reload
+
 """
 This file contains scripts that I use to orchestrate workloads on remote clusters/virtual machines.
 
@@ -607,7 +610,11 @@ def kill_proxies(ips, key_path = KEYFILE_PATH):
     everything, though (proxies, MapReduce clients and workers, etc.).
     """      
     kill_command = "sudo ps aux | grep proxy | awk '{print $2}' | xargs kill -9 $1"
-    execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
+    if parallel_ssh_enabled:
+        client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
+        client.run_command(kill_command)
+    else:
+        execute_command(kill_command, 0, get_pty = True, ips = ips, key_path = key_path)
 
 # mrd.clear_redis_instances(flushall = True, hostnames = hostnames)
 def clear_redis_instances(
@@ -1019,6 +1026,8 @@ if __name__ == "__main__":
 # go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.127.209:6378 -storageIps 10.0.119.99:6378 -storageIps 10.0.121.183:6378 -storageIps 10.0.100.125:6378 -storageIps 10.0.100.240:6378 -storageIps 10.0.113.14:6378
 # 20 GB
 # go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.127.209:6378 -storageIps 10.0.119.99:6378 -storageIps 10.0.121.183:6378 -storageIps 10.0.100.125:6378 -storageIps 10.0.100.240:6378 -storageIps 10.0.113.14:6378
+# 50 GB
+# go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/50GB_50Partitions_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.127.209:6378 -storageIps 10.0.119.99:6378 -storageIps 10.0.121.183:6378 -storageIps 10.0.100.125:6378 -storageIps 10.0.100.240:6378 -storageIps 10.0.113.14:6378
 # 100 GB
 # go run client.go -driverHostname 10.0.109.88:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -clientPoolCapacity 10 -storageIps 10.0.109.88:6378 -storageIps 10.0.127.209:6378 -storageIps 10.0.119.99:6378 -storageIps 10.0.121.183:6378 -storageIps 10.0.100.125:6378 -storageIps 10.0.100.240:6378 -storageIps 10.0.113.14:6378
 

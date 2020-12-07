@@ -122,6 +122,7 @@ if __name__ == "__main__":
    increment = args.increment 
    filename = args.filename 
    threads = args.threads
+   skip_merged = args.skip_merged
    desired_size = args.desired_size 
 
    if (desired_size > 0):
