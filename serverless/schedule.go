@@ -111,8 +111,8 @@ func (drv *Driver) schedule(
 		map_jobs = append(map_jobs, i)
 	}
 
-	reduce_jobs := make([]int, 0, drv.NReduce)
-	for i := 0; i < drv.NReduce; i++ {
+	reduce_jobs := make([]int, 0, drv.nReduce)
+	for i := 0; i < drv.nReduce; i++ {
 		reduce_jobs = append(reduce_jobs, i)
 	}
 
