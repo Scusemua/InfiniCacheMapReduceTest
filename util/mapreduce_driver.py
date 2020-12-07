@@ -905,7 +905,7 @@ def print_time():
 # Updating
 # mrd.build_mapreduce(worker_ips + [client_ip])
 # mrd.update_lambdas(worker_ips + [client_ip])
-# mrd.update_lambdas_prefixed(worker_ips + [client_ip])
+#   
 # mrd.update_lambdas(worker_ips) # Workers only, so we can do manually on client to see progress.
 # mrd.update_lambdas_prefixed(worker_ips) # Workers only, so we can do manually on client to see progress.
 

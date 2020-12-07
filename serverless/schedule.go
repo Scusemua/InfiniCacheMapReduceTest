@@ -18,6 +18,14 @@ import (
 	"log"
 )
 
+func remove(a []int, element int) {
+	for i := 0; i < len(a); i++ {
+		if a[i] == element {
+			a = append(a[:i], a[i+1:]...)
+		}
+	}
+}
+
 // schedule starts and waits for all tasks in the given phase (Map or Reduce).
 func (drv *Driver) schedule(
 	phase jobPhase,
@@ -98,6 +106,16 @@ func (drv *Driver) schedule(
 	}
 	Debug("Driver: Creating jobs\n")
 
+	map_jobs := make([]int, 0, len(drv.s3Keys)) 
+	for i := 0; i < len(drv.s3Keys); i++ {
+		map_jobs = append(map_jobs, i)
+	}
+
+	reduce_jobs := make([]int, 0, drv.NReduce)
+	for i := 0; i < drv.NReduce; i++ {
+		reduce_jobs = append(reduce_jobs, i)
+	}
+
 	// readyChan is a bounded buffer that is used to notify the
 	// scheduler of workers that are *TRULY* ready for executing the
 	// service tasks.
@@ -135,6 +153,14 @@ func (drv *Driver) schedule(
 			completeChan <- true
 
 			log.Printf("Schedule: %s task #%d executed successfully on worker %v.\n", phase, args.TaskNum, worker)
+
+			if phase == mapPhase {
+				remove(map_jobs, args.TaskNum)
+				log.Printf("Remaining %s tasks: %v\n", phase, map_jobs)
+			} else {
+				remove(reduce_jobs, args.TaskNum)
+				log.Printf("Remaining %s tasks: %v\n", phase, reduce_jobs)
+			}
 		} else {
 			// Job failed, so put job back in queue to be executed
 			jobChan <- args
