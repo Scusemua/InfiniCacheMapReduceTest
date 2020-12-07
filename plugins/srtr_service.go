@@ -8,7 +8,7 @@ package main
 
 import (
 	"bytes"
-	//"crypto/md5"
+	"crypto/md5"
 	"encoding/gob"
 	//"encoding/json"
 	"fmt"
@@ -304,7 +304,7 @@ func doReduceDriver(
 			//log.Printf("ERROR: storage encountered exception for key \"%s\"...", dataKey)
 			//log.Printf("ERROR: Just skipping the key \"%s\"...", dataKey)
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
-			continue
+			//continue
 		}
 		end := time.Now()
 		readDuration := time.Since(start)
@@ -418,8 +418,7 @@ func doReduceDriver(
 
 	/* Chunk up the final results if necessary. */
 	if len(marshalled_result) > int(chunkThreshold) {
-		log.Printf("Data for final result \"%s\" is larger than %d bytes. Storing it in pieces...\n", fileName, chunkThreshold)
-		//log.Printf("md5 of marshalled_result with key \"%s\": %x\n", fileName, md5.Sum(marshalled_result))
+		log.Printf("Data for final result \"%s\" is larger than %d bytes. Storing it in pieces. MD5: %x\n", fileName, chunkThreshold, md5.Sum(marshalled_result))
 		chunks := split(marshalled_result, int(chunkThreshold))
 		num_chunks := len(chunks)
 		log.Printf("Created %d chunks for final result.\n", num_chunks)
@@ -427,8 +426,7 @@ func doReduceDriver(
 		counter := 0
 		for _, chunk := range chunks {
 			chunk_key := base_key + strconv.Itoa(counter)
-			log.Printf("Writing chunk #%d with key \"%s\" (size = %f MB) to storage.\n", counter, chunk_key, float64(len(chunk))/float64(1e6))
-			//log.Printf("md5 of chunk with key \"%s\": %x\n", chunk_key, md5.Sum(chunk))
+			log.Printf("Writing chunk #%d with key \"%s\" (size = %f MB) to storage. MD5: \n", counter, chunk_key, float64(len(chunk))/float64(1e6), md5.Sum(chunk))
 			start := time.Now()
 
 			// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
@@ -448,20 +446,6 @@ func doReduceDriver(
 
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: chunk_key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
-
-			//log.Printf("Chunk \"%s\":\n%s", chunk_key, string(chunk))
-
-			// readAllCloser2, ok := cli.Get(chunk_key)
-
-			// if !ok {
-			// 	log.Fatal("Got error reading back chunk \"", chunk_key, "\" after writing it.\n")
-			// }
-
-			// marshalled_result2, err2 := readAllCloser2.ReadAll()
-			// checkError(err2)
-
-			// log.Printf("md5 of chunk \"%s\" read back immediately after writing: %x\n", chunk_key, md5.Sum(marshalled_result2))
-
 			counter = counter + 1
 		}
 		var byte_buffer bytes.Buffer
