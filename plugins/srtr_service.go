@@ -314,7 +314,6 @@ func doReduceDriver(
 
 		log.Printf("[REDUCER #%d] Decoding data for key \"%s\" now...\n", reduceTaskNum, dataKey)
 		byte_buffer_res := bytes.NewBuffer(encoded_result)
-		//byte_buffer_res.Write(encoded_result)
 		gobDecoder := gob.NewDecoder(byte_buffer_res)
 		err = gobDecoder.Decode(&kvs)
 
@@ -459,7 +458,11 @@ func doReduceDriver(
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
 		// wanna reuse the same code in each location.
-		success := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli)
+		success, writeStart := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli)
+
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(chunk), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
+		ioRecords = append(ioRecords, rec)		
+
 		//success := exponentialBackoffWrite(fileName, numberOfChunksSerialized)
 		if !success {
 			log.Fatal("ERROR while storing value in storage, key is: \"", fileName, "\"")

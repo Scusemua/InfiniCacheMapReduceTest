@@ -8,7 +8,6 @@ import (
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"encoding/gob"
 	"io/ioutil"
-	"encoding/json"
 	"time"
 	"fmt"
 	"math/rand"
@@ -186,7 +185,9 @@ func doMap(
 	log.Println("Storing results in storage now...")
 
 	for k, v := range results {
-		marshalled_result, err := json.Marshal(v)
+		var byte_buffer bytes.Buffer
+		gobEncoder := gob.NewEncoder(&byte_buffer)
+		err := gobEncoder.Encode(v)
 		checkError(err)
 		var writeStart time.Time  
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f \n", k, float64(len(marshalled_result))/float64(1e6))
