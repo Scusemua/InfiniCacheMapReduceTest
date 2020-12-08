@@ -40,6 +40,7 @@ func (drv *Driver) schedule(
 	pattern string,
 	chunkThreshold int,
 	usePocket bool,
+	pocketJobId string,
 ) {
 	Debug("Driver: schedule %s\n", phase)
 
@@ -71,6 +72,7 @@ func (drv *Driver) schedule(
 			arg.Pattern = pattern
 			arg.UsePocket = usePocket
 			arg.ChunkThreshold = chunkThreshold
+			arg.PocketJobId = pocketJobId
 			jobChan <- arg
 		}
 	} else {
@@ -92,6 +94,7 @@ func (drv *Driver) schedule(
 			arg.Pattern = pattern
 			arg.UsePocket = usePocket
 			arg.ChunkThreshold = chunkThreshold
+			arg.PocketJobId = pocketJobId
 			jobChan <- arg
 		}
 	}

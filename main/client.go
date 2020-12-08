@@ -59,6 +59,10 @@ func main() {
 	clientPoolCapacity := flag.Int("clientPoolCapacity", 10, "Maximum capacity for the pool of InfiniStore clients.")
 	chunkThreshold := flag.Int("chunkThreshold", 512000000, "The size (in bytes) above which we break a piece of data up into chunk-sized pieces and read/write those chunks rather than the entire piece of data all at once.")
 	usePocket := flag.Bool("usePocket", false, "When set to true, workers will use Pocket for intermediate data storage.")
+	numLambdasPocket := flag.Int("numLambdasPocket", 0, "The number of Lambdas to use for Pocket...?")
+	capacityGbPocket := flag.Int("capacityGbPocket", 0, "Pocket capacity.")
+	peakMbpsPocket := flag.Int("peakMbpsPocket", 0, "Peak Mbps Pocket.")
+	latencySensitivePocket := flag.Int("latencySensitivePocket", 1, "Latency sensitive for Pocket?")
 	flag.Var(&storageIps, "storageIps", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
 	flag.Parse()
 
@@ -91,7 +95,9 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	go drv.Run(*jobName, *s3KeyFile, *sampleDataKey, *nReduce, *dataShards, *parityShards, *maxGoRoutines, *pattern, *clientPoolCapacity, *chunkThreshold, *usePocket, storageIps)
+	go drv.Run(*jobName, *s3KeyFile, *sampleDataKey, *nReduce, *dataShards, *parityShards, 
+		*maxGoRoutines, *pattern, *clientPoolCapacity, *chunkThreshold, *usePocket, 
+		*numLambdasPocket, *capacityGbPocket, *peakMbpsPocket, *latencySensitivePocket, storageIps)
 
 	drv.Wait()
 }

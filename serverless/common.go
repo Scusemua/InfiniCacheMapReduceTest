@@ -87,5 +87,6 @@ type MapReduceArgs struct {
 	ClientPoolCapacity int 		// Maximum capacity of the pool of InfiniStore clients.
 	Pattern 	  string 		// Regex, used for Grep.
 	UsePocket	  bool 			// Use Pocket for intermediate storage?
+	PocketJobId   string		// The JobID of the Pocket job, if we're using pocket.
 	ChunkThreshold int			// Threshold above which we break intermediate data into ChunkThreshold-sized pieces for reading/writing to storage.
 }

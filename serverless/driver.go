@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/Scusemua/PythonGoBridge"
 	"io/ioutil"
 	"log"
 	"net"
@@ -354,6 +355,10 @@ func (drv *Driver) Run(
 	clientPoolCapacity int,
 	chunkThreshold int,
 	usePocket bool,
+	numLambdasPocket int, 
+	capacityGbPocket int, 
+	peakMbpsPocket int, 
+	latencySensitivePocket int,
 	storageIps []string,
 ) {
 	Debug("%s: Starting driver RPC server\n", drv.address)
@@ -408,18 +413,31 @@ func (drv *Driver) Run(
 
 	log.Printf("Number of S3 keys: %d\n", len(s3Keys))
 
+	var pocketJobId string 
+	if usePocket {
+		log.Printf("Registering job with Pocket now...\n")
+		pocketJobId = PythonGoBridge.RegisterJob("", numLambdasPocket, capacityGbPocket, peakMbpsPocket, latencySensitivePocket)
+	}
+
 	go drv.run(jobName, s3Keys, nReduce, sampleKeys, dataShards, parityShards, maxGoRoutines, storageIps, usePocket,
 		func(phase jobPhase, serviceName string) { // func schedule()
 			registerChan := make(chan string)
 			go drv.prepareService(registerChan, ServiceName(serviceName, phase))
-			drv.schedule(phase, serviceName, registerChan, dataShards, parityShards, maxGoRoutines, clientPoolCapacity, pattern, chunkThreshold, usePocket)
+			drv.schedule(phase, serviceName, registerChan, dataShards, parityShards, maxGoRoutines, 
+				clientPoolCapacity, pattern, chunkThreshold, usePocket, pocketJobId)
 		},
 		func() { // func finish()
 			log.Printf("Driver executing finish() function now. First, killing workers.\n")
 			drv.killWorkers()
 			log.Printf("Workers killed. Next, stopping RPC server.\n")
 			drv.stopRPCServer()
-			log.Printf("RPC server stopped.\n")
+			log.Printf("RPC server stopped. Next, deregistering job from Pocket.\n")
+			res := PythonGoBridge.DeregisterJob(pocketJobId)
+			if res == 0 {
+				log.Printf("Job deregistered successfully.\n")
+			} else {
+				log.Printf("[ERROR] Job failed to deregister successfully.\n")
+			}
 		})
 }
 
