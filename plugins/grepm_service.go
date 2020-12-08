@@ -96,7 +96,7 @@ func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []stri
 
 // The mapping function is called once for each piece of the input.
 func mapF(s3Key string, text string) (res []KeyValue) {
-	log.Printf("Searching for matches in string \"%s\".\n", text)
+	//log.Printf("Searching for matches in string \"%s\".\n", text)
 	matches := pattern.FindAllString(text, -1)
 
 	for _, match := range matches {
