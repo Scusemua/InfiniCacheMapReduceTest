@@ -307,7 +307,7 @@ func exponentialBackoffWrite(key string, value []byte, cli *client.Client) (bool
 	var writeStart time.Time 
 	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
-		writeStart := time.Now()
+		writeStart = time.Now()
 		_, ok := cli.EcSet(key, value)
 
 		if !ok {
