@@ -188,15 +188,15 @@ func doMap(
 	for k, v := range results {
 		marshalled_result, err := json.Marshal(v)
 		checkError(err)
-		start := time.Now()
+		var writeStart time.Time  
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f \n", k, float64(len(marshalled_result))/float64(1e6))
-		writeStart := time.Now()
 
 		// Exponential backoff.
 		success := false
 		for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 			log.Printf("Attempt %d/%d for write to key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, k)
 			log.Printf("md5 of marshalled result for key \"%s\": %x\n", k, md5.Sum(marshalled_result))
+			writeStart = time.Now()
 			_, ok := cli.EcSet(k, marshalled_result)
 
 			if !ok {
@@ -218,10 +218,10 @@ func doMap(
 			log.Fatal("Failed to write key \"%s\" to storage in minimum number of attempts.")
 		}
 
-		writeEnd := time.Since(writeStart)
-		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", k, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
-		end := time.Now()
-		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
+		writeDuration := time.Since(writeStart)
+		writeEnd := time.Now()
+		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", k, float64(len(marshalled_result))/float64(1e6), writeDuration.Nanoseconds()/1e6)
+		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 	}
 	

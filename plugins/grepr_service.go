@@ -140,7 +140,7 @@ func doReduce(
 		dataKey := serverless.ReduceName(jobName, i, reduceTaskNum)
 
 		var kvs []KeyValue
-		start := time.Now()
+		var readStart time.Time 
 		log.Printf("storage READ START. Key: \"%s\", Reduce Task #: %d.", dataKey, reduceTaskNum)
 		var readAllCloser client.ReadAllCloser
 		var ok bool
@@ -148,6 +148,7 @@ func doReduce(
 		// Exponential backoff.
 		for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 			log.Printf("Attempt %d/%d for read key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, dataKey)
+			readStart = time.Now()
 			readAllCloser, ok = cli.Get(dataKey)
 
 			// Check for failure, and backoff exponentially on-failure.
@@ -181,10 +182,10 @@ func doReduce(
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			continue
 		}
-		end := time.Now()
-		readDuration := time.Since(start)
+		readEnd := time.Now()
+		readDuration := time.Since(readStart)
 		log.Printf("storage READ END. Key: \"%s\", Reduce Task #: %d, Bytes read: %f, Time: %d ms", dataKey, reduceTaskNum, float64(len(marshalled_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
-		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(marshalled_result), Start: readStart.UnixNano(), End: readEnd.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 		json.Unmarshal([]byte(marshalled_result), &kvs)
 		for _, kv := range kvs {
@@ -234,14 +235,9 @@ func doReduce(
 		base_key := fileName + "-part"
 		for i, chunk := range chunks {
 			key := base_key + string(i)
-			log.Printf("storage WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB. md5: %x\n", 
-				i, key, float64(len(chunk))/float64(1e6), md5.Sum(chunk))
-			start := time.Now()
-			//err := redis_client.Set(key, chunk, 0).Err()
-			//_, ok := cli.EcSet(key, chunk)
-			success := exponentialBackoffWrite(key, chunk, cli)
-			end := time.Now()
-			writeEnd := time.Since(start)
+			log.Printf("storage WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB. md5: %x\n", i, key, float64(len(chunk))/float64(1e6), md5.Sum(chunk))
+			success, writeStart := exponentialBackoffWrite(key, chunk, cli)
+			writeEnd := time.Since(writeStart)
 			//checkError(err)
 			if !success {
 				log.Fatal("\n\nERROR while storing value in storage, key is: \"", key, "\"")
@@ -249,7 +245,7 @@ func doReduce(
 			log.Printf("storage WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Size: %f, Time: %v ms. md5: %x\n", 
 				i, key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6, md5.Sum(chunk))
 
-			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
+			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
 			ioRecords = append(ioRecords, rec)
 		}
 		num_chunks_serialized, err3 := json.Marshal(num_chunks)
@@ -263,20 +259,19 @@ func doReduce(
 		checkError(err)
 	} else {
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
-		start := time.Now()
 		//err := redis_client.Set(fileName, marshalled_result, 0).Err()
 		//_, ok := cli.EcSet(fileName, marshalled_result)
-		success := exponentialBackoffWrite(fileName, marshalled_result, cli)
+		success, writeStart := exponentialBackoffWrite(fileName, marshalled_result, cli)
 		if !success {
 			log.Fatal("ERROR while storing value in storage with key \"", fileName, "\"")
 		}
 		//checkError(err)
-		end := time.Now()
-		writeEnd := time.Since(start)
+		writeDuration := time.Since(writeStart)
+		writeEnd := time.Now()
 
-		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", fileName, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", fileName, float64(len(marshalled_result))/float64(1e6), writeDuration.Nanoseconds()/1e6)
 
-		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 	}
 
@@ -292,10 +287,15 @@ func doReduce(
 	clientPool.Put(cli)
 }
 
-func exponentialBackoffWrite(key string, value []byte, cli *client.Client) bool {
+// Return bool indicating success as well as the value of time.Now() when 
+// either the successful write operation began or when the last write operation (that ended
+// up ultimately failing) began.
+func exponentialBackoffWrite(key string, value []byte, cli *client.Client) (bool, time.Time) {
 	success := false
+	var writeStart time.Time 
 	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
+		writeStart := time.Now()
 		_, ok := cli.EcSet(key, value)
 
 		if !ok {
@@ -313,7 +313,7 @@ func exponentialBackoffWrite(key string, value []byte, cli *client.Client) bool 
 		}
 	}
 
-	return success
+	return (success, writeStart)
 }
 
 // DON'T MODIFY THIS FUNCTION

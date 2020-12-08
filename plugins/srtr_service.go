@@ -243,6 +243,8 @@ func doReduceDriver(
 	// This is used when approximating the final size of the inputs slice.
 	receivedDataForTheFirstTime := false
 
+	var readStart time.Time 
+
 	for i := 0; i < nMap; i++ {
 		// nMap is the number of Map tasks (i.e., the number of S3 keys or # of initial data partitions).
 		// So the variable i here refers to the associated Map task/initial data partition, or where
@@ -250,7 +252,6 @@ func doReduceDriver(
 		dataKey := serverless.ReduceName(jobName, i, reduceTaskNum)
 
 		var kvs []KeyValue
-		start := time.Now()
 		log.Printf("storage READ START. Key: \"%s\", Reduce Task #: %d.", dataKey, reduceTaskNum)
 		//marshalled_result, err := redis_client.Get(dataKey).Result()
 
@@ -264,6 +265,7 @@ func doReduceDriver(
 			// an object of type ReadAllCloser, and the second element of the tuple is a boolean
 			// which indicates whether or not the read operation went well.
 			log.Printf("[REDUCER #%d] Attempt %d/%d for read key \"%s\".\n", reduceTaskNum, current_attempt, serverless.MaxAttemptsDuringBackoff, dataKey)
+			readStart := time.Now()
 			readAllCloser, ok = cli.Get(dataKey)
 
 			// Check for failure, and backoff exponentially on-failure.
@@ -304,10 +306,10 @@ func doReduceDriver(
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			//continue
 		}
-		end := time.Now()
-		readDuration := time.Since(start)
+		readEnd := time.Now()
+		readDuration := time.Since(readStart)
 		log.Printf("storage READ END. Key: \"%s\", Reduce Task #: %d, Bytes read: %f, Time: %d ms", dataKey, reduceTaskNum, float64(len(encoded_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
-		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(encoded_result), Start: start.UnixNano(), End: end.UnixNano()}
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(encoded_result), Start: readStart.UnixNano(), End: readEnd.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 
 		log.Printf("[REDUCER #%d] Decoding data for key \"%s\" now...\n", reduceTaskNum, dataKey)
@@ -425,24 +427,23 @@ func doReduceDriver(
 		for _, chunk := range chunks {
 			chunk_key := base_key + strconv.Itoa(counter)
 			log.Printf("Writing chunk #%d with key \"%s\" (size = %f MB) to storage. MD5: %x\n", counter, chunk_key, float64(len(chunk))/float64(1e6), md5.Sum(chunk))
-			start := time.Now()
 
 			// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 			// I put it in its own function bc there are several write calls in this file and I did not
 			// wanna reuse the same code in each location.
-			success := exponentialBackoffWrite(chunk_key, chunk, cli)
+			success, writeStart := exponentialBackoffWrite(chunk_key, chunk, cli)
 			//success := exponentialBackoffWrite(chunk_key, chunk)
 
-			end := time.Now()
-			writeEnd := time.Since(start)
+			writeEnd := time.Now()
+			writeDuration := time.Since(writeStart)
 			//checkError(err)
 			if !success {
 				log.Fatal("\n\nERROR while storing value in storage, key is: \"", chunk_key, "\"")
 			}
 
-			log.Printf("SUCCESSFULLY wrote chunk #%d, \"%s\", to storage. Size: %f MB, Time: %v ms.\n", counter, chunk_key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+			log.Printf("SUCCESSFULLY wrote chunk #%d, \"%s\", to storage. Size: %f MB, Time: %v ms.\n", counter, chunk_key, float64(len(chunk))/float64(1e6), writeDuration.Nanoseconds()/1e6)
 
-			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: chunk_key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
+			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: chunk_key, Bytes: len(chunk), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
 			ioRecords = append(ioRecords, rec)
 			counter = counter + 1
 		}
@@ -466,22 +467,21 @@ func doReduceDriver(
 		checkError(err)
 	} else {
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
-		start := time.Now()
 
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
 		// wanna reuse the same code in each location.
-		success := exponentialBackoffWrite(fileName, marshalled_result, cli)
+		success, writeStart := exponentialBackoffWrite(fileName, marshalled_result, cli)
 		//success := exponentialBackoffWrite(fileName, marshalled_result)
 		if !success {
 			log.Fatal("ERROR while storing value in storage with key \"", fileName, "\"")
 		}
-		end := time.Now()
-		writeEnd := time.Since(start)
+		writeEnd := time.Now()
+		writeDuration := time.Since(writeStart)
 
-		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", fileName, float64(len(marshalled_result))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", fileName, float64(len(marshalled_result))/float64(1e6), writeDuration.Nanoseconds()/1e6)
 
-		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: start.UnixNano(), End: end.UnixNano()}
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 	}
 
@@ -499,12 +499,14 @@ func doReduceDriver(
 }
 
 // Encapsulates a write operation. Currently, this is an InfiniStore write operation.
-func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) bool {
+func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) (bool, time.Time) {
 	//func exponentialBackoffWrite(key string, value []byte) bool {
 	success := false
+	var writeStart time.Time 
 	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
 		// Call the EcSet InfiniStore function to store 'value' at key 'key'.
+		writeStart := time.Now()
 		_, ok := ecClient.EcSet(key, value)
 
 		if !ok {
