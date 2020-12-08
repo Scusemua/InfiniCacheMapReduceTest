@@ -659,7 +659,7 @@ def clean_workers(
 
         worker_ips: IPv4 addresses of worker VMs.
     """
-    command = "cd %s/main/;sudo rm WorkerLog*; sudo rm *.dat" % MAPREDUCE_DIRECTORY
+    command = "cd %s/main/;sudo rm WorkerLog*; sudo rm *.dat; sudo rm IOData/*" % MAPREDUCE_DIRECTORY
 
     if parallel_ssh_enabled:
         client = ParallelSSHClient(worker_ips, pkey = key_path, user = "ubuntu")

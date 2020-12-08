@@ -73,6 +73,26 @@ type IORecord struct {
 
 var pattern *regexp.Regexp
 
+var poolCreated = false
+
+var poolLock = &sync.Mutex{}
+var clientPool *serverless.Pool
+
+func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []string, clientPoolCapacity int) {
+	clientPool = serverless.InitPool(&serverless.Pool{
+		New: func() interface{} {
+			cli := client.NewClient(dataShard, parityShard, ecMaxGoroutine)
+			log.Printf("Client created. Dialing addresses now: %v\n", addrArr)
+			cli.Dial(addrArr)
+			log.Printf("Dialed successfully.\n")
+			return cli
+		},
+		Finalize: func(c interface{}) {
+			c.(*client.Client).Close()
+		},
+	}, clientPoolCapacity, serverless.PoolForStrictConcurrency)
+}
+
 // The mapping function is called once for each piece of the input.
 func mapF(s3Key string, text string) (res []KeyValue) {
 	log.Printf("Searching for matches in string \"%s\".\n", text)
@@ -119,14 +139,19 @@ func doMap(
 	s3KeyFile, err = os.Create(S3Key)
 	checkError(err)
 
+	s3_start_time := time.Now()
+
 	// Write the contents of S3 Object to the file
-	n, err := downloader.Download(s3KeyFile, &s3.GetObjectInput{
+	num_bytes_s3, err := downloader.Download(s3KeyFile, &s3.GetObjectInput{
 		Bucket: aws.String("infinistore-mapreduce"),
 		Key:    aws.String(S3Key),
 	})
 	checkError(err)
 
-	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
+	s3_end_time := time.Now()
+	s3_duration := time.Since(s3_start_time)
+
+	log.Printf("File %s downloaded in %d ms, %d bytes\n", S3Key, s3_duration.Nanoseconds() / 1e6, num_bytes_s3)
 
 	Debug("Reading data for S3 key \"%s\" from downloaded file now...\n", S3Key)
 	b, err = ioutil.ReadFile(S3Key)
@@ -140,13 +165,21 @@ func doMap(
 		results[storageKey] = append(results[storageKey], result)
 	}
 
-	ioRecords := make([]IORecord, 0)
+	ioRecords := make([]IORecord, 0, len(results))
+	// Create record for S3.
+	s3rec := IORecord{TaskNum: taskNum, RedisKey: "S3", Bytes: num_bytes_s3, Start: s3_start_time.UnixNano(), End: s3_end_time.UnixNano()}
+	ioRecords = append(ioRecords, s3rec)	
 
-	log.Printf("Creating storage client for IPs: %v\n", storageIPs)
-	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
-	cli.Dial(storageIPs)
+	//log.Printf("Creating storage client for IPs: %v\n", storageIPs)
+	//cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
+	//cli.Dial(storageIPs)
 
-	log.Println("Successfully created storage client.")
+	log.Printf("Mapper getting storage client from client pool now...\n")
+	cli := clientPool.Get().(*client.Client)
+
+	log.Println("Mapper successfully created storage client.")
+	
+	//log.Println("Successfully created storage client.")
 
 	log.Println("Storing results in storage now...")
 
@@ -197,6 +230,8 @@ func doMap(
 		_, err := ioData.WriteString(fmt.Sprintf("%v\n", rec))
 		checkError(err)
 	}	
+
+	clientPool.Put(cli)
 }
 
 // We supply you an ihash function to help with mapping of a given
@@ -218,6 +253,15 @@ func (s grepmService) DoService(raw []byte) error {
 	}
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
 	log.Printf("Compiling the regex pattern \"%s\"\n", args.Pattern)
+
+	poolLock.Lock() 
+	if !poolCreated {
+		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
+		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
+
+		poolCreated = true
+	}
+	poolLock.Unlock()
 
 	// Compile the regex pattern.
 	pattern = regexp.MustCompile(args.Pattern)

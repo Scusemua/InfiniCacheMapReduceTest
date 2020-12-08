@@ -41,6 +41,26 @@ func checkError(err error) {
 
 const debugEnabled = true
 
+var poolCreated = false
+
+var poolLock = &sync.Mutex{}
+var clientPool *serverless.Pool
+
+func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []string, clientPoolCapacity int) {
+	clientPool = serverless.InitPool(&serverless.Pool{
+		New: func() interface{} {
+			cli := client.NewClient(dataShard, parityShard, ecMaxGoroutine)
+			log.Printf("Client created. Dialing addresses now: %v\n", addrArr)
+			cli.Dial(addrArr)
+			log.Printf("Dialed successfully.\n")
+			return cli
+		},
+		Finalize: func(c interface{}) {
+			c.(*client.Client).Close()
+		},
+	}, clientPoolCapacity, serverless.PoolForStrictConcurrency)
+}
+
 func Debug(format string, a ...interface{}) (n int, err error) {
 	if debugEnabled {
 		log.Printf(format, a...)
@@ -88,11 +108,15 @@ func doReduce(
 	parityShards int,
 	maxEcGoroutines int,
 ) {
-	log.Println("Creating storage client for storage ", storageIps)
-	cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
-	cli.Dial(storageIps)
+	//log.Println("Creating storage client for storage ", storageIps)
+	//cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
+	//cli.Dial(storageIps)
 
-	log.Println("Successfully created storage client")
+	//log.Println("Successfully created storage client")
+
+	log.Printf("[REDUCER #%d] Getting storage client from client pool now...\n", reduceTaskNum)
+	cli := clientPool.Get().(*client.Client)
+	log.Printf("[REDUCER #%d] Successfully created storage client\n", reduceTaskNum)	
 
 	ioRecords := make([]IORecord, 0)
 
@@ -250,7 +274,8 @@ func doReduce(
 		checkError(err2)
 	}
 
-	cli.Close()
+	//cli.Close()
+	clientPool.Put(cli)
 }
 
 func exponentialBackoffWrite(key string, value []byte, cli *client.Client) bool {
@@ -288,6 +313,15 @@ func (s greprService) DoService(raw []byte) error {
 		return err
 	}
 	log.Printf("Grep Reducer for Reducer Task # \"%d\"\n", args.TaskNum)
+
+	poolLock.Lock() 
+	if !poolCreated {
+		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
+		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
+
+		poolCreated = true
+	}
+	poolLock.Unlock()
 
 	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines)
 

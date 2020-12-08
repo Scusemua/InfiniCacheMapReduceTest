@@ -148,14 +148,19 @@ func doMap(
 	s3KeyFile, err = os.Create(S3Key)
 	checkError(err)
 
+	s3_start_time := time.Now()
+
 	// Write the contents of S3 Object to the file
-	n, err := downloader.Download(s3KeyFile, &s3.GetObjectInput{
+	num_bytes_s3, err := downloader.Download(s3KeyFile, &s3.GetObjectInput{
 		Bucket: aws.String("infinistore-mapreduce"),
 		Key:    aws.String(S3Key),
 	})
 	checkError(err)
 
-	log.Printf("File %s downloaded, %d bytes\n", S3Key, n)
+	s3_end_time := time.Now()
+	s3_duration := time.Since(s3_start_time)
+
+	log.Printf("File %s downloaded in %d ms, %d bytes\n", S3Key, s3_duration.Nanoseconds() / 1e6, num_bytes_s3)
 
 	// =====================================================================
 	// Storage Client Creation
@@ -183,9 +188,13 @@ func doMap(
 		results[redisKey] = append(results[redisKey], result)
 	}
 
-	ioRecords := make([]IORecord, 0)
-
 	log.Println("Storing results in storage now...")
+
+	ioRecords := make([]IORecord, 0, len(results))
+
+	// Create record for S3.
+	s3rec := IORecord{TaskNum: taskNum, RedisKey: "S3", Bytes: num_bytes_s3, Start: s3_start_time.UnixNano(), End: s3_end_time.UnixNano()}
+	ioRecords = append(ioRecords, s3rec)
 
 	for k, v := range results {
 		var byte_buffer bytes.Buffer
