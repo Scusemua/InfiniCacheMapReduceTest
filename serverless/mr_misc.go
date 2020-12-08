@@ -3,7 +3,7 @@ package serverless
 import (
 	"bufio"
 	"bytes"
-	//"crypto/md5"
+	"crypto/md5"
 	//"encoding/json"
 	"encoding/gob"
 	"fmt"
