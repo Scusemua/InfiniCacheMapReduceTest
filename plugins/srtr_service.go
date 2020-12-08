@@ -301,8 +301,6 @@ func doReduceDriver(
 		readAllCloser.Close()
 		if err != nil {
 			log.Fatal("Unexpected exception during ReadAll() for key \"%s\".\n", dataKey)
-			//log.Printf("ERROR: storage encountered exception for key \"%s\"...", dataKey)
-			//log.Printf("ERROR: Just skipping the key \"%s\"...", dataKey)
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			//continue
 		}

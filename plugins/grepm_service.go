@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/md5"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"encoding/gob"
 	"io/ioutil"
@@ -195,6 +196,7 @@ func doMap(
 		success := false
 		for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 			log.Printf("Attempt %d/%d for write to key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, k)
+			log.Printf("md5 of marshalled result for key \"%s\": %x\n", k, md5.Sum(marshalled_result))
 			_, ok := cli.EcSet(k, marshalled_result)
 
 			if !ok {

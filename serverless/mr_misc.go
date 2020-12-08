@@ -115,7 +115,8 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 					readDuration := time.Since(chunkStart)
 					checkError(err2)
 
-					log.Printf("storage READ CHUNK END. Key: \"%s\", Chunk #: %d, Bytes read: %f, Time: %d ms\n", key, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6)
+					log.Printf("storage READ CHUNK END. Key: \"%s\", Chunk #: %d, Bytes read: %f, Time: %d ms, md5: %x\n", 
+						key, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6, md5.Sum(res))
 
 					//log.Printf("md5 of chunk with key \"%s\": %x\n", key, md5.Sum(all_bytes))
 
@@ -126,7 +127,8 @@ func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, 
 
 				//log.Printf("md5 of all bytes for key \"%s\": %x\n", p, md5.Sum(all_bytes))
 
-				log.Printf("Final size of all %d chunks for key \"%s\" combined together: %f MB.\n", res_int, p, float64(len(all_bytes))/float64(1e6))
+				log.Printf("Final size of all %d chunks for key \"%s\" combined together: %f MB. md5: %x\n", 
+					res_int, p, float64(len(all_bytes))/float64(1e6), md5.Sum(all_bytes))
 
 				//log.Printf("All data for \"%s\":\n%s\n", p, string(all_bytes))
 

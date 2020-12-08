@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/md5"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -219,20 +220,22 @@ func doReduce(
 
 	marshalled_result, err := json.Marshal(results)
 	checkError(err)
-	log.Println("Writing final result to Redis at key", fileName, ". Size:", float64(len(marshalled_result))/float64(1e6), "MB.")
+	log.Printf("Writing final result to Redis at key \"%s\". Size: %f MB. md5: %x\n", 
+		fileName, float64(len(marshalled_result))/float64(1e6), md5.Sum(marshalled_result))
 
 	chunk_threshold := 512 * 1e6
 
 	/* Chunk up the final results if necessary. */
 	if len(marshalled_result) > int(chunk_threshold) {
-		log.Printf("Final result is larger than %dMB. Storing it in pieces...", int(chunk_threshold/1e6))
+		log.Printf("Final result is larger than %d MB. Storing it in pieces.\n", int(chunk_threshold/1e6))
 		chunks := split(marshalled_result, int(chunk_threshold))
 		num_chunks := len(chunks)
 		log.Println("Created", num_chunks, " chunks for final result", fileName)
 		base_key := fileName + "-part"
 		for i, chunk := range chunks {
 			key := base_key + string(i)
-			log.Printf("storage WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB\n", i, key, float64(len(chunk))/float64(1e6))
+			log.Printf("storage WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB. md5: %x\n", 
+				i, key, float64(len(chunk))/float64(1e6), md5.Sum(chunk))
 			start := time.Now()
 			//err := redis_client.Set(key, chunk, 0).Err()
 			//_, ok := cli.EcSet(key, chunk)
@@ -243,7 +246,8 @@ func doReduce(
 			if !success {
 				log.Fatal("\n\nERROR while storing value in storage, key is: \"", key, "\"")
 			}
-			log.Printf("storage WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Size: %f, Time: %v ms \n", i, key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6)
+			log.Printf("storage WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Size: %f, Time: %v ms. md5: %x\n", 
+				i, key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6, md5.Sum(chunk))
 
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: start.UnixNano(), End: end.UnixNano()}
 			ioRecords = append(ioRecords, rec)
