@@ -19,6 +19,7 @@ import (
 	"hash/fnv"
 	"regexp"
 	"strconv"
+	"sync"
 	"log"
 	"os"
 )
@@ -167,7 +168,7 @@ func doMap(
 
 	ioRecords := make([]IORecord, 0, len(results))
 	// Create record for S3.
-	s3rec := IORecord{TaskNum: taskNum, RedisKey: "S3", Bytes: num_bytes_s3, Start: s3_start_time.UnixNano(), End: s3_end_time.UnixNano()}
+	s3rec := IORecord{TaskNum: taskNum, RedisKey: "S3", Bytes: int(num_bytes_s3), Start: s3_start_time.UnixNano(), End: s3_end_time.UnixNano()}
 	ioRecords = append(ioRecords, s3rec)	
 
 	//log.Printf("Creating storage client for IPs: %v\n", storageIPs)
