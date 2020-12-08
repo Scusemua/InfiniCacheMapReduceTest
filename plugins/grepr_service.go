@@ -79,7 +79,7 @@ func reduceF(key string, values []string) string {
 	return res
 }
 
-func (s srtrService) ClosePool() error {
+func (s greprService) ClosePool() error {
 	if clientPool != nil {
 		log.Printf("Closing the srtm_service client pool...")
 		clientPool.Close()

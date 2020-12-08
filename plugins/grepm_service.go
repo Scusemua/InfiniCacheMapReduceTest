@@ -235,7 +235,7 @@ func doMap(
 	clientPool.Put(cli)
 }
 
-func (s srtmService) ClosePool() error {
+func (s grepmService) ClosePool() error {
 	if clientPool != nil {
 		log.Printf("Closing the srtm_service client pool...")
 		clientPool.Close()
