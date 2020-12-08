@@ -243,8 +243,6 @@ func doReduceDriver(
 	// This is used when approximating the final size of the inputs slice.
 	receivedDataForTheFirstTime := false
 
-	var readStart time.Time 
-
 	for i := 0; i < nMap; i++ {
 		// nMap is the number of Map tasks (i.e., the number of S3 keys or # of initial data partitions).
 		// So the variable i here refers to the associated Map task/initial data partition, or where
@@ -256,6 +254,7 @@ func doReduceDriver(
 		//marshalled_result, err := redis_client.Get(dataKey).Result()
 
 		var readAllCloser client.ReadAllCloser
+		var readStart time.Time 
 		var ok bool
 		success := false
 		// Exponential backoff.
@@ -265,7 +264,7 @@ func doReduceDriver(
 			// an object of type ReadAllCloser, and the second element of the tuple is a boolean
 			// which indicates whether or not the read operation went well.
 			log.Printf("[REDUCER #%d] Attempt %d/%d for read key \"%s\".\n", reduceTaskNum, current_attempt, serverless.MaxAttemptsDuringBackoff, dataKey)
-			readStart := time.Now()
+			readStart = time.Now()
 			readAllCloser, ok = cli.Get(dataKey)
 
 			// Check for failure, and backoff exponentially on-failure.
@@ -509,7 +508,7 @@ func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) 
 	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
 		// Call the EcSet InfiniStore function to store 'value' at key 'key'.
-		writeStart := time.Now()
+		writeStart = time.Now()
 		_, ok := ecClient.EcSet(key, value)
 
 		if !ok {

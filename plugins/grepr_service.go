@@ -261,9 +261,9 @@ func doReduce(
 		numberOfChunksSerialized := byte_buffer.Bytes()
 
 		// Store number of chunks at original key.
-		success, writeStart := exponentialBackoffWrite(fileName, num_chunks_serialized, cli)
+		success, writeStart := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli)
 
-		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(num_chunks_serialized), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(numberOfChunksSerialized), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
 		ioRecords = append(ioRecords, rec)	
 
 		if !success {
