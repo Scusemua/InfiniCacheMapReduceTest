@@ -79,6 +79,15 @@ func reduceF(key string, values []string) string {
 	return res
 }
 
+func (s srtmService) ClosePool() error {
+	if clientPool != nil {
+		log.Printf("Closing the srtm_service client pool...")
+		clientPool.Close()
+	}
+
+	return nil
+}
+
 // Used to chunk up the final results to prevent writing huge blocks of data at once.
 // This was more relevant for Redis, as Redis had a hard-limit for key/value size (512MB, I think?).
 func split(buf []byte, lim int) [][]byte {

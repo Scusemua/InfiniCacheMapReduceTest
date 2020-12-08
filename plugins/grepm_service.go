@@ -235,6 +235,15 @@ func doMap(
 	clientPool.Put(cli)
 }
 
+func (s srtmService) ClosePool() error {
+	if clientPool != nil {
+		log.Printf("Closing the srtm_service client pool...")
+		clientPool.Close()
+	}
+
+	return nil
+}
+
 // We supply you an ihash function to help with mapping of a given
 // key to an intermediate file.
 func ihash(s string) int {
