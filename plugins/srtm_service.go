@@ -213,7 +213,7 @@ func doMap(
 		for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 			log.Printf("Attempt %d/%d for write to key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, k)
 			log.Printf("md5 of marshalled result for key \"%s\": %x\n", k, md5.Sum(marshalled_result))
-			writeStart := time.Now()
+			writeStart = time.Now()
 			_, ok := cli.EcSet(k, marshalled_result)
 
 			if !ok {

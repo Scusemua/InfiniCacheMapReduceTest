@@ -242,13 +242,14 @@ func doReduce(
 			key := base_key + string(i)
 			log.Printf("storage WRITE CHUNK START. Chunk #: %d, Key: \"%s\", Size: %f MB. md5: %x\n", i, key, float64(len(chunk))/float64(1e6), md5.Sum(chunk))
 			success, writeStart := exponentialBackoffWrite(key, chunk, cli)
-			writeEnd := time.Since(writeStart)
+			writeDuration := time.Since(writeStart)
+			writeEnd := time.Now()
 			//checkError(err)
 			if !success {
 				log.Fatal("\n\nERROR while storing value in storage, key is: \"", key, "\"")
 			}
 			log.Printf("storage WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Size: %f, Time: %v ms. md5: %x\n", 
-				i, key, float64(len(chunk))/float64(1e6), writeEnd.Nanoseconds()/1e6, md5.Sum(chunk))
+				i, key, float64(len(chunk))/float64(1e6), writeDuration.Nanoseconds()/1e6, md5.Sum(chunk))
 
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
 			ioRecords = append(ioRecords, rec)
@@ -262,7 +263,7 @@ func doReduce(
 		// Store number of chunks at original key.
 		success, writeStart := exponentialBackoffWrite(fileName, num_chunks_serialized, cli)
 
-		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(chunk), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(num_chunks_serialized), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
 		ioRecords = append(ioRecords, rec)	
 
 		if !success {

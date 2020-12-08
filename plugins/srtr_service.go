@@ -460,7 +460,7 @@ func doReduceDriver(
 		// wanna reuse the same code in each location.
 		success, writeStart := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli)
 
-		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(chunk), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(numberOfChunksSerialized), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
 		ioRecords = append(ioRecords, rec)		
 
 		//success := exponentialBackoffWrite(fileName, numberOfChunksSerialized)
