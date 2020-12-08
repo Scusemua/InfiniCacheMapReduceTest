@@ -3,12 +3,17 @@
 #GET_IP_CMD="dig +short myip.opendns.com @resolver1.opendns.com"
 GET_IP_CMD="curl http://169.254.169.254/latest/meta-data/local-ipv4"
 
+# -- Command Line Arguments --
+# (1) The hostname of the Client in the form of a string "<IP>:<PORT>".
+# (2) The number of workers to launch (integer).
+# (3) The starting port for the worker (integer).
+
 IP=$(eval $GET_IP_CMD)
 
 echo "Got IP: $IP"
 
 num_workers=$2
-port=1235
+port=$3
 
 echo "Launching $2 workers..."
 

@@ -25,7 +25,7 @@ import (
 
 type arrayFlags []string
 
-var myFlags arrayFlags
+var storageIps arrayFlags
 
 func (i *arrayFlags) String() string {
 	return strings.Join(*i, ", ")
@@ -58,7 +58,8 @@ func main() {
 	pattern := flag.String("pattern", "[a-zA-Z]+", "Regular expression pattern for Grep. Default is matching one or more letters (uppercase or lowercase) in a row.")
 	clientPoolCapacity := flag.Int("clientPoolCapacity", 10, "Maximum capacity for the pool of InfiniStore clients.")
 	chunkThreshold := flag.Int("chunkThreshold", 512000000, "The size (in bytes) above which we break a piece of data up into chunk-sized pieces and read/write those chunks rather than the entire piece of data all at once.")
-	flag.Var(&myFlags, "storageIps", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
+	usePocket := flag.Bool("usePocket", false, "When set to true, workers will use Pocket for intermediate data storage.")
+	flag.Var(&storageIps, "storageIps", "IP addresses for the intermediate storage (e.g., Redis shards, InfiniStore proxies, Pocket endpoints, etc.). At least one required.")
 	flag.Parse()
 
 	drv := serverless.NewDriver(*driverHostname) // the 1st cmd-line argument: driver hostname and ip addr
@@ -90,7 +91,7 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	go drv.Run(*jobName, *s3KeyFile, *sampleDataKey, *nReduce, *dataShards, *parityShards, *maxGoRoutines, *pattern, *clientPoolCapacity, *chunkThreshold, myFlags)
+	go drv.Run(*jobName, *s3KeyFile, *sampleDataKey, *nReduce, *dataShards, *parityShards, *maxGoRoutines, *pattern, *clientPoolCapacity, *chunkThreshold, *usePocket, storageIps)
 
 	drv.Wait()
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/Scusemua/PythonGoBridge"
 	"math/rand"
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
@@ -127,6 +128,7 @@ func doMap(
 	dataShards int,
 	parityShards int,
 	maxGoRoutines int,
+	usePocket bool,
 	trie serverless.TrieNode,
 ) {
 	var err error
@@ -285,9 +287,15 @@ func (s srtmService) DoService(raw []byte) error {
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
 
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
+	
+	if args.UsePocket {
+		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
+	} else {
+		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
+	}
 
 	poolLock.Lock() 
-	if !poolCreated {
+	if !poolCreated && args.UsePocket {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
@@ -303,7 +311,8 @@ func (s srtmService) DoService(raw []byte) error {
 	// 	DialInfiniStoreClient(args.TaskNum, args.StorageIPs)
 	// }
 
-	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, args.ParityShards, args.MaxGoroutines, trie)
+	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, 
+		args.ParityShards, args.MaxGoroutines, args.UsePocket, trie)
 
 	return nil
 }

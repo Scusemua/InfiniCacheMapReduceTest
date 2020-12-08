@@ -12,6 +12,7 @@ import (
 	"encoding/gob"
 	//"encoding/json"
 	"fmt"
+	"github.com/Scusemua/PythonGoBridge"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"math/rand"
 	//"github.com/go-redis/redis/v7"
@@ -205,6 +206,7 @@ func doReduceDriver(
 	parityShards int,
 	maxEcGoroutines int,
 	chunkThreshold int,
+	usePocket bool,
 ) {
 	// log.Println("Creating Redis client for Redis @ 127.0.0.1:6378")
 	// redis_client := redis.NewClient(&redis.Options{
@@ -550,9 +552,15 @@ func (s srtrService) DoService(raw []byte) error {
 	}
 	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
 
+	if args.UsePocket {
+		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
+	} else {
+		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
+	}
+
 	// Make sure only one worker at a time can check this in order to ensure that the pool has been created.
 	poolLock.Lock()
-	if !poolCreated {
+	if !poolCreated && args.UsePocket {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
@@ -568,7 +576,8 @@ func (s srtrService) DoService(raw []byte) error {
 	// 	DialInfiniStoreClient(args.TaskNum, args.StorageIPs)
 	// }
 
-	doReduceDriver(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines, args.ChunkThreshold)
+	doReduceDriver(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, 
+		args.ParityShards, args.MaxGoroutines, args.ChunkThreshold, args.UsePocket)
 
 	return nil
 }

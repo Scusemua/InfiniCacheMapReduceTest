@@ -39,6 +39,7 @@ func (drv *Driver) schedule(
 	clientPoolCapacity int,
 	pattern string,
 	chunkThreshold int,
+	usePocket bool,
 ) {
 	Debug("Driver: schedule %s\n", phase)
 
@@ -68,6 +69,7 @@ func (drv *Driver) schedule(
 			arg.ParityShards = parityShards
 			arg.MaxGoroutines = maxGoRoutines
 			arg.Pattern = pattern
+			arg.UsePocket = usePocket
 			arg.ChunkThreshold = chunkThreshold
 			jobChan <- arg
 		}
@@ -88,6 +90,7 @@ func (drv *Driver) schedule(
 			arg.ClientPoolCapacity = clientPoolCapacity
 			arg.MaxGoroutines = maxGoRoutines
 			arg.Pattern = pattern
+			arg.UsePocket = usePocket
 			arg.ChunkThreshold = chunkThreshold
 			jobChan <- arg
 		}
@@ -155,7 +158,7 @@ func (drv *Driver) schedule(
 		} else {
 			// Job failed, so put job back in queue to be executed
 			jobChan <- args
-			log.Printf("Schedule: %s task #%d FAILED to execute by %v: %s task #%v\n", phase, args.TaskNum, worker, phase, args.TaskNum)
+			log.Printf("\nSchedule: %s task #%d ***** FAILED ***** to execute by %v: %s task #%v\n", phase, args.TaskNum, worker, phase, args.TaskNum)
 		}
 	}
 

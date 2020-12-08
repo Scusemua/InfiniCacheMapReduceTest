@@ -8,6 +8,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	//"github.com/go-redis/redis/v7"
+	"github.com/Scusemua/PythonGoBridge"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
 	"math/rand"
@@ -21,7 +22,13 @@ import (
 // merge combines the results of the many reduce jobs into a single
 // output file XXX use merge sort
 //func (drv *Driver) merge(redisHostnames []string, dataShards int, parityShards int, maxGoRoutines int) {
-func (drv *Driver) merge(storageIps []string, dataShards int, parityShards int, maxGoRoutines int) {
+func (drv *Driver) merge(
+	storageIps []string, 
+	dataShards int, 
+	parityShards int, 
+	maxGoRoutines int,
+	usePocket bool,
+) {
 	Debug("Merge phase\n")
 	now := time.Now()
 

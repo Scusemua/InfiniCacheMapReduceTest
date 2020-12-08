@@ -275,6 +275,7 @@ func (drv *Driver) run(
 	parityShards int,
 	maxGoRoutines int,
 	storageIps []string,
+	usePocket bool,
 	schedule func(phase jobPhase, serviceName string),
 	finish func(),
 ) {
@@ -321,7 +322,7 @@ func (drv *Driver) run(
 	log.Printf("DURATION OF MAP PHASE + REDUCE PHASE: %d ms", mapReduceDuration/1e6)
 
 	startOfMerge := time.Now()
-	drv.merge(storageIps, dataShards, parityShards, maxGoRoutines)
+	drv.merge(storageIps, dataShards, parityShards, maxGoRoutines, usePocket)
 	mergePhaseDuration := time.Since(startOfMerge)
 
 	jobEndTime := time.Now()
@@ -352,6 +353,7 @@ func (drv *Driver) Run(
 	pattern string,
 	clientPoolCapacity int,
 	chunkThreshold int,
+	usePocket bool,
 	storageIps []string,
 ) {
 	Debug("%s: Starting driver RPC server\n", drv.address)
@@ -378,7 +380,7 @@ func (drv *Driver) Run(
 	// ======================================
 	// Get list of Redis endpoints from file.
 	// ======================================
-	//file2, err2 := os.Open("/home/ubuntu/project/src/InfiniCacheMapReduceTest/main/redis_hosts.txt")
+	// file2, err2 := os.Open("/home/ubuntu/project/src/InfiniCacheMapReduceTest/main/redis_hosts.txt")
 	// file2, err2 := os.Open("/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main/redis_hosts.txt")
 	// checkError(err2)
 
@@ -406,11 +408,11 @@ func (drv *Driver) Run(
 
 	log.Printf("Number of S3 keys: %d\n", len(s3Keys))
 
-	go drv.run(jobName, s3Keys, nReduce, sampleKeys, dataShards, parityShards, maxGoRoutines, storageIps,
+	go drv.run(jobName, s3Keys, nReduce, sampleKeys, dataShards, parityShards, maxGoRoutines, storageIps, usePocket,
 		func(phase jobPhase, serviceName string) { // func schedule()
 			registerChan := make(chan string)
 			go drv.prepareService(registerChan, ServiceName(serviceName, phase))
-			drv.schedule(phase, serviceName, registerChan, dataShards, parityShards, maxGoRoutines, clientPoolCapacity, pattern, chunkThreshold)
+			drv.schedule(phase, serviceName, registerChan, dataShards, parityShards, maxGoRoutines, clientPoolCapacity, pattern, chunkThreshold, usePocket)
 		},
 		func() { // func finish()
 			log.Printf("Driver executing finish() function now. First, killing workers.\n")

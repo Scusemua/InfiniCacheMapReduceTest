@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+	"github.com/Scusemua/PythonGoBridge"
 	"encoding/gob"
 	"io/ioutil"
 	"time"
@@ -120,6 +121,7 @@ func doMap(
 	dataShards int,
 	parityShards int,
 	maxGoRoutines int,
+	usePocket bool,
 ) {
 	var err error
 	var b []byte
@@ -268,8 +270,17 @@ func (s grepmService) DoService(raw []byte) error {
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
 	log.Printf("Compiling the regex pattern \"%s\"\n", args.Pattern)
 
+	// Compile the regex pattern.
+	pattern = regexp.MustCompile(args.Pattern)
+
+	if args.UsePocket {
+		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
+	} else {
+		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
+	}
+
 	poolLock.Lock() 
-	if !poolCreated {
+	if !poolCreated && args.UsePocket {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
@@ -277,10 +288,8 @@ func (s grepmService) DoService(raw []byte) error {
 	}
 	poolLock.Unlock()
 
-	// Compile the regex pattern.
-	pattern = regexp.MustCompile(args.Pattern)
-
-	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, args.ParityShards, args.MaxGoroutines)
+	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, 
+		args.ParityShards, args.MaxGoroutines, args.UsePocket)
 
 	return nil
 }

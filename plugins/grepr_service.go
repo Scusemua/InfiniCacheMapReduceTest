@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"math/rand"
+	"github.com/Scusemua/PythonGoBridge"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
 	"os"
@@ -117,6 +118,7 @@ func doReduce(
 	dataShards int,
 	parityShards int,
 	maxEcGoroutines int,
+	usePocket bool,
 ) {
 	//log.Println("Creating storage client for storage ", storageIps)
 	//cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
@@ -340,8 +342,14 @@ func (s greprService) DoService(raw []byte) error {
 	}
 	log.Printf("Grep Reducer for Reducer Task # \"%d\"\n", args.TaskNum)
 
+	if args.UsePocket {
+		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
+	} else {
+		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
+	}
+
 	poolLock.Lock() 
-	if !poolCreated {
+	if !poolCreated && args.UsePocket {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
@@ -349,7 +357,8 @@ func (s greprService) DoService(raw []byte) error {
 	}
 	poolLock.Unlock()
 
-	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines)
+	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, 
+		args.ParityShards, args.MaxGoroutines, args.UsePocket)
 
 	return nil
 }
