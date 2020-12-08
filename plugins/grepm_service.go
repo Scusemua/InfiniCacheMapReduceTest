@@ -100,7 +100,7 @@ func mapF(s3Key string, text string) (res []KeyValue) {
 	matches := pattern.FindAllString(text, -1)
 
 	for idx, match := range matches {
-			log.Printf("Match #%d: \"%s\".\n", idx, match)
+		//log.Printf("Match #%d: \"%s\".\n", idx, match)
 		res = append(res, KeyValue{text, match})
 	}
 
