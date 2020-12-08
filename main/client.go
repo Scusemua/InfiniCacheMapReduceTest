@@ -62,15 +62,8 @@ func main() {
 	flag.Parse()
 
 	drv := serverless.NewDriver(*driverHostname) // the 1st cmd-line argument: driver hostname and ip addr
-	//jobName := os.Args[2]                   // the 2nd cmd-line argument: MapReduce job name
-	//nReduce, err := strconv.Atoi(os.Args[3])
 
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-
-	//f, err := os.OpenFile("Client-"+string(os.Args[1])+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	f, err := os.OpenFile("Client-"+(*driverHostname)+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile("Client-"+(*driverHostname)+"-"+(*jobName)+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
