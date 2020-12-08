@@ -324,7 +324,7 @@ func exponentialBackoffWrite(key string, value []byte, cli *client.Client) (bool
 		}
 	}
 
-	return (success, writeStart)
+	return success, writeStart
 }
 
 // DON'T MODIFY THIS FUNCTION

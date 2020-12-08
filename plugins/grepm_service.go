@@ -189,16 +189,17 @@ func doMap(
 		gobEncoder := gob.NewEncoder(&byte_buffer)
 		err := gobEncoder.Encode(v)
 		checkError(err)
+		encoded_result := byte_buffer.Bytes()
 		var writeStart time.Time  
-		log.Printf("storage WRITE START. Key: \"%s\", Size: %f \n", k, float64(len(marshalled_result))/float64(1e6))
+		log.Printf("storage WRITE START. Key: \"%s\", Size: %f \n", k, float64(len(encoded_result))/float64(1e6))
 
 		// Exponential backoff.
 		success := false
 		for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 			log.Printf("Attempt %d/%d for write to key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, k)
-			log.Printf("md5 of marshalled result for key \"%s\": %x\n", k, md5.Sum(marshalled_result))
+			log.Printf("md5 of marshalled result for key \"%s\": %x\n", k, md5.Sum(encoded_result))
 			writeStart = time.Now()
-			_, ok := cli.EcSet(k, marshalled_result)
+			_, ok := cli.EcSet(k, encoded_result)
 
 			if !ok {
 				max_duration := (2 << uint(current_attempt + 4)) - 1
@@ -221,8 +222,8 @@ func doMap(
 
 		writeDuration := time.Since(writeStart)
 		writeEnd := time.Now()
-		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", k, float64(len(marshalled_result))/float64(1e6), writeDuration.Nanoseconds()/1e6)
-		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
+		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", k, float64(len(encoded_result))/float64(1e6), writeDuration.Nanoseconds()/1e6)
+		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(encoded_result), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 	}
 	

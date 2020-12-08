@@ -527,7 +527,7 @@ func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) 
 		}
 	}
 
-	return success
+	return success, writeStart
 }
 
 func (s srtrService) ClosePool() error {
