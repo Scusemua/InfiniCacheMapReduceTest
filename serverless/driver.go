@@ -434,12 +434,12 @@ func (drv *Driver) Run(
 			log.Printf("Workers killed. Next, stopping RPC server.\n")
 			drv.stopRPCServer()
 			log.Printf("RPC server stopped. Next, deregistering job from Pocket.\n")
-			res := PythonGoBridge.DeregisterJob(pocketJobId)
-			if res == 0 {
-				log.Printf("Job deregistered successfully.\n")
-			} else {
-				log.Printf("[ERROR] Job failed to deregister successfully.\n")
-			}
+			// res := PythonGoBridge.DeregisterJob(pocketJobId)
+			// if res == 0 {
+			// 	log.Printf("Job deregistered successfully.\n")
+			// } else {
+			// 	log.Printf("[ERROR] Job failed to deregister successfully.\n")
+			// }
 		})
 }
 
