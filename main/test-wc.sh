@@ -18,7 +18,7 @@ OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
 # Initialize our variables:
 KEY_FILE=/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt # S3 key of input data.
-NUM_WORKERS=5
+NUM_WORKERS=10
 
 while getopts "h?fn:" opt; do
     case "$opt" in
