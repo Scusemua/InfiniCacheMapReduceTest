@@ -208,6 +208,7 @@ func doMap(
 			log.Printf("Attempt %d/%d for write to key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, k)
 			log.Printf("md5 of marshalled result for key \"%s\": %x\n", k, md5.Sum(encoded_result))
 			writeStart = time.Now()
+			// IOHERE - This is a write (k is the key, it is a string, encoded_result is the value, it is []byte).
 			_, ok := cli.EcSet(k, encoded_result)
 
 			if !ok {

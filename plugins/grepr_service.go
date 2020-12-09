@@ -7,17 +7,20 @@ import (
 	"crypto/md5"
 	"encoding/gob"
 	"fmt"
-	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"math/rand"
+
+	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+
 	//"github.com/Scusemua/PythonGoBridge"
-	"github.com/mason-leap-lab/infinicache/client"
 	"log"
 	"os"
 	"sort"
-	"sync"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/mason-leap-lab/infinicache/client"
 )
 
 type greprService string
@@ -128,7 +131,7 @@ func doReduce(
 
 	log.Printf("[REDUCER #%d] Getting storage client from client pool now...\n", reduceTaskNum)
 	cli := clientPool.Get().(*client.Client)
-	log.Printf("[REDUCER #%d] Successfully created storage client\n", reduceTaskNum)	
+	log.Printf("[REDUCER #%d] Successfully created storage client\n", reduceTaskNum)
 
 	ioRecords := make([]IORecord, 0)
 
@@ -141,7 +144,7 @@ func doReduce(
 		dataKey := serverless.ReduceName(jobName, i, reduceTaskNum)
 
 		var kvs []KeyValue
-		var readStart time.Time 
+		var readStart time.Time
 		log.Printf("storage READ START. Key: \"%s\", Reduce Task #: %d.", dataKey, reduceTaskNum)
 		var readAllCloser client.ReadAllCloser
 		var ok bool
@@ -150,6 +153,7 @@ func doReduce(
 		for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 			log.Printf("Attempt %d/%d for read key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, dataKey)
 			readStart = time.Now()
+			// IOHERE - This is a read (dataKey is the key, it is a string).
 			readAllCloser, ok = cli.Get(dataKey)
 
 			// Check for failure, and backoff exponentially on-failure.
@@ -179,7 +183,7 @@ func doReduce(
 		if err != nil {
 			log.Printf("ERROR: storage encountered exception for key \"%s\"...", "addr", dataKey)
 			log.Printf("ERROR: Just skipping the key \"%s\"...", dataKey)
-			
+
 			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
 			continue
 		}
@@ -228,7 +232,7 @@ func doReduce(
 	checkError(err)
 	encoded_result := byte_buffer.Bytes()
 
-	log.Printf("Writing final result to Redis at key \"%s\". Size: %f MB. md5: %x\n", 
+	log.Printf("Writing final result to Redis at key \"%s\". Size: %f MB. md5: %x\n",
 		fileName, float64(len(encoded_result))/float64(1e6), md5.Sum(encoded_result))
 
 	chunk_threshold := 512 * 1e6
@@ -250,7 +254,7 @@ func doReduce(
 			if !success {
 				log.Fatal("\n\nERROR while storing value in storage, key is: \"", key, "\"")
 			}
-			log.Printf("storage WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Size: %f, Time: %v ms. md5: %x\n", 
+			log.Printf("storage WRITE CHUNK END. Chunk #: %d, Key: \"%s\", Size: %f, Time: %v ms. md5: %x\n",
 				i, key, float64(len(chunk))/float64(1e6), writeDuration.Nanoseconds()/1e6, md5.Sum(chunk))
 
 			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: key, Bytes: len(chunk), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
@@ -266,7 +270,7 @@ func doReduce(
 		success, writeStart := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli)
 
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(numberOfChunksSerialized), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
-		ioRecords = append(ioRecords, rec)	
+		ioRecords = append(ioRecords, rec)
 
 		if !success {
 			log.Fatal("ERROR while storing value in storage, key is: \"", fileName, "\"")
@@ -301,19 +305,20 @@ func doReduce(
 	clientPool.Put(cli)
 }
 
-// Return bool indicating success as well as the value of time.Now() when 
+// Return bool indicating success as well as the value of time.Now() when
 // either the successful write operation began or when the last write operation (that ended
 // up ultimately failing) began.
 func exponentialBackoffWrite(key string, value []byte, cli *client.Client) (bool, time.Time) {
 	success := false
-	var writeStart time.Time 
+	var writeStart time.Time
 	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
 		writeStart = time.Now()
+		// IOHERE - This is a write (key is the key, it is a string, value is the value, it is []byte).
 		_, ok := cli.EcSet(key, value)
 
 		if !ok {
-			max_duration := (2 << uint(current_attempt + 4)) - 1
+			max_duration := (2 << uint(current_attempt+4)) - 1
 			if max_duration > serverless.MaxBackoffSleepWrites {
 				max_duration = serverless.MaxBackoffSleepWrites
 			}
@@ -348,7 +353,7 @@ func (s greprService) DoService(raw []byte) error {
 		log.Printf("=-=-= USING INFINISTORE FOR INTERMEDIATE DATA STORAGE =-=-=\n")
 	}
 
-	poolLock.Lock() 
+	poolLock.Lock()
 	if !poolCreated && args.UsePocket {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
@@ -357,7 +362,7 @@ func (s greprService) DoService(raw []byte) error {
 	}
 	poolLock.Unlock()
 
-	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, 
+	doReduce(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards,
 		args.ParityShards, args.MaxGoroutines, args.UsePocket)
 
 	return nil

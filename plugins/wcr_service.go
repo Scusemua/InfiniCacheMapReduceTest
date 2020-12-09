@@ -187,6 +187,7 @@ func doReduceDriver(
 			// which indicates whether or not the read operation went well.
 			log.Printf("[REDUCER #%d] Attempt %d/%d for read key \"%s\".\n", reduceTaskNum, current_attempt, serverless.MaxAttemptsDuringBackoff, dataKey)
 			readStart = time.Now()
+			// IOHERE - This is a read (dataKey is the key, it is a string).
 			readAllCloser, ok = cli.Get(dataKey)
 
 			// Check for failure, and backoff exponentially on-failure.
@@ -429,6 +430,7 @@ func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) 
 		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
 		// Call the EcSet InfiniStore function to store 'value' at key 'key'.
 		writeStart = time.Now()
+		// IOHERE - This is a write (key is the key, it is a string, value is the value, it is []byte).
 		_, ok := ecClient.EcSet(key, value)
 
 		if !ok {

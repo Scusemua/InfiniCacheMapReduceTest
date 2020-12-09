@@ -445,6 +445,26 @@ def git_status(ips, key_path = KEYFILE_PATH):
     command = "cd %s; git status" % INFINISTORE_DIRECTORY
     execute_command(command, 3, get_pty = True, ips = ips, key_path = key_path)
 
+def build_infinistore(ips, count_limit = 1, key_path = KEYFILE_PATH):
+    """
+    Execute the ./build.sh script in the /plugins directory of the MapReduce library on each of the
+    given VMs, as specified by their IP addresses in the ips parameter.
+
+    Arguments:
+        ips (list of string): The IPs of the VM's you want to build the MapReduce framework on.
+
+        key_path (str): Path to your SSH key.
+    """
+    print("Executing /plugins/build.sh for the MapReduce framework on %d VMs." % len(ips))
+    command = "cd %s/evaluation; export PATH=$PATH:/usr/local/go/bin; make build" % INFINISTORE_DIRECTORY
+
+    if parallel_ssh_enabled:
+        client = ParallelSSHClient(ips, pkey = key_path, user = "ubuntu")
+        client.run_command(command)
+        del client
+    else:
+        execute_command(command, count_limit, get_pty = True, ips = ips, key_path = key_path)   
+    
 def build_mapreduce(ips, count_limit = 1, key_path = KEYFILE_PATH):
     """
     Execute the ./build.sh script in the /plugins directory of the MapReduce library on each of the
@@ -984,6 +1004,7 @@ This will download all of the metadata to a folder MapReduceProjectRoot/util/IOD
 # Updating the Lambdas
 # ====================
 # mrd.build_mapreduce(worker_ips + [client_ip])
+# mrd.build_infinistore(worker_ips + [client_ip])
 # mrd.update_lambdas(worker_ips + [client_ip])
 # mrd.update_lambdas_prefixed(worker_ips + [client_ip])
 # mrd.update_lambdas(worker_ips) # Workers only, so we can do manually on client to see progress.

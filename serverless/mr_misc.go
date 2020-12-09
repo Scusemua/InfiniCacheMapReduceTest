@@ -4,17 +4,21 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/md5"
+
 	//"encoding/json"
 	"encoding/gob"
 	"fmt"
+
 	//"github.com/go-redis/redis/v7"
 	//"github.com/Scusemua/PythonGoBridge"
-	"github.com/mason-leap-lab/infinicache/client"
 	"log"
 	"math/rand"
 	"os"
 	"sort"
 	"strconv"
+
+	"github.com/mason-leap-lab/infinicache/client"
+
 	//"strings"
 	"time"
 )
@@ -23,9 +27,9 @@ import (
 // output file XXX use merge sort
 //func (drv *Driver) merge(redisHostnames []string, dataShards int, parityShards int, maxGoRoutines int) {
 func (drv *Driver) merge(
-	storageIps []string, 
-	dataShards int, 
-	parityShards int, 
+	storageIps []string,
+	dataShards int,
+	parityShards int,
 	maxGoRoutines int,
 	usePocket bool,
 ) {
@@ -67,7 +71,7 @@ func (drv *Driver) merge(
 		if reader == nil {
 			log.Printf("WARNING: Key \"%s\" does not exist.\n", p)
 			log.Printf("Skipping for now...")
-			continue 
+			continue
 		}
 
 		result, err2 := reader.ReadAll()
@@ -80,7 +84,7 @@ func (drv *Driver) merge(
 
 		firstReadDuration := time.Since(start)
 
-		var res_int int	// If wecoding to []KeyValue fails, we'll try to decode an int in case everything was chunked.
+		var res_int int // If wecoding to []KeyValue fails, we'll try to decode an int in case everything was chunked.
 		results := make([]KeyValue, 0)
 
 		log.Println("Unmarshalling data retrieved from storage now...")
@@ -98,7 +102,7 @@ func (drv *Driver) merge(
 		if err != nil {
 			byte_buffer_res := bytes.NewBuffer(result)
 			gobDecoder := gob.NewDecoder(byte_buffer_res)
-			err = gobDecoder.Decode(&res_int)		
+			err = gobDecoder.Decode(&res_int)
 			//err = json.Unmarshal([]byte(result), &res_int)
 
 			if err != nil {
@@ -122,7 +126,7 @@ func (drv *Driver) merge(
 					readDuration := time.Since(chunkStart)
 					checkError(err2)
 
-					log.Printf("storage READ CHUNK END. Key: \"%s\", Chunk #: %d, Bytes read: %f, Time: %d ms, md5: %x\n", 
+					log.Printf("storage READ CHUNK END. Key: \"%s\", Chunk #: %d, Bytes read: %f, Time: %d ms, md5: %x\n",
 						key, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6, md5.Sum(res))
 
 					//log.Printf("md5 of chunk with key \"%s\": %x\n", key, md5.Sum(all_bytes))
@@ -134,14 +138,14 @@ func (drv *Driver) merge(
 
 				//log.Printf("md5 of all bytes for key \"%s\": %x\n", p, md5.Sum(all_bytes))
 
-				log.Printf("Final size of all %d chunks for key \"%s\" combined together: %f MB. md5: %x\n", 
+				log.Printf("Final size of all %d chunks for key \"%s\" combined together: %f MB. md5: %x\n",
 					res_int, p, float64(len(all_bytes))/float64(1e6), md5.Sum(all_bytes))
 
 				//log.Printf("All data for \"%s\":\n%s\n", p, string(all_bytes))
 
 				byte_buffer_res := bytes.NewBuffer(all_bytes)
 				gobDecoder := gob.NewDecoder(byte_buffer_res)
-				err := gobDecoder.Decode(&results)		
+				err := gobDecoder.Decode(&results)
 				//err = json.Unmarshal(all_bytes, &results)
 
 				if err != nil {
@@ -189,6 +193,7 @@ func readExponentialBackoff(key string, cli *client.Client) (client.ReadAllClose
 	// Exponential backoff.
 	for current_attempt := 0; current_attempt < MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for read to key \"%s\".\n", current_attempt, MaxAttemptsDuringBackoff, key)
+		// IOHERE - This is a read (key is the key, it is a string).
 		readAllCloser, ok = cli.Get(key)
 
 		// Check for failure, and backoff exponentially on-failure.
