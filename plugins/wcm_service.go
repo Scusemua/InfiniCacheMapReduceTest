@@ -15,26 +15,30 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
+
 	//"encoding/json"
 	"crypto/md5"
 	"fmt"
 	"hash/fnv"
+	"math/rand"
+
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"math/rand"
+
 	//"github.com/go-redis/redis/v7"
-	"github.com/mason-leap-lab/infinicache/client"
 	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
-	"sync"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
+
+	"github.com/mason-leap-lab/infinicache/client"
 )
 
 var clientCreated = false // Has this InfiniStore client been created yet?
@@ -59,8 +63,6 @@ func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []stri
 	}, clientPoolCapacity, serverless.PoolForStrictConcurrency)
 }
 
-
-
 // To compile the map plugin: run:
 // go build --buildmode=plugin -o wcm_service.so wcm_service.go
 
@@ -84,18 +86,18 @@ type wcmService string
 
 // MapReduceArgs defines this plugin's argument format
 // type MapReduceArgs struct {
-	// 	JobName       string
-	// 	S3Key         string
-	// 	TaskNum       int
-	// 	NReduce       int
-	// 	NOthers       int
-	// 	SampleKeys    []string
-	// 	StorageIPs    []string
-	// 	DataShards    int
-	// 	ParityShards  int
-	// 	MaxGoroutines int
-	// 	Pattern 	  string 
-	// }
+// 	JobName       string
+// 	S3Key         string
+// 	TaskNum       int
+// 	NReduce       int
+// 	NOthers       int
+// 	SampleKeys    []string
+// 	StorageIPs    []string
+// 	DataShards    int
+// 	ParityShards  int
+// 	MaxGoroutines int
+// 	Pattern 	  string
+// }
 
 type KeyValue struct {
 	Key   string
@@ -172,7 +174,7 @@ func doMap(
 	s3_end_time := time.Now()
 	s3_duration := time.Since(s3_start_time)
 
-	log.Printf("File %s downloaded in %d ms, %d bytes\n", S3Key, s3_duration.Nanoseconds() / 1e6, num_bytes_s3)
+	log.Printf("File %s downloaded in %d ms, %d bytes\n", S3Key, s3_duration.Nanoseconds()/1e6, num_bytes_s3)
 
 	// =====================================================================
 	// Storage Client Creation
@@ -217,7 +219,7 @@ func doMap(
 		//marshalled_result, err := json.Marshal(v)
 		//checkError(err)
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f \n", k, float64(len(marshalled_result))/float64(1e6))
-		var writeStart time.Time 
+		var writeStart time.Time
 		//err = redis_client.Set(k, marshalled_result, 0).Err()
 
 		// Exponential backoff.
@@ -253,7 +255,7 @@ func doMap(
 		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(marshalled_result), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 	}
-	
+
 	Debug("Writing metric data to file now...\n")
 	ioData, err = os.Create("IOData/map_io_data_" + jobName + strconv.Itoa(taskNum) + ".dat")
 	checkError(err)
@@ -298,10 +300,10 @@ func (s wcmService) DoService(raw []byte) error {
 	if args.UsePocket {
 		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
 	} else {
-		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
+		log.Printf("=-=-= USING INFINISTORE FOR INTERMEDIATE DATA STORAGE =-=-=\n")
 	}
 
-	poolLock.Lock() 
+	poolLock.Lock()
 	if !poolCreated {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
@@ -310,7 +312,7 @@ func (s wcmService) DoService(raw []byte) error {
 	}
 	poolLock.Unlock()
 
-	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, 
+	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce,
 		args.DataShards, args.ParityShards, args.MaxGoroutines)
 
 	return nil

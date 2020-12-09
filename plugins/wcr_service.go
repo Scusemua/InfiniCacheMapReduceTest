@@ -16,10 +16,13 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/gob"
+
 	//"encoding/json"
 	"fmt"
-	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"math/rand"
+
+	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
 	//infinicache "github.com/mason-leap-lab/infinicache/client"
@@ -161,7 +164,7 @@ func doReduceDriver(
 	// We flip this to true the first time we receive at least one element from a mapper.
 	// This is used when approximating the final size of the inputs slice.
 	receivedDataForTheFirstTime := false
-	
+
 	for i := 0; i < nMap; i++ {
 		// nMap is the number of Map tasks (i.e., the number of S3 keys or # of initial data partitions).
 		// So the variable i here refers to the associated Map task/initial data partition, or where
@@ -173,7 +176,7 @@ func doReduceDriver(
 		//marshalled_result, err := redis_client.Get(dataKey).Result()
 
 		var readAllCloser client.ReadAllCloser
-		var readStart time.Time 
+		var readStart time.Time
 		var ok bool
 		success := false
 		// Exponential backoff.
@@ -300,7 +303,7 @@ func doReduceDriver(
 		// for-loop, we don't call doReduce, we just set value of lastKey. Then on second iteration, we call
 		// doReduce for the FIRST (0th) input.
 		results[i-1] = *new_kv // = append(results, *new_kv)
-	}	
+	}
 
 	log.Printf("[REDUCER #%d] Performing Reduce() function now. There are %d inputs.\n", reduceTaskNum, len(inputs))
 
@@ -379,7 +382,7 @@ func doReduceDriver(
 		success, writeStart := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli)
 
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(numberOfChunksSerialized), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
-		ioRecords = append(ioRecords, rec)		
+		ioRecords = append(ioRecords, rec)
 
 		//success := exponentialBackoffWrite(fileName, numberOfChunksSerialized)
 		if !success {
@@ -421,7 +424,7 @@ func doReduceDriver(
 func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) (bool, time.Time) {
 	//func exponentialBackoffWrite(key string, value []byte) bool {
 	success := false
-	var writeStart time.Time 
+	var writeStart time.Time
 	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
 		// Call the EcSet InfiniStore function to store 'value' at key 'key'.
@@ -470,7 +473,7 @@ func (s wcrService) DoService(raw []byte) error {
 	if args.UsePocket {
 		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
 	} else {
-		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
+		log.Printf("=-=-= USING INFINISTORE FOR INTERMEDIATE DATA STORAGE =-=-=\n")
 	}
 
 	// Make sure only one worker at a time can check this in order to ensure that the pool has been created.
