@@ -1,9 +1,12 @@
-package serverless 
+package serverless
 
 import (
 	//"log"
 	//"fmt"
 	"encoding/gob"
+	"fmt"
+	"os"
+	"os/exec"
 )
 
 const FILEPATH = "intermediate_data/"
@@ -16,16 +19,15 @@ func RegisterJob(jobName string, numLambdas int, capacityGB int, peakMbps int, l
 	fmt.Println(cmd.Args)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Println(err);
+		fmt.Println(err)
 	}
 
 	fmt.Println(string(out))
 
-	// TODO: Adjust this, as out will be the entire output of the Pocket 
+	// TODO: Adjust this, as out will be the entire output of the Pocket
 	// function call rather than JUST the jobId, which is what we want.
 	return string(out)
 }
-
 
 // Steps:
 // Create local file.
@@ -42,8 +44,7 @@ func Set(key string, value []byte, jobid string) {
 	encoder.Encode(value)
 	// Close the file explicitly so we can hand it over to Pocket!
 	file.Close()
-	
-	python_command := fmt.Sprintf("import pocket; print pocket.put()
-		jobName, numLambdas, capacityGB, peakMbps, latency_sensitive)
-	cmd := exec.Command("python3", "-c", python_command)
+
+	//python_command := fmt.Sprintf("import pocket; print pocket.put(jobName, numLambdas, capacityGB, peakMbps, latency_sensitive)
+	//cmd := exec.Command("python3", "-c", python_command)
 }
