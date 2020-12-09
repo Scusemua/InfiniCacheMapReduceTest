@@ -19,12 +19,13 @@ OPTIND=1         # Reset in case getopts has been used previously in the shell.
 # Initialize our variables:
 KEY_FILE=/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt # S3 key of input data.
 PATTERN="[a-zA-Z]+" # Regular expression pattern for grep.
-NUM_WORKERS=1 
+NUM_WORKERS=5
 
 while getopts "h?fn:" opt; do
     case "$opt" in
     h|\?)
         echo "-f <key_file> for s3 key file (input data stored in AWS S3)"
+        echo "-n <num_workers> number of workers"
         exit 0
         ;;
     f)  KEY_FILE=$OPTARG

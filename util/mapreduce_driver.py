@@ -706,16 +706,16 @@ def launch_workers(
     #post_command = "cd /home/ubuntu/project/src/InfiniCacheMapReduceTest/main/;pwd;./start-workers.sh {}:1234 {}".format(client_ip, workers_per_vm)
     post_command = "cd {}/main/;export PATH=$PATH:/usr/local/go/bin;./start-workers.sh {}:1234 {} > /dev/null".format(MAPREDUCE_DIRECTORY, client_ip, workers_per_vm)
 
-    # if parallel_ssh_enabled:
-    #     print("Full command: {}".format(post_command))
-    #     client = ParallelSSHClient(worker_ips, pkey = key_path, user = "ubuntu")
-    #     client.run_command(post_command)
-    #     del client
-    # else:
-    for ip in worker_ips:
-        command = "launch_workers.sh \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"" % (MAPREDUCE_DIRECTORY, client_ip, workers_per_vm, key_path, ip, "ubuntu")
-        print("About to execute command:\n %s" % command)
-        subprocess.run(command, shell=True)
+    if parallel_ssh_enabled:
+        print("Full command: {}".format(post_command))
+        client = ParallelSSHClient(worker_ips, pkey = key_path, user = "ubuntu")
+        client.run_command(post_command)
+        del client
+    else:
+        for ip in worker_ips:
+            command = "launch_workers.sh \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"" % (MAPREDUCE_DIRECTORY, client_ip, workers_per_vm, key_path, ip, "ubuntu")
+            print("About to execute command:\n %s" % command)
+            subprocess.run(command, shell=True)
 
     # execute_command(
     #     command = command,
@@ -1044,19 +1044,19 @@ if __name__ == "__main__":
 
 # Six-node SORT Commands ** REMEMBER TO CHANGE -nReduce PARAMETER **
 # 1 MB
-# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.79.125:6378 -storageIps 10.0.70.204:6378 -storageIps 10.0.91.38:6378 -storageIps 10.0.84.148:6378 -storageIps 10.0.94.242:6378 -storageIps 10.0.89.241:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.110.170:6378 -storageIps 10.0.102.8:6378 -storageIps 10.0.105.108:6378 -storageIps 10.0.117.187:6378 -storageIps 10.0.103.53:6378 -storageIps 10.0.108.69:6378
 # 100 MB
-# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.79.125:6378 -storageIps 10.0.70.204:6378 -storageIps 10.0.91.38:6378 -storageIps 10.0.84.148:6378 -storageIps 10.0.94.242:6378 -storageIps 10.0.89.241:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100MB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.110.170:6378 -storageIps 10.0.102.8:6378 -storageIps 10.0.105.108:6378 -storageIps 10.0.117.187:6378 -storageIps 10.0.103.53:6378 -storageIps 10.0.108.69:6378
 # 10 GB
-# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.79.125:6378 -storageIps 10.0.70.204:6378 -storageIps 10.0.91.38:6378 -storageIps 10.0.84.148:6378 -storageIps 10.0.94.242:6378 -storageIps 10.0.89.241:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.110.170:6378 -storageIps 10.0.102.8:6378 -storageIps 10.0.105.108:6378 -storageIps 10.0.117.187:6378 -storageIps 10.0.103.53:6378 -storageIps 10.0.108.69:6378
 # 20 GB
-# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.79.125:6378 -storageIps 10.0.70.204:6378 -storageIps 10.0.91.38:6378 -storageIps 10.0.84.148:6378 -storageIps 10.0.94.242:6378 -storageIps 10.0.89.241:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/10GB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.110.170:6378 -storageIps 10.0.102.8:6378 -storageIps 10.0.105.108:6378 -storageIps 10.0.117.187:6378 -storageIps 10.0.103.53:6378 -storageIps 10.0.108.69:6378
 # 50 GB
-# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/50GB_50Partitions_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.79.125:6378 -storageIps 10.0.70.204:6378 -storageIps 10.0.91.38:6378 -storageIps 10.0.84.148:6378 -storageIps 10.0.94.242:6378 -storageIps 10.0.89.241:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/50GB_50Partitions_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.110.170:6378 -storageIps 10.0.102.8:6378 -storageIps 10.0.105.108:6378 -storageIps 10.0.117.187:6378 -storageIps 10.0.103.53:6378 -storageIps 10.0.108.69:6378
 # 100 GB
-# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.79.125:6378 -storageIps 10.0.70.204:6378 -storageIps 10.0.91.38:6378 -storageIps 10.0.84.148:6378 -storageIps 10.0.94.242:6378 -storageIps 10.0.89.241:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.110.170:6378 -storageIps 10.0.102.8:6378 -storageIps 10.0.105.108:6378 -storageIps 10.0.117.187:6378 -storageIps 10.0.103.53:6378 -storageIps 10.0.108.69:6378
 
-# go run client.go -driverHostname 10.0.116.159:1234 -jobName grep -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.79.125:6378 -storageIps 10.0.70.204:6378 -storageIps 10.0.91.38:6378 -storageIps 10.0.84.148:6378 -storageIps 10.0.94.242:6378 -storageIps 10.0.89.241:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName wc -nReduce 84 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.110.170:6378 -storageIps 10.0.102.8:6378 -storageIps 10.0.105.108:6378 -storageIps 10.0.117.187:6378 -storageIps 10.0.103.53:6378 -storageIps 10.0.108.69:6378
 
 # Change the 'jobName' parameter depending on what job you want to run. For TeraSort, it is 'srt'.
 # For grep, it is 'grep'. For Word Count, it is 'wc'. Basically, it is the prefix of the two service
