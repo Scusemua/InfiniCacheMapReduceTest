@@ -10,11 +10,14 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/gob"
+
 	//"encoding/json"
 	"fmt"
 	//"github.com/Scusemua/PythonGoBridge"
-	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"math/rand"
+
+	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
 	//infinicache "github.com/mason-leap-lab/infinicache/client"
@@ -256,7 +259,7 @@ func doReduceDriver(
 		//marshalled_result, err := redis_client.Get(dataKey).Result()
 
 		var readAllCloser client.ReadAllCloser
-		var readStart time.Time 
+		var readStart time.Time
 		var ok bool
 		success := false
 		// Exponential backoff.
@@ -462,7 +465,7 @@ func doReduceDriver(
 		success, writeStart := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli)
 
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(numberOfChunksSerialized), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
-		ioRecords = append(ioRecords, rec)		
+		ioRecords = append(ioRecords, rec)
 
 		//success := exponentialBackoffWrite(fileName, numberOfChunksSerialized)
 		if !success {
@@ -506,7 +509,7 @@ func doReduceDriver(
 func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) (bool, time.Time) {
 	//func exponentialBackoffWrite(key string, value []byte) bool {
 	success := false
-	var writeStart time.Time 
+	var writeStart time.Time
 	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
 		// Call the EcSet InfiniStore function to store 'value' at key 'key'.
@@ -560,7 +563,7 @@ func (s srtrService) DoService(raw []byte) error {
 
 	// Make sure only one worker at a time can check this in order to ensure that the pool has been created.
 	poolLock.Lock()
-	if !poolCreated && args.UsePocket {
+	if !poolCreated && !args.UsePocket {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
@@ -576,7 +579,7 @@ func (s srtrService) DoService(raw []byte) error {
 	// 	DialInfiniStoreClient(args.TaskNum, args.StorageIPs)
 	// }
 
-	doReduceDriver(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, 
+	doReduceDriver(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards,
 		args.ParityShards, args.MaxGoroutines, args.ChunkThreshold, args.UsePocket)
 
 	return nil
