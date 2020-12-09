@@ -905,6 +905,54 @@ def download_io_data(prefix, ips = [], key_path = KEYFILE_PATH):
         print("About to execute command:\n %s" % command)
         subprocess.run(command, shell=True)
 
+"""
+==== GENERAL RUNNING INSTRUCTIONS ===
+I usually run these script from my personal laptop or desktop. I always run the scripts
+from a Python3 interactive terminal. I start by opening the interactive session (e.g., type
+python3 in terminal/command-line). I then copy-and-paste all of the import statements at the top of
+this file into the interactive session.
+
+Next, you need to collect all of the IP addresses of your VMs so you can execute SSH commands on them.
+This is done automatically for you, provided you have the proper Python libraries installed (boto3, 
+namely).
+
+In the code below (after the "if __name__ == '__main__':" part), I have labeled the various 
+blocks of code that you'll run as BLOCK 1, BLOCk 2, ..., BLOCK N. I will use these labels
+when discussing them.
+
+Block 1 will gather all of the IPs of your VMs. Of the VMs you use for MapReduce, one will serve
+as the so-called Client/Scheduler while the others are workers. Identify the VM you will use as
+your client, as these scripts treat that VM differently, and the VM is identified via its IP address.
+
+When gathering the IPs by executing the code in BLOCK 1, you will see a list of IPs. Basically,
+the client_ip variables need to take on the value of the client VM while the rest are workers.
+I usually pick the first or last VM in the list to be my client, as this makes it easy to
+assign client_ip = ip[0] (make client the first vm).
+
+So execute one of the code blocks in BLOCK 2, whichever makes sense. You may need to modify them
+if the client IP is in the middle of the list. You also may need to manually remove the IPs of VMs
+used by Pocket (since you presumably don't want to run workers on those VMs).
+
+Block 4 prints out all of the data you just collected so you can view it. The "param" variable won't
+be used by Pocket, so you can ignore that.
+
+Once you've gotten your list of worker IPs, I would SSH onto the Client, go into the MapReduce project
+root directory, then go into the main folder. It is here that you will run the client. There are a
+bunch of pre-configured commands for running the client below so you can copy-and-paste them. They
+alll have a bunch of -storageParameter command-line parameters. You can either include these or 
+remove them. They're for InfiniStore.
+
+After starting the client, I'd just execute the line of code in Block 7. That'll start the workers,
+and thus start the job. That should be it. Watch the client output for errors or to see when it
+finishes. Timing information for the job phases (map, reduce, merge) will be printed out.
+
+You can download the IO metadata by executing the command:
+
+mrd.download_io_data(experiment_prefix, ips = worker_ips + [client_ip])
+
+This will download all of the metadata to a folder MapReduceProjectRoot/util/IOData/experiment_prefix/.
+"""
+
 # =========================================================
 # Quick reference, copy-and-paste these commands as needed.
 # =========================================================
@@ -912,32 +960,45 @@ def download_io_data(prefix, ips = [], key_path = KEYFILE_PATH):
 # They are commented out bc otherwise they would be executed when we import 
 # mapreduce_driver.py into our Python terminal session.
 
+# ====================
 # Post-Experiment:
+# ====================
 # mrd.download_io_data(experiment_prefix, ips = worker_ips + [client_ip])
 
-# Clean-up:
+# =======================
+# Clean-up (after jobs):
+# =======================
 # mrd.clear_redis_instances(flushall = True, hostnames = hostnames)
 # mrd.clean_workers(worker_ips = worker_ips)
 # mrd.kill_proxies(ips = worker_ips + [client_ip])
 # mrd.kill_go_processes(ips = worker_ips + [client_ip])
 
+# ====================
 # Pulling from Github:
+# ====================
 # mrd.pull_from_github_infinistore(worker_ips)
 # mrd.pull_from_github_infinistore(worker_ips + [client_ip], reset_first = True)
 # mrd.pull_from_github_mapreduce(worker_ips + [client_ip], reset_first = True)
 
-# Updating
+# ====================
+# Updating the Lambdas
+# ====================
 # mrd.build_mapreduce(worker_ips + [client_ip])
 # mrd.update_lambdas(worker_ips + [client_ip])
 # mrd.update_lambdas_prefixed(worker_ips + [client_ip])
 # mrd.update_lambdas(worker_ips) # Workers only, so we can do manually on client to see progress.
 # mrd.update_lambdas_prefixed(worker_ips) # Workers only, so we can do manually on client to see progress.
 
-# Launching 
+# ====================
+# Launching Workloads
+# ====================
 # experiment_prefix = mrd.launch_infinistore_proxies(worker_ips + [client_ip])
 # experiment_prefix = mrd.launch_infinistore_proxies([client_ip])
 # print("experiment_prefix = " + str(experiment_prefix))
 if __name__ == "__main__":
+    # ================
+    # ====BLOCK #1====
+    # ================
     # I usually copy-and-paste this entire block of text into a terminal. Make sure you
     # un-indent them before copying-and-pasting. They are indented now bc otherwise 
     # they cause errors when importing mapreduce_driver.py into your Python terminal session.
@@ -951,6 +1012,9 @@ if __name__ == "__main__":
     # So depending on which it is, I then copy and paste this block or the next block to 
     # populate the values accordingly.
 
+    # ================
+    # ====BLOCK #2====
+    # ================
     # If the Client IP appears first in the list. 
     client_ip = public_ips[0]   # Create variable to hold the MapReduce client's IP public address.
     client_ip_private = private_ips[0] # Create variable to hold the MapReduce client's IP private address. 
@@ -966,12 +1030,14 @@ if __name__ == "__main__":
 
     # This function isn't used anymore; this was only for when we used the Redis protocol with
     # InfiniStore. See the documentation for 'format_proxy_config'.
-    code_line = mrd.format_proxy_config([client_ip_private] + worker_private_ips)
+    # code_line = mrd.format_proxy_config([client_ip_private] + worker_private_ips)
 
+    # ================
+    # ====BLOCK #4====
+    # ================
     # We DO use this. Usually I'll execute this, print out the value of 'param', then update the
     # command I use to launch the MapReduce worker.
     param = mrd.format_parameter_storage_list([client_ip_private] + worker_private_ips, 6378, "storageIps")
-
     # Print the IPs.
     print("Client IP: {}".format(client_ip))
     print("Client private IP: {}".format(client_ip_private))
@@ -980,17 +1046,20 @@ if __name__ == "__main__":
     print(param)
 
     # Only do this if we're purposefully modifying the upload/download speeds of our VMs.
-    wondershape(ips = [client_ip] + worker_ips)
+    # wondershape(ips = [client_ip] + worker_ips)
 
+    # ================
+    # ====BLOCK #5====
+    # ================    
     # Number of Reducers = NUM_WORKERS_PER_VM * NUM_VMs * NUM_CORES_PER_WORKER
     # This value gets passed to the MapReduce client. You need to update the command yourself
     # with whatever this calculates.
     nReducers = workers_per_vm * len(worker_ips) * NUM_CORES_PER_WORKER
     print("nReducers = {}".format(nReducers))
 
-    # Sometimes needed, sometimes not. Used to update the InfiniStore repos on the VMs.
-    mrd.pull_from_github_infinistore([client_ip] + worker_ips, reset_first = True)
-
+    # ================
+    # ====BLOCK #6====
+    # ================
     # ==================================================================================================
     # We use this block to start all the InfiniStore proxies.
     # 
@@ -1001,11 +1070,10 @@ if __name__ == "__main__":
     # We store the returned experiment_prefix in a variable (and print it) as we also need that to pass
     # to export_ubuntu.sh. Basically, we use the prefix when creating a folder in our AWS S3 bucket for
     # the logs corresponding to this specific experiment/job.
-    start_time = mrd.print_time()
-    experiment_prefix = mrd.launch_infinistore_proxies(worker_ips + [client_ip])
-    print("experiment_prefix = " + str(experiment_prefix))
-
-    # This function does the same thing as the previous block of three lines.
+    # start_time = mrd.print_time()
+    # experiment_prefix = mrd.launch_infinistore_proxies(worker_ips + [client_ip])
+    # print("experiment_prefix = " + str(experiment_prefix))
+    # This function does the same thing as the previous three lines. Just use this.
     start_time, experiment_prefix = mrd.launch_proxies_and_record_metadata(worker_ips, client_ip)
 
     # ===============================================================================================
@@ -1032,6 +1100,9 @@ if __name__ == "__main__":
     # I don't have to rewrite this function call.
     # mrd.launch_client(client_ip = client_ip, nReducers = nReducers, s3_key_file = "/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt")
 
+    # ================
+    # ====BLOCK #7====
+    # ================    
     # This function IS used. This is a pre-formatted function call to start the workers based on all the code we executed above.
     mrd.launch_workers(client_ip = client_ip_private, worker_ips = worker_ips, workers_per_vm = workers_per_vm, count_limit = 1)
     # mrd.launch_workers(client_ip = client_ip_private, worker_ips = [client_ip], workers_per_vm = workers_per_vm, count_limit = 1)
