@@ -96,12 +96,15 @@ func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []stri
 
 // The mapping function is called once for each piece of the input.
 func mapF(s3Key string, text string) (res []KeyValue) {
-	//log.Printf("Searching for matches in string \"%s\".\n", text)
+	log.Printf("Searching for matches now...\n")
 	matches := pattern.FindAllString(text, -1)
+	log.Printf("Identified %d matches.\n", len(matches))
 
-	for _, match := range matches {
-		//log.Printf("Match #%d: \"%s\".\n", idx, match)
-		res = append(res, KeyValue{text, match})
+	if len(matches) > 0 {
+		log.Printf("Processing matches now.\n")
+		for _, match := range matches {
+			res = append(res, KeyValue{text, match})
+		}
 	}
 
 	return res
@@ -160,7 +163,8 @@ func doMap(
 
 	log.Println("Performing grep map function now...")
 	results := make(map[string][]KeyValue)
-	for _, result := range mapF(S3Key, string(b)) {
+	regex_results := mapF(S3Key, string(b))
+	for _, result := range regex_results {
 		reducerNum := ihash(result.Key) % nReduce
 		storageKey := serverless.ReduceName(jobName, taskNum, reducerNum)
 		results[storageKey] = append(results[storageKey], result)
