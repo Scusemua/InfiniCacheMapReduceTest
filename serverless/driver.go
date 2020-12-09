@@ -15,10 +15,12 @@ package serverless
 
 import (
 	"bufio"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+
 	//"github.com/Scusemua/PythonGoBridge"
 	"io/ioutil"
 	"log"
@@ -344,20 +346,20 @@ func (drv *Driver) run(
 // Run calls the internal call `run` to register plugin services and
 // schedule tasks with workers over RPC.
 func (drv *Driver) Run(
-	jobName string, 
-	s3KeyFile string, 
-	sampleFileS3Key string, 
-	nReduce int, 
-	dataShards int, 
-	parityShards int, 
-	maxGoRoutines int, 
+	jobName string,
+	s3KeyFile string,
+	sampleFileS3Key string,
+	nReduce int,
+	dataShards int,
+	parityShards int,
+	maxGoRoutines int,
 	pattern string,
 	clientPoolCapacity int,
 	chunkThreshold int,
 	usePocket bool,
-	numLambdasPocket int, 
-	capacityGbPocket int, 
-	peakMbpsPocket int, 
+	numLambdasPocket int,
+	capacityGbPocket int,
+	peakMbpsPocket int,
 	latencySensitivePocket int,
 	storageIps []string,
 ) {
@@ -413,17 +415,17 @@ func (drv *Driver) Run(
 
 	log.Printf("Number of S3 keys: %d\n", len(s3Keys))
 
-	var pocketJobId string 
-	if usePocket {
-		log.Printf("Registering job with Pocket now...\n")
-		pocketJobId = PythonGoBridge.RegisterJob("", numLambdasPocket, capacityGbPocket, peakMbpsPocket, latencySensitivePocket)
-	}
+	pocketJobId := "N/A"
+	// if usePocket {
+	// 	log.Printf("Registering job with Pocket now...\n")
+	// 	pocketJobId = PythonGoBridge.RegisterJob("", numLambdasPocket, capacityGbPocket, peakMbpsPocket, latencySensitivePocket)
+	// }
 
 	go drv.run(jobName, s3Keys, nReduce, sampleKeys, dataShards, parityShards, maxGoRoutines, storageIps, usePocket,
 		func(phase jobPhase, serviceName string) { // func schedule()
 			registerChan := make(chan string)
 			go drv.prepareService(registerChan, ServiceName(serviceName, phase))
-			drv.schedule(phase, serviceName, registerChan, dataShards, parityShards, maxGoRoutines, 
+			drv.schedule(phase, serviceName, registerChan, dataShards, parityShards, maxGoRoutines,
 				clientPoolCapacity, pattern, chunkThreshold, usePocket, pocketJobId)
 		},
 		func() { // func finish()
