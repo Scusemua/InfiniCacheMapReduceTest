@@ -8,25 +8,29 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
+
 	//"encoding/json"
 	"crypto/md5"
 	"fmt"
+
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+
 	//"github.com/Scusemua/PythonGoBridge"
 	"math/rand"
 	//"github.com/go-redis/redis/v7"
-	"github.com/mason-leap-lab/infinicache/client"
 	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
-	"sync"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/mason-leap-lab/infinicache/client"
 )
 
 //var cli *client.Client		// The InfiniStore client.
@@ -162,7 +166,7 @@ func doMap(
 	s3_end_time := time.Now()
 	s3_duration := time.Since(s3_start_time)
 
-	log.Printf("File %s downloaded in %d ms, %d bytes\n", S3Key, s3_duration.Nanoseconds() / 1e6, num_bytes_s3)
+	log.Printf("File %s downloaded in %d ms, %d bytes\n", S3Key, s3_duration.Nanoseconds()/1e6, num_bytes_s3)
 
 	// =====================================================================
 	// Storage Client Creation
@@ -207,7 +211,7 @@ func doMap(
 		//marshalled_result, err := json.Marshal(v)
 		//checkError(err)
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f \n", k, float64(len(marshalled_result))/float64(1e6))
-		var writeStart time.Time 
+		var writeStart time.Time
 		//err = redis_client.Set(k, marshalled_result, 0).Err()
 
 		// Exponential backoff.
@@ -287,15 +291,15 @@ func (s srtmService) DoService(raw []byte) error {
 	trie := serverless.BuildTrie(args.SampleKeys, 0, len(args.SampleKeys), "", 2)
 
 	log.Printf("MAPPER -- args.S3Key: \"%s\"\n", args.S3Key)
-	
+
 	if args.UsePocket {
 		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
 	} else {
 		log.Printf("=-=-= USING INFINISTORE FOR INTERMEDIATE DATA STORAGE =-=-=\n")
 	}
 
-	poolLock.Lock() 
-	if !poolCreated && args.UsePocket {
+	poolLock.Lock()
+	if !poolCreated && !args.UsePocket {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
@@ -311,7 +315,7 @@ func (s srtmService) DoService(raw []byte) error {
 	// 	DialInfiniStoreClient(args.TaskNum, args.StorageIPs)
 	// }
 
-	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, 
+	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards,
 		args.ParityShards, args.MaxGoroutines, args.UsePocket, trie)
 
 	return nil

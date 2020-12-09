@@ -1065,7 +1065,7 @@ if __name__ == "__main__":
 # 100 GB
 # go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.78.140:6378 -storageIps 10.0.82.103:6378 -storageIps 10.0.73.57:6378 -storageIps 10.0.95.241:6378 -storageIps 10.0.77.246:6378 -storageIps 10.0.77.240:6378
 
-# go run client.go -driverHostname 10.0.116.159:1234 -jobName wc -nReduce 84 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/5GB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.78.140:6378 -storageIps 10.0.82.103:6378 -storageIps 10.0.73.57:6378 -storageIps 10.0.95.241:6378 -storageIps 10.0.77.246:6378 -storageIps 10.0.77.240:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName wc -nReduce 84 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/50GB_50Partitions_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.78.140:6378 -storageIps 10.0.82.103:6378 -storageIps 10.0.73.57:6378 -storageIps 10.0.95.241:6378 -storageIps 10.0.77.246:6378 -storageIps 10.0.77.240:6378
 
 # Change the 'jobName' parameter depending on what job you want to run. For TeraSort, it is 'srt'.
 # For grep, it is 'grep'. For Word Count, it is 'wc'. Basically, it is the prefix of the two service
