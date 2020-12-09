@@ -13,7 +13,7 @@ IP=$(eval $GET_IP_CMD)
 echo "Got IP: $IP"
 
 num_workers=$2
-port=$3
+port=1235
 
 echo "Launching $2 workers..."
 

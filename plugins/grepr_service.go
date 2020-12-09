@@ -345,7 +345,7 @@ func (s greprService) DoService(raw []byte) error {
 	if args.UsePocket {
 		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
 	} else {
-		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
+		log.Printf("=-=-= USING INFINISTORE FOR INTERMEDIATE DATA STORAGE =-=-=\n")
 	}
 
 	poolLock.Lock() 
