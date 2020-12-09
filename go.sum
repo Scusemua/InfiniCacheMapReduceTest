@@ -2,7 +2,6 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/ScottMansfield/nanolog v0.2.0 h1:yOM5kCDD5/4jmiS+bTzvfDhksIEtZjgSOt2negzIc5A=
 github.com/ScottMansfield/nanolog v0.2.0/go.mod h1:QeDt4EJEUL0Sy7y28yTC6GoMvtx1Ex2+cQQC1QtCJtQ=
-github.com/Scusemua/PythonGoBridge v0.0.0-20201208185307-5495b806ac76 h1:p7ECZ4YM4GGePEFmoWGHif4kQesUqHiOeRhOa+mwoCg=
 github.com/Scusemua/PythonGoBridge v0.0.0-20201208185307-5495b806ac76/go.mod h1:DbK3JD0BXeMJJj+ua8IkN7MH/QhvfUt9yBqGHQDKDCA=
 github.com/aws/aws-lambda-go v1.13.3/go.mod h1:4UKl9IzQMoD+QF79YdCuzCwp8VbmG4VAQwij/eHl5CU=
 github.com/aws/aws-sdk-go v1.28.10/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
