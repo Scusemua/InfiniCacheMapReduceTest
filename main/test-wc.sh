@@ -18,7 +18,6 @@ OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
 # Initialize our variables:
 KEY_FILE=/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt # S3 key of input data.
-PATTERN="[a-zA-Z]+" # Regular expression pattern for grep.
 NUM_WORKERS=5
 
 while getopts "h?fn:" opt; do
@@ -39,7 +38,7 @@ shift $((OPTIND-1))
 
 [ "${1:-}" = "--" ] && shift
 
-echo "Command-line Arguments:\nPATTERN=$PATTERN, KEY_FILE='$KEY_FILE', NUM_WORKERS=$NUM_WORKERS"
+echo "Command-line Arguments: KEY_FILE='$KEY_FILE', NUM_WORKERS=$NUM_WORKERS"
 
 go run client.go -driverHostname 127.0.0.1:1234 -jobName wc -nReduce 10 -sampleDataKey sample_data.dat -s3KeyFile "$KEY_FILE" -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps "127.0.0.1:6378" & 
 pids[0]=$!
