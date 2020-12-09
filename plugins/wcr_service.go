@@ -14,15 +14,24 @@ package main
 
 import (
 	"bytes"
-	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+	"crypto/md5"
 	"encoding/gob"
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
-	"io"
+	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+	"math/rand"
+	//"github.com/go-redis/redis/v7"
+	"github.com/mason-leap-lab/infinicache/client"
+	//infinicache "github.com/mason-leap-lab/infinicache/client"
+	//"io"
 	"log"
 	"os"
 	"sort"
 	"strconv"
+	"strings"
+	"sync"
+	"time"
+	//"unsafe"
 )
 
 // To compile the map plugin: run:
@@ -31,30 +40,46 @@ import (
 // Define Word Count's reduce service
 type wcrService string
 
-// MapReduceArgs defines this plugin's argument format
-// type MapReduceArgs struct {
-// 	JobName       string
-// 	S3Key         string
-// 	TaskNum       int
-// 	NReduce       int
-// 	NOthers       int
-// 	SampleKeys    []string
-// 	StorageIPs    []string
-// 	DataShards    int
-// 	ParityShards  int
-// 	MaxGoroutines int
-// 	Pattern 	  string 
-// }
-
 type KeyValue struct {
 	Key   string
 	Value string
+}
+
+type IORecord struct {
+	TaskNum  int
+	RedisKey string
+	Bytes    int
+	Start    int64
+	End      int64
 }
 
 func checkError(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+var clientCreated = false // Has this InfiniStore client been created yet?
+var clientDialed = false  // Have we called the client's Dial function yet?
+var poolCreated = false
+
+var poolLock = &sync.Mutex{}
+
+var clientPool *serverless.Pool
+
+func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []string, clientPoolCapacity int) {
+	clientPool = serverless.InitPool(&serverless.Pool{
+		New: func() interface{} {
+			cli := client.NewClient(dataShard, parityShard, ecMaxGoroutine)
+			log.Printf("Client created. Dialing addresses now: %v\n", addrArr)
+			cli.Dial(addrArr)
+			log.Printf("Dialed successfully.\n")
+			return cli
+		},
+		Finalize: func(c interface{}) {
+			c.(*client.Client).Close()
+		},
+	}, clientPoolCapacity, serverless.PoolForStrictConcurrency)
 }
 
 const debugEnabled = true
@@ -85,57 +110,335 @@ func reduceF(key string, values []string) string {
 // user-defined reduce function (reduceF) for each key, and writes
 // the output to disk. Each reduce generates an output file named
 // using serverless.MergeName(jobName, reduceTask).
-func doReduce(
+func doReduceDriver(
 	jobName string,
+	storageIps []string,
 	reduceTaskNum int,
 	nMap int,
+	dataShards int,
+	parityShards int,
+	maxEcGoroutines int,
+	chunkThreshold int,
 ) {
-	inputs := make([]*KeyValue, 0)
-	for i := 0; i < nMap; i++ {
-		fileName := serverless.ReduceName(jobName, i, reduceTaskNum)
-		f, err := os.Open(fileName)
-		checkError(err)
-		defer f.Close()
-		dec := json.NewDecoder(f)
+	log.Printf("[REDUCER #%d] Creating storage client for IPs %v.\n", reduceTaskNum, storageIps)
 
-		for {
-			kv := new(KeyValue)
-			if err := dec.Decode(&kv); err == io.EOF {
+	// =====================================================================
+	// Storage Client Creation
+	// ---------------------------------------------------------------------
+	// In theory, you would create whatever clients that Pocket uses here...
+	// =====================================================================
+
+	log.Printf("[REDUCER #%d] Getting storage client from client pool now...\n", reduceTaskNum)
+
+	// This creates a new InfiniStore EcClient object.
+	// cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
+	cli := clientPool.Get().(*client.Client)
+
+	// This effectively connects the InfiniStore EcClient to all of the proxies.
+	//cli.Dial(storageIps)
+
+	log.Printf("[REDUCER #%d] Successfully created storage client\n", reduceTaskNum)
+
+	ioRecords := make([]IORecord, 0)
+
+	log.Printf("[REDUCER #%d] Retrieving input data.\n", reduceTaskNum)
+	inputs := make([]KeyValue, 0)
+
+	// We flip this to true the first time we receive at least one element from a mapper.
+	// This is used when approximating the final size of the inputs slice.
+	receivedDataForTheFirstTime := false
+	
+	for i := 0; i < nMap; i++ {
+		// nMap is the number of Map tasks (i.e., the number of S3 keys or # of initial data partitions).
+		// So the variable i here refers to the associated Map task/initial data partition, or where
+		// the data we're processing came from, essentially.
+		dataKey := serverless.ReduceName(jobName, i, reduceTaskNum)
+
+		var kvs []KeyValue
+		log.Printf("storage READ START. Key: \"%s\", Reduce Task #: %d.", dataKey, reduceTaskNum)
+		//marshalled_result, err := redis_client.Get(dataKey).Result()
+
+		var readAllCloser client.ReadAllCloser
+		var readStart time.Time 
+		var ok bool
+		success := false
+		// Exponential backoff.
+		for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
+			// This is a read operation from InfiniStore. The code that follows is also related.
+			// Basically, the Get function returns a tuple where the first element of the tuple is
+			// an object of type ReadAllCloser, and the second element of the tuple is a boolean
+			// which indicates whether or not the read operation went well.
+			log.Printf("[REDUCER #%d] Attempt %d/%d for read key \"%s\".\n", reduceTaskNum, current_attempt, serverless.MaxAttemptsDuringBackoff, dataKey)
+			readStart = time.Now()
+			readAllCloser, ok = cli.Get(dataKey)
+
+			// Check for failure, and backoff exponentially on-failure.
+			// If the bool is false, then there was an error. If the key was not found, then readAllCloser will be null.
+			if !ok {
+				max_duration := (2 << uint(current_attempt)) - 1
+				duration := rand.Intn(max_duration + 1)
+				log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
+				time.Sleep(time.Duration(duration) * time.Millisecond)
+			} else {
+				log.Printf("[REDUCER #%d] Successfully read data with key \"%s\" on attempt %d.\n", reduceTaskNum, dataKey, current_attempt)
+				success = true
 				break
 			}
-			checkError(err)
-			inputs = append(inputs, kv)
 		}
+
+		// If ultimately the read failed after multiple attempts during exponential backoff,
+		// we log the error with log.Fatal(), which prints the error and then exits.
+		if !success {
+			log.Fatal("ERROR: Failed to retrieve data from storage with key \"" + dataKey + "\" in allotted number of attempts.\n")
+		}
+
+		// If the ReadAllCloser is nil but there was no error, then that means the key was not found.
+		if readAllCloser == nil {
+			log.Printf("WARNING: Key \"%s\" does not exist in intermediate storage.\n", dataKey)
+			log.Printf("WARNING: Skipping key \"%s\"...\n", dataKey)
+			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
+			continue
+		}
+
+		log.Printf("[REDUCER #%d] Calling .ReadAll() on ReadAllCloser for key \"%s\" now...\n", reduceTaskNum, dataKey)
+		// To get the data from the read, we call ReadAll() on the ReadAllCloser object. This is still
+		// InfiniStore specific. That's just how it works. After reading, we call Close().
+		encoded_result, err := readAllCloser.ReadAll()
+		readAllCloser.Close()
+		if err != nil {
+			log.Fatal("Unexpected exception during ReadAll() for key \"%s\".\n", dataKey)
+			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
+			//continue
+		}
+		readEnd := time.Now()
+		readDuration := time.Since(readStart)
+		log.Printf("storage READ END. Key: \"%s\", Reduce Task #: %d, Bytes read: %f, Time: %d ms", dataKey, reduceTaskNum, float64(len(encoded_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(encoded_result), Start: readStart.UnixNano(), End: readEnd.UnixNano()}
+		ioRecords = append(ioRecords, rec)
+
+		log.Printf("[REDUCER #%d] Decoding data for key \"%s\" now...\n", reduceTaskNum, dataKey)
+		byte_buffer_res := bytes.NewBuffer(encoded_result)
+		gobDecoder := gob.NewDecoder(byte_buffer_res)
+		err = gobDecoder.Decode(&kvs)
+
+		checkError(err)
+
+		log.Printf("[REDUCER #%d] Successfully decoded data for key \"%s\".\n", reduceTaskNum, dataKey)
+		log.Printf("[REDUCER #%d] Received %d KeyValue structs from mapper #%d.\n", reduceTaskNum, len(kvs), i)
+
+		// If this is the first time we're obtaining data, I preemptively expand the length of the array
+		// equal to the number of elements we just received * nMap (this, of course, assumes we'll be
+		// receiving approximately the same amount of data from all mappers, which or may not be true.)
+		//
+		// The goal here is to prevent a significant number of memory-reallocations. For larger problem sizes,
+		// such as 100GB, the final size of inputs could grow to be as large as 10-10.5mil elements. We may be
+		// able to approximate that here, thereby avoiding a significant number of unnecessary memory reallocations.
+		if len(kvs) > 0 && !receivedDataForTheFirstTime {
+			log.Printf("[REDUCER #%d] Allocating slice of capacity %d for inputs.\n", reduceTaskNum, len(kvs)*nMap)
+
+			capacity := len(kvs) * nMap
+
+			// Don't allocate anything too absurd. 100GB uses at most 10-11M entries.
+			if capacity > 11000000 {
+				log.Printf("[REDUCER #%d] Capping capacity to 11,000,000 for inputs slice.\n", reduceTaskNum)
+				capacity = 11000000
+			}
+
+			inputs = make([]KeyValue, 0, capacity)
+
+			// Now that we've received data for the first time, flip this to true.
+			receivedDataForTheFirstTime = true
+		}
+
+		inputs = append(inputs, kvs...)
+
+		log.Printf("[REDUCER #%d] Finished adding decoded data to inputs list. Added %d entries.\n", reduceTaskNum, len(kvs))
 	}
+
+	log.Printf("[REDUCER #%d] Sorting the inputs. There are %d inputs to sort.\n", reduceTaskNum, len(inputs))
+
 	sort.Slice(inputs, func(i, j int) bool { return inputs[i].Key < inputs[j].Key })
 
 	fileName := serverless.MergeName(jobName, reduceTaskNum)
-	Debug("Creating %s\n", fileName)
-	f, err := os.Create(fileName)
-	checkError(err)
-	defer f.Close()
-	enc := json.NewEncoder(f)
 
-	doReduce := func(enc *json.Encoder, k string, v []string) {
+	results := make([]KeyValue, len(inputs), len(inputs))
+
+	// Calculate five percent of the inputs. We'll print an update every five percent
+	// during reduce operations (e.g., 0% done, 5% done, 10% done, ...., 90% done, 95% done, 100% done).
+	five_percent := int(float64(len(inputs)) * 0.05)
+
+	doReduce := func(k string, v []string, i int, max int) {
+		//log.Printf("[REDUCER #%d] Reduce %d/%d: key = \"%s\"...\n", reduceTaskNum, i, max, k)
 		output := reduceF(k, v)
+		//log.Printf("[REDUCER #%d] Reduce() for key \"%s\" SUCCESS.\n", reduceTaskNum, k)
 		new_kv := new(KeyValue)
 		new_kv.Key = k
 		new_kv.Value = output
-		err = enc.Encode(&new_kv)
-		checkError(err)
-	}
+
+		// Print a message every increment of 5%.
+		if i%five_percent == 0 {
+			percent_done := (float64(i) / float64(max)) * 100
+			log.Printf("Completed %f%% (%d/%d) of REDUCE operations.\n", percent_done, i, max)
+		}
+
+		// The value of i passed is actually one higher than it should be. This is because we basically process
+		// the key from the LAST iteration of the for-loop calling doReduce. On the first (0th) iteration of the
+		// for-loop, we don't call doReduce, we just set value of lastKey. Then on second iteration, we call
+		// doReduce for the FIRST (0th) input.
+		results[i-1] = *new_kv // = append(results, *new_kv)
+	}	
+
+	log.Printf("[REDUCER #%d] Performing Reduce() function now. There are %d inputs.\n", reduceTaskNum, len(inputs))
 
 	var lastKey string
-	values := make([]string, 0)
+	values := make([]string, 0, 10)
+	num_inputs := len(inputs)
 	for i, kv := range inputs {
 		if kv.Key != lastKey && i > 0 {
-			doReduce(enc, lastKey, values)
-			values = make([]string, 0)
+			doReduce(lastKey, values, i, num_inputs)
+			values = values[:0]
 		}
 		lastKey = kv.Key
 		values = append(values, kv.Value)
 	}
-	doReduce(enc, lastKey, values)
+	// If inputs is length 0, then lastKey was never set to a value and thus we should just skip this...
+	if len(inputs) > 0 {
+		log.Printf("Calling doReduce() for the last time. lastKey = \"%s\".\n", lastKey)
+		doReduce(lastKey, values, len(inputs), num_inputs)
+	}
+
+	log.Printf("Completed reduce operations. Encoding the results now...\n")
+
+	var byte_buffer bytes.Buffer
+	gobEncoder := gob.NewEncoder(&byte_buffer)
+	err := gobEncoder.Encode(results)
+	checkError(err)
+	marshalled_result := byte_buffer.Bytes() // should be of type []byte now.
+
+	//marshalled_result, err := json.Marshal(results)
+	//checkError(err)
+	log.Printf("Results encoded successfully. Writing final result to Redis at key \"%s\". Size: %f MB.\n", fileName, float64(len(marshalled_result))/float64(1e6))
+
+	/* Chunk up the final results if necessary. */
+	if len(marshalled_result) > int(chunkThreshold) {
+		log.Printf("Data for final result \"%s\" is larger than %d bytes. Storing it in pieces. MD5: %x\n", fileName, chunkThreshold, md5.Sum(marshalled_result))
+		chunks := split(marshalled_result, int(chunkThreshold))
+		num_chunks := len(chunks)
+		log.Printf("Created %d chunks for final result.\n", num_chunks)
+		base_key := fileName + "-part"
+		counter := 0
+		for _, chunk := range chunks {
+			chunk_key := base_key + strconv.Itoa(counter)
+			log.Printf("Writing chunk #%d with key \"%s\" (size = %f MB) to storage. MD5: %x\n", counter, chunk_key, float64(len(chunk))/float64(1e6), md5.Sum(chunk))
+
+			// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
+			// I put it in its own function bc there are several write calls in this file and I did not
+			// wanna reuse the same code in each location.
+			success, writeStart := exponentialBackoffWrite(chunk_key, chunk, cli)
+			//success := exponentialBackoffWrite(chunk_key, chunk)
+
+			writeEnd := time.Now()
+			writeDuration := time.Since(writeStart)
+			//checkError(err)
+			if !success {
+				log.Fatal("\n\nERROR while storing value in storage, key is: \"", chunk_key, "\"")
+			}
+
+			log.Printf("SUCCESSFULLY wrote chunk #%d, \"%s\", to storage. Size: %f MB, Time: %v ms.\n", counter, chunk_key, float64(len(chunk))/float64(1e6), writeDuration.Nanoseconds()/1e6)
+
+			rec := IORecord{TaskNum: reduceTaskNum, RedisKey: chunk_key, Bytes: len(chunk), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
+			ioRecords = append(ioRecords, rec)
+			counter = counter + 1
+		}
+		var byte_buffer bytes.Buffer
+		gobEncoder := gob.NewEncoder(&byte_buffer)
+		err3 := gobEncoder.Encode(num_chunks)
+		checkError(err3)
+		numberOfChunksSerialized := byte_buffer.Bytes() // should be of type []byte now.
+
+		//numberOfChunksSerialized, err3 := json.Marshal(num_chunks)
+		checkError(err3)
+
+		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
+		// I put it in its own function bc there are several write calls in this file and I did not
+		// wanna reuse the same code in each location.
+		success, writeStart := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli)
+
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(numberOfChunksSerialized), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
+		ioRecords = append(ioRecords, rec)		
+
+		//success := exponentialBackoffWrite(fileName, numberOfChunksSerialized)
+		if !success {
+			log.Fatal("ERROR while storing value in storage, key is: \"", fileName, "\"")
+		}
+		checkError(err)
+	} else {
+		log.Printf("storage WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(marshalled_result))/float64(1e6))
+
+		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
+		// I put it in its own function bc there are several write calls in this file and I did not
+		// wanna reuse the same code in each location.
+		success, writeStart := exponentialBackoffWrite(fileName, marshalled_result, cli)
+		//success := exponentialBackoffWrite(fileName, marshalled_result)
+		if !success {
+			log.Fatal("ERROR while storing value in storage with key \"", fileName, "\"")
+		}
+		writeEnd := time.Now()
+		writeDuration := time.Since(writeStart)
+
+		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", fileName, float64(len(marshalled_result))/float64(1e6), writeDuration.Nanoseconds()/1e6)
+
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(marshalled_result), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
+		ioRecords = append(ioRecords, rec)
+	}
+
+	f2, err2 := os.Create("IOData/reduce_io_data_" + jobName + strconv.Itoa(reduceTaskNum) + ".dat")
+	checkError(err2)
+	defer f2.Close()
+	for _, rec := range ioRecords {
+		_, err2 := f2.WriteString(fmt.Sprintf("%v\n", rec))
+		checkError(err2)
+	}
+
+	clientPool.Put(cli)
+}
+
+// Encapsulates a write operation. Currently, this is an InfiniStore write operation.
+func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) (bool, time.Time) {
+	//func exponentialBackoffWrite(key string, value []byte) bool {
+	success := false
+	var writeStart time.Time 
+	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
+		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
+		// Call the EcSet InfiniStore function to store 'value' at key 'key'.
+		writeStart = time.Now()
+		_, ok := ecClient.EcSet(key, value)
+
+		if !ok {
+			max_duration := (2 << uint(current_attempt+4)) - 1
+			if max_duration > serverless.MaxBackoffSleepWrites {
+				max_duration = serverless.MaxBackoffSleepWrites
+			}
+			duration := rand.Intn(max_duration + 1)
+			log.Printf("[ERROR] Failed to write key \"%s\". Backing off for %d ms.\n", key, duration)
+			time.Sleep(time.Duration(duration) * time.Millisecond)
+		} else {
+			log.Printf("Successfully wrote key \"%s\" on attempt %d.\n", key, current_attempt)
+			success = true
+			break
+		}
+	}
+
+	return success, writeStart
+}
+
+func (s srtrService) ClosePool() error {
+	if clientPool != nil {
+		log.Printf("Closing the srtm_service client pool...")
+		clientPool.Close()
+	}
+
+	return nil
 }
 
 // DON'T MODIFY THIS FUNCTION
@@ -148,9 +451,19 @@ func (s wcrService) DoService(raw []byte) error {
 		fmt.Printf("Word Count Service: Failed to decode!\n")
 		return err
 	}
-	fmt.Printf("Hello from wordCountService plugin: %s\n", args.S3Key)
+	log.Printf("REDUCER for Reducer Task # \"%d\"\n", args.TaskNum)
 
-	doReduce(args.JobName, args.TaskNum, args.NOthers)
+	// Make sure only one worker at a time can check this in order to ensure that the pool has been created.
+	poolLock.Lock()
+	if !poolCreated {
+		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
+		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
+
+		poolCreated = true
+	}
+	poolLock.Unlock()
+
+	doReduceDriver(args.JobName, args.StorageIPs, args.TaskNum, args.NOthers, args.DataShards, args.ParityShards, args.MaxGoroutines, args.ChunkThreshold)
 
 	return nil
 }
