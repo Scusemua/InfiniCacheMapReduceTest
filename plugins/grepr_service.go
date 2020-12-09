@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"math/rand"
-	"github.com/Scusemua/PythonGoBridge"
+	//"github.com/Scusemua/PythonGoBridge"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
 	"os"

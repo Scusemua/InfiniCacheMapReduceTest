@@ -12,7 +12,7 @@ import (
 	"encoding/gob"
 	//"encoding/json"
 	"fmt"
-	"github.com/Scusemua/PythonGoBridge"
+	//"github.com/Scusemua/PythonGoBridge"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"math/rand"
 	//"github.com/go-redis/redis/v7"

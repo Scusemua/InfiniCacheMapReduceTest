@@ -16,7 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/Scusemua/PythonGoBridge"
+	//"github.com/Scusemua/PythonGoBridge"
 	"math/rand"
 	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"

@@ -8,7 +8,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	//"github.com/go-redis/redis/v7"
-	"github.com/Scusemua/PythonGoBridge"
+	//"github.com/Scusemua/PythonGoBridge"
 	"github.com/mason-leap-lab/infinicache/client"
 	"log"
 	"math/rand"

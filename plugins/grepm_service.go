@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
-	"github.com/Scusemua/PythonGoBridge"
+	//"github.com/Scusemua/PythonGoBridge"
 	"encoding/gob"
 	"io/ioutil"
 	"time"
