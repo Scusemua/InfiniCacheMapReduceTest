@@ -28,7 +28,6 @@ import (
 	"os"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 	//"unsafe"
@@ -80,6 +79,21 @@ func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []stri
 			c.(*client.Client).Close()
 		},
 	}, clientPoolCapacity, serverless.PoolForStrictConcurrency)
+}
+
+// Used to chunk up the final results to prevent writing huge blocks of data at once.
+// This was more relevant for Redis, as Redis had a hard-limit for key/value size (512MB, I think?).
+func split(buf []byte, lim int) [][]byte {
+	var chunk []byte
+	chunks := make([][]byte, 0, len(buf)/lim+1)
+	for len(buf) >= lim {
+		chunk, buf = buf[:lim], buf[lim:]
+		chunks = append(chunks, chunk)
+	}
+	if len(buf) > 0 {
+		chunks = append(chunks, buf[:len(buf)])
+	}
+	return chunks
 }
 
 const debugEnabled = true
@@ -432,9 +446,9 @@ func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) 
 	return success, writeStart
 }
 
-func (s srtrService) ClosePool() error {
+func (s wcrService) ClosePool() error {
 	if clientPool != nil {
-		log.Printf("Closing the srtm_service client pool...")
+		log.Printf("Closing the wcr_service client pool...")
 		clientPool.Close()
 	}
 

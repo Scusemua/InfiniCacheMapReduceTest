@@ -18,6 +18,7 @@ import (
 	//"encoding/json"
 	"crypto/md5"
 	"fmt"
+	"hash/fnv"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -194,7 +195,7 @@ func doMap(
 	log.Println("Performing map function/operations now...")
 	results := make(map[string][]KeyValue)
 	for _, result := range mapF(S3Key, string(b)) {
-		reducerNum := ihash(result.Key, trie) % nReduce
+		reducerNum := ihash(result.Key) % nReduce
 		redisKey := serverless.ReduceName(jobName, taskNum, reducerNum)
 		results[redisKey] = append(results[redisKey], result)
 	}
@@ -273,9 +274,9 @@ func ihash(s string) int {
 	return int(h.Sum32() & 0x7fffffff)
 }
 
-func (s srtmService) ClosePool() error {
+func (s wcmService) ClosePool() error {
 	if clientPool != nil {
-		log.Printf("Closing the srtm_service client pool...")
+		log.Printf("Closing the wcm_service client pool...")
 		clientPool.Close()
 	}
 
@@ -303,7 +304,8 @@ func (s wcmService) DoService(raw []byte) error {
 	}
 	poolLock.Unlock()
 
-	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, args.ParityShards, args.MaxGoroutines, trie)
+	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, 
+		args.DataShards, args.ParityShards, args.MaxGoroutines)
 
 	return nil
 }
