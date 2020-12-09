@@ -33,6 +33,7 @@ import (
 	"sync"
 	"strings"
 	"time"
+	"unicode"
 )
 
 var clientCreated = false // Has this InfiniStore client been created yet?
@@ -188,15 +189,6 @@ func doMap(
 
 	Debug("Reading data for S3 key \"%s\" from downloaded file now...\n", S3Key)
 	b, err = ioutil.ReadFile(S3Key)
-	checkError(err)
-
-	var err error
-	var b []byte
-
-	// Read in whole file. Not scalable, but OK for a
-	// lab.
-	Debug("Reading %s", inFile)
-	b, err = ioutil.ReadFile(inFile)
 	checkError(err)
 
 	log.Println("Performing map function/operations now...")
