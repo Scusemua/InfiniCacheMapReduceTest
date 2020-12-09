@@ -217,7 +217,7 @@ func doReduceDriver(
 			continue
 		}
 
-		log.Printf("[REDUCER #%d] Calling .ReadAll() on ReadAllCloser for key \"%s\" now...\n", reduceTaskNum, dataKey)
+		log.Printf("[REDUCER #%d] Calling .ReadAll() on ReadAllCloser for key \"%s\" now. len = %d\n", reduceTaskNum, dataKey, readAllCloser.Len())
 		// To get the data from the read, we call ReadAll() on the ReadAllCloser object. This is still
 		// InfiniStore specific. That's just how it works. After reading, we call Close().
 		encoded_result, err := readAllCloser.ReadAll()

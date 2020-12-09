@@ -5,24 +5,27 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
+
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+
 	//"github.com/Scusemua/PythonGoBridge"
 	"encoding/gob"
-	"io/ioutil"
-	"time"
 	"fmt"
+	"hash/fnv"
+	"io/ioutil"
+	"log"
 	"math/rand"
-	"github.com/mason-leap-lab/infinicache/client"
+	"os"
+	"regexp"
+	"strconv"
+	"sync"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"hash/fnv"
-	"regexp"
-	"strconv"
-	"sync"
-	"log"
-	"os"
+	"github.com/mason-leap-lab/infinicache/client"
 )
 
 // To compile the map plugin: run:
@@ -130,7 +133,7 @@ func doMap(
 	var b []byte
 	var s3KeyFile *os.File
 	var ioData *os.File
-	
+
 	// The session the S3 Downloader will use
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1")},
@@ -157,7 +160,7 @@ func doMap(
 	s3_end_time := time.Now()
 	s3_duration := time.Since(s3_start_time)
 
-	log.Printf("File %s downloaded in %d ms, %d bytes\n", S3Key, s3_duration.Nanoseconds() / 1e6, num_bytes_s3)
+	log.Printf("File %s downloaded in %d ms, %d bytes\n", S3Key, s3_duration.Nanoseconds()/1e6, num_bytes_s3)
 
 	Debug("Reading data for S3 key \"%s\" from downloaded file now...\n", S3Key)
 	b, err = ioutil.ReadFile(S3Key)
@@ -175,7 +178,7 @@ func doMap(
 	ioRecords := make([]IORecord, 0, len(results))
 	// Create record for S3.
 	s3rec := IORecord{TaskNum: taskNum, RedisKey: "S3", Bytes: int(num_bytes_s3), Start: s3_start_time.UnixNano(), End: s3_end_time.UnixNano()}
-	ioRecords = append(ioRecords, s3rec)	
+	ioRecords = append(ioRecords, s3rec)
 
 	//log.Printf("Creating storage client for IPs: %v\n", storageIPs)
 	//cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
@@ -185,7 +188,7 @@ func doMap(
 	cli := clientPool.Get().(*client.Client)
 
 	log.Println("Mapper successfully created storage client.")
-	
+
 	//log.Println("Successfully created storage client.")
 
 	log.Println("Storing results in storage now...")
@@ -196,7 +199,7 @@ func doMap(
 		err := gobEncoder.Encode(v)
 		checkError(err)
 		encoded_result := byte_buffer.Bytes()
-		var writeStart time.Time  
+		var writeStart time.Time
 		log.Printf("storage WRITE START. Key: \"%s\", Size: %f \n", k, float64(len(encoded_result))/float64(1e6))
 
 		// Exponential backoff.
@@ -208,8 +211,8 @@ func doMap(
 			_, ok := cli.EcSet(k, encoded_result)
 
 			if !ok {
-				max_duration := (2 << uint(current_attempt + 4)) - 1
-				if max_duration > serverless.MaxBackoffSleepWrites { 
+				max_duration := (2 << uint(current_attempt+4)) - 1
+				if max_duration > serverless.MaxBackoffSleepWrites {
 					max_duration = serverless.MaxBackoffSleepWrites
 				}
 				duration := rand.Intn(max_duration + 1)
@@ -232,7 +235,7 @@ func doMap(
 		rec := IORecord{TaskNum: taskNum, RedisKey: k, Bytes: len(encoded_result), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 	}
-	
+
 	Debug("Writing metric data to file now...\n")
 	ioData, err = os.Create("IOData/map_io_data_" + jobName + strconv.Itoa(taskNum) + ".dat")
 	checkError(err)
@@ -240,7 +243,7 @@ func doMap(
 	for _, rec := range ioRecords {
 		_, err := ioData.WriteString(fmt.Sprintf("%v\n", rec))
 		checkError(err)
-	}	
+	}
 
 	clientPool.Put(cli)
 }
@@ -280,10 +283,10 @@ func (s grepmService) DoService(raw []byte) error {
 	if args.UsePocket {
 		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
 	} else {
-		log.Printf("=-=-= USING POCKET FOR INTERMEDIATE DATA STORAGE =-=-=\n")
+		log.Printf("=-=-= USING INFINISTORE FOR INTERMEDIATE DATA STORAGE =-=-=\n")
 	}
 
-	poolLock.Lock() 
+	poolLock.Lock()
 	if !poolCreated && args.UsePocket {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
@@ -292,7 +295,7 @@ func (s grepmService) DoService(raw []byte) error {
 	}
 	poolLock.Unlock()
 
-	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards, 
+	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce, args.DataShards,
 		args.ParityShards, args.MaxGoroutines, args.UsePocket)
 
 	return nil
