@@ -17,7 +17,7 @@ echo "Launching MapReduce client."
 OPTIND=1         # Reset in case getopts has been used previously in the shell.
 
 # Initialize our variables:
-KEY_FILE=/home/ubuntu/project/src/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt # S3 key of input data.
+KEY_FILE=/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt # S3 key of input data.
 PATTERN="[a-zA-Z]+" # Regular expression pattern for grep.
 NUM_WORKERS=1
 
