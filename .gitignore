@@ -7,3 +7,4 @@ main/redis_hosts.txt
 plugins/*.so
 *.out
 infinistore_logs/
+util/iodata

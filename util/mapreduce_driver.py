@@ -60,7 +60,7 @@ KEYFILE_PATH = "C:\\Users\\benrc\\.ssh\\CS484_Desktop.pem"
 INFINISTORE_BRANCH = "origin/config_ben"
 
 # This is the branch to use for the MapReduce framework.
-MAPREDUCE_BRANCH = "origin/ecclient"
+MAPREDUCE_BRANCH = "origin/pocket"
 
 def get_private_ips(region_name="us-east-1"):
     """
@@ -899,12 +899,21 @@ def launch_proxies_and_record_metadata(worker_ips : list, client_ip : str) -> (s
     print("experiment_prefix = " + str(experiment_prefix)) 
     return start_time, experiment_prefix   
 
+def download_io_data(prefix, ips = [], key_path = KEYFILE_PATH):
+    for ip in ips:
+        command = "download_io_data.sh \"%s\" \"%s\" \"%s\"" % (prefix, ip, key_path)
+        print("About to execute command:\n %s" % command)
+        subprocess.run(command, shell=True)
+
 # =========================================================
 # Quick reference, copy-and-paste these commands as needed.
 # =========================================================
 #
 # They are commented out bc otherwise they would be executed when we import 
 # mapreduce_driver.py into our Python terminal session.
+
+# Post-Experiment:
+# mrd.download_io_data(experiment_prefix, ips = worker_ips + [client_ip])
 
 # Clean-up:
 # mrd.clear_redis_instances(flushall = True, hostnames = hostnames)
