@@ -101,7 +101,7 @@ func InitHashRing(storageIps []string) {
 		Load:              1.25,
 		Hasher:            serverless.Hasher{},
 	}
-	ring := consistent.New(nil, cfg)
+	ring = consistent.New(nil, cfg)
 
 	for _, ip := range storageIps {
 		log.Println("Creating Redis client for Redis @ %s", ip)
