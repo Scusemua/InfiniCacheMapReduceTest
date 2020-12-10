@@ -244,8 +244,10 @@ func readExponentialBackoff(key string, cli *client.Client, usePocket bool) ([]b
 			log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", key, duration)
 			time.Sleep(time.Duration(duration) * time.Millisecond)
 		} else {
-			readAllCloserSizeMB := float64(readAllCloser.Len()) / float64(1e6)
-			log.Printf("Successfully read data with key \"%s\" on attempt %d. Size = %f MB.\n", key, current_attempt, readAllCloserSizeMB)
+			if !usePocket {
+				readAllCloserSizeMB := float64(readAllCloser.Len()) / float64(1e6)
+				log.Printf("Successfully read data with key \"%s\" on attempt %d. Size = %f MB.\n", key, current_attempt, readAllCloserSizeMB)
+			}
 			success = true
 			break
 		}
