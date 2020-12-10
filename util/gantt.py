@@ -1,6 +1,6 @@
 import time 
 import datetime 
-import plotly.figure_factory as ff
+#import plotly.figure_factory as ff
 import plotly as py 
 import plotly.graph_objects as go
 import pandas as pd
@@ -59,7 +59,7 @@ if __name__ == "__main__":
    for line in map_lines:
       line = line.replace('}', '')
       line = line.replace('{', '')
-      splits = line.split(" ")
+      splits = line.split("\t")
       task_num = splits[0]
       redis_key = splits[1]
       bytes_written = float(splits[2])
@@ -80,21 +80,25 @@ if __name__ == "__main__":
       df.append(var)
    
    start_times.sort()
-   end_times = list()
+   end_times_s3 = list()
+   end_times_mr = list()
    entries = list() 
    
    print("Processing reduce data...")
    for line in reduce_lines:
       line = line.replace('}', '')
       line = line.replace('{', '')   
-      splits = line.split(" ")
+      splits = line.split("\t")
       task_num = splits[0]
       redis_key = splits[1]
       bytes_read = float(splits[2])
       start = float(splits[3][0:10] + "." + splits[3][10:-2])
       end = float(splits[4][0:10] + "." + splits[4][10:-2])
       sizes.add(bytes_read)
-      end_times.append(end)
+      if redis_key == "s3":
+         end_times_s3.append(end)
+      else:
+         end_times_mr.append(end)
       var = dict(
          Task = "Reducer " + str(task_num), 
          Start = datetime.datetime.fromtimestamp(start).strftime('%Y-%m-%d %H:%M:%S.%f'), 
@@ -107,24 +111,34 @@ if __name__ == "__main__":
       entry = Entry(d["start"], end, d["size"])
       entries.append(entry)
    
-   end_times.sort()
-   time_series = dict()
+   end_times_s3.sort()
+   end_times_mr.sort()
+   time_series_mr = dict()
+   time_series_s3 = dict()
    
-   diff = end_times[-1] - start_times[0]
+   diff = end_times_mr[-1] - start_times[0]
    granularity = diff / 100 
    
    t = start_times[0]
-   while t < end_times[-1]:
+   while t < end_times_mr[-1]:
       wss = calculate_working_set_size(t, entries)
-      time_series[t] = wss 
+      time_series_mr[t] = wss 
       t += granularity
    
-   for k,v in time_series.items():
+   while t < end_times_s3[-1]:
+      wss = calculate_working_set_size(t, entries)
+      time_series_s3[t] = wss 
+      t += granularity
+
+   for k,v in time_series_s3.items():
+      print("{}, {}".format(k, v))
+   print("\nmr:")
+   for k,v in time_series_mr.items():
       print("{}, {}".format(k, v))
    
    blue = Color("blue")
    colors = list(blue.range_to(Color("red"), len(sizes)))
    
    print("Creating Gantt chart...")
-   fig = ff.create_gantt(df, colors=[c.rgb for c in colors], index_col='Complete', show_colorbar=True, group_tasks = True, showgrid_x=True, showgrid_y=True)
-   fig.show()
+   #fig = ff.create_gantt(df, colors=[c.rgb for c in colors], index_col='Complete', show_colorbar=True, group_tasks = True, showgrid_x=True, showgrid_y=True)
+   #fig.show()

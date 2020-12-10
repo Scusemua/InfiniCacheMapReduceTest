@@ -17,8 +17,9 @@ import (
 	"math/rand"
 
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+	"github.com/buraksezer/consistent"
+	"github.com/go-redis/redis"
 
-	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
 	//infinicache "github.com/mason-leap-lab/infinicache/client"
 	//"io"
@@ -104,6 +105,38 @@ func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []stri
 			c.(*client.Client).Close()
 		},
 	}, clientPoolCapacity, serverless.PoolForStrictConcurrency)
+}
+
+var redisClients map[string]*redis.Client
+var members []consistent.Member
+var ring *consistent.Consistent
+var ringCreated = false
+
+func InitHashRing(storageIps []string) {
+	redisClients = make(map[string]*redis.Client)
+
+	cfg := consistent.Config{
+		PartitionCount:    7,
+		ReplicationFactor: 20,
+		Load:              1.25,
+		Hasher:            serverless.Hasher{},
+	}
+	ring := consistent.New(nil, cfg)
+
+	for _, ip := range storageIps {
+		log.Println("Creating Redis client for Redis @ %s:6378", ip)
+		redisClient := redis.NewClient(&redis.Options{
+			Addr:         fmt.Sprintf("%s:6378", ip),
+			Password:     "",
+			DB:           0,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 30 * time.Second,
+			MaxRetries:   3,
+		})
+		myMember := serverless.HashMember(ip)
+		ring.Add(myMember)
+		redisClients[ip] = redisClient
+	}
 }
 
 // func CreateInfiniStoreClient(taskNum int, dataShards int, parityShards int, maxGoRoutines int) {
@@ -259,32 +292,58 @@ func doReduceDriver(
 		//marshalled_result, err := redis_client.Get(dataKey).Result()
 
 		var readAllCloser client.ReadAllCloser
+		var encodedResult []byte
 		var readStart time.Time
 		var ok bool
 		success := false
 		// Exponential backoff.
-		for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
+		for currentAttempt := 0; currentAttempt < serverless.MaxAttemptsDuringBackoff; currentAttempt++ {
 			// This is a read operation from InfiniStore. The code that follows is also related.
 			// Basically, the Get function returns a tuple where the first element of the tuple is
 			// an object of type ReadAllCloser, and the second element of the tuple is a boolean
 			// which indicates whether or not the read operation went well.
-			log.Printf("[REDUCER #%d] Attempt %d/%d for read key \"%s\".\n", reduceTaskNum, current_attempt, serverless.MaxAttemptsDuringBackoff, dataKey)
+			log.Printf("[REDUCER #%d] Attempt %d/%d for read key \"%s\".\n", reduceTaskNum, currentAttempt, serverless.MaxAttemptsDuringBackoff, dataKey)
 			readStart = time.Now()
 			// IOHERE - This is a read (dataKey is the key, it is a string).
-			readAllCloser, ok = cli.Get(dataKey)
+			if usePocket {
+				owner := ring.LocateKey([]byte(dataKey))
+				log.Printf("Located owner %s for key \"%s\"", owner.String(), k)
+				redisClient := redisClients[owner.String()]
+				encodedResult, err = redisClient.Get(dataKey).Result()
+
+				if err != nil {
+					maxDuration := (2 << uint(currentAttempt)) - 1
+					duration := rand.Intn(maxDuration + 1)
+					log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
+					time.Sleep(time.Duration(duration) * time.Millisecond)
+				} else {
+					ok = true
+				}
+			} else {
+				// IOHERE - This is a read (dataKey is the key, it is a string).
+				readAllCloser, ok = cli.Get(dataKey)
+			}
 
 			// Check for failure, and backoff exponentially on-failure.
 			// If the bool is false, then there was an error. If the key was not found, then readAllCloser will be null.
 			if !ok {
-				max_duration := (2 << uint(current_attempt)) - 1
+				max_duration := (2 << uint(currentAttempt)) - 1
 				duration := rand.Intn(max_duration + 1)
 				log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
 				time.Sleep(time.Duration(duration) * time.Millisecond)
 			} else {
-				log.Printf("[REDUCER #%d] Successfully read data with key \"%s\" on attempt %d.\n", reduceTaskNum, dataKey, current_attempt)
+				log.Printf("[REDUCER #%d] Successfully read data with key \"%s\" on attempt %d.\n", reduceTaskNum, dataKey, currentAttempt)
 				success = true
 				break
 			}
+		}
+
+		// If the ReadAllCloser is nil but there was no error, then that means the key was not found.
+		if !usePocket && readAllCloser == nil {
+			log.Printf("WARNING: Key \"%s\" does not exist in intermediate storage.\n", dataKey)
+			log.Printf("WARNING: Skipping key \"%s\"...\n", dataKey)
+			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
+			continue
 		}
 
 		// If ultimately the read failed after multiple attempts during exponential backoff,
@@ -293,32 +352,26 @@ func doReduceDriver(
 			log.Fatal("ERROR: Failed to retrieve data from storage with key \"" + dataKey + "\" in allotted number of attempts.\n")
 		}
 
-		// If the ReadAllCloser is nil but there was no error, then that means the key was not found.
-		if readAllCloser == nil {
-			log.Printf("WARNING: Key \"%s\" does not exist in intermediate storage.\n", dataKey)
-			log.Printf("WARNING: Skipping key \"%s\"...\n", dataKey)
-			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
-			continue
-		}
-
 		log.Printf("[REDUCER #%d] Calling .ReadAll() on ReadAllCloser for key \"%s\" now...\n", reduceTaskNum, dataKey)
 		// To get the data from the read, we call ReadAll() on the ReadAllCloser object. This is still
 		// InfiniStore specific. That's just how it works. After reading, we call Close().
-		encoded_result, err := readAllCloser.ReadAll()
-		readAllCloser.Close()
-		if err != nil {
-			log.Fatal("Unexpected exception during ReadAll() for key \"%s\".\n", dataKey)
-			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
-			//continue
+		if !usePocket {
+			encodedResult, err = readAllCloser.ReadAll()
+			readAllCloser.Close()
+			if err != nil {
+				log.Fatal("Unexpected exception during ReadAll() for key \"%s\".\n", dataKey)
+				// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
+				//continue
+			}
 		}
 		readEnd := time.Now()
 		readDuration := time.Since(readStart)
-		log.Printf("storage READ END. Key: \"%s\", Reduce Task #: %d, Bytes read: %f, Time: %d ms", dataKey, reduceTaskNum, float64(len(encoded_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
-		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(encoded_result), Start: readStart.UnixNano(), End: readEnd.UnixNano()}
+		log.Printf("storage READ END. Key: \"%s\", Reduce Task #: %d, Bytes read: %f, Time: %d ms", dataKey, reduceTaskNum, float64(len(encodedResult))/float64(1e6), readDuration.Nanoseconds()/1e6)
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(encodedResult), Start: readStart.UnixNano(), End: readEnd.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 
 		log.Printf("[REDUCER #%d] Decoding data for key \"%s\" now...\n", reduceTaskNum, dataKey)
-		byte_buffer_res := bytes.NewBuffer(encoded_result)
+		byte_buffer_res := bytes.NewBuffer(encodedResult)
 		gobDecoder := gob.NewDecoder(byte_buffer_res)
 		err = gobDecoder.Decode(&kvs)
 
@@ -435,8 +488,7 @@ func doReduceDriver(
 			// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 			// I put it in its own function bc there are several write calls in this file and I did not
 			// wanna reuse the same code in each location.
-			success, writeStart := exponentialBackoffWrite(chunk_key, chunk, cli)
-			//success := exponentialBackoffWrite(chunk_key, chunk)
+			success, writeStart := exponentialBackoffWrite(chunk_key, chunk, cli, usePocket)
 
 			writeEnd := time.Now()
 			writeDuration := time.Since(writeStart)
@@ -463,12 +515,11 @@ func doReduceDriver(
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
 		// wanna reuse the same code in each location.
-		success, writeStart := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli)
+		success, writeStart := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli, usePocket)
 
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(numberOfChunksSerialized), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
 		ioRecords = append(ioRecords, rec)
 
-		//success := exponentialBackoffWrite(fileName, numberOfChunksSerialized)
 		if !success {
 			log.Fatal("ERROR while storing value in storage, key is: \"", fileName, "\"")
 		}
@@ -479,8 +530,8 @@ func doReduceDriver(
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
 		// wanna reuse the same code in each location.
-		success, writeStart := exponentialBackoffWrite(fileName, marshalled_result, cli)
-		//success := exponentialBackoffWrite(fileName, marshalled_result)
+		success, writeStart := exponentialBackoffWrite(fileName, marshalled_result, cli, usePocket)
+
 		if !success {
 			log.Fatal("ERROR while storing value in storage with key \"", fileName, "\"")
 		}
@@ -507,27 +558,36 @@ func doReduceDriver(
 }
 
 // Encapsulates a write operation. Currently, this is an InfiniStore write operation.
-func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) (bool, time.Time) {
+func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client, usePocket bool) (bool, time.Time) {
 	//func exponentialBackoffWrite(key string, value []byte) bool {
 	success := false
 	var writeStart time.Time
-	for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
-		log.Printf("Attempt %d/%d for write key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, key)
+	for currentAttempt := 0; currentAttempt < serverless.MaxAttemptsDuringBackoff; currentAttempt++ {
+		log.Printf("Attempt %d/%d for write key \"%s\".\n", currentAttempt, serverless.MaxAttemptsDuringBackoff, key)
 		// Call the EcSet InfiniStore function to store 'value' at key 'key'.
 		writeStart = time.Now()
-		// IOHERE - This is a write (k is the key, it is a string, value is the value, it is []byte).
-		_, ok := ecClient.EcSet(key, value)
+
+		var ok bool
+		if usePocket {
+			owner := ring.LocateKey([]byte(k))
+			log.Printf("Located owner %s for key \"%s\"", owner.String(), k)
+			redisClient := redisClients[owner.String()]
+			redisClient.Set(key, value, 0)
+		} else {
+			// IOHERE - This is a write (k is the key, it is a string, encodedResult is the value, it is []byte).
+			_, ok = ecClient.EcSet(key, value)
+		}
 
 		if !ok {
-			max_duration := (2 << uint(current_attempt+4)) - 1
-			if max_duration > serverless.MaxBackoffSleepWrites {
-				max_duration = serverless.MaxBackoffSleepWrites
+			maxDuration := (2 << uint(currentAttempt+4)) - 1
+			if maxDuration > serverless.MaxBackoffSleepWrites {
+				maxDuration = serverless.MaxBackoffSleepWrites
 			}
-			duration := rand.Intn(max_duration + 1)
+			duration := rand.Intn(maxDuration + 1)
 			log.Printf("[ERROR] Failed to write key \"%s\". Backing off for %d ms.\n", key, duration)
 			time.Sleep(time.Duration(duration) * time.Millisecond)
 		} else {
-			log.Printf("Successfully wrote key \"%s\" on attempt %d.\n", key, current_attempt)
+			log.Printf("Successfully wrote key \"%s\" on attempt %d.\n", key, currentAttempt)
 			success = true
 			break
 		}
@@ -570,6 +630,11 @@ func (s srtrService) DoService(raw []byte) error {
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
 		poolCreated = true
+	}
+
+	if !ringCreated && args.UsePocket {
+		log.Printf("Creating consistent hash ring now.\n")
+		InitHashRing(args.StorageIPs)
 	}
 	poolLock.Unlock()
 

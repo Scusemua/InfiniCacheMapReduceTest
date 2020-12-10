@@ -147,19 +147,37 @@ func doReduce(
 		var readStart time.Time
 		log.Printf("storage READ START. Key: \"%s\", Reduce Task #: %d.", dataKey, reduceTaskNum)
 		var readAllCloser client.ReadAllCloser
+		var encodedResult []byte
 		var ok bool
 		success := false
 		// Exponential backoff.
 		for current_attempt := 0; current_attempt < serverless.MaxAttemptsDuringBackoff; current_attempt++ {
 			log.Printf("Attempt %d/%d for read key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, dataKey)
 			readStart = time.Now()
-			// IOHERE - This is a read (dataKey is the key, it is a string).
-			readAllCloser, ok = cli.Get(dataKey)
+
+			if usePocket {
+				owner := ring.LocateKey([]byte(dataKey))
+				log.Printf("Located owner %s for key \"%s\"", owner.String(), k)
+				redisClient := redisClients[owner.String()]
+				encodedResult, err = redisClient.Get(dataKey).Result()
+
+				if err != nil {
+					maxDuration := (2 << uint(current_attempt)) - 1
+					duration := rand.Intn(maxDuration + 1)
+					log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
+					time.Sleep(time.Duration(duration) * time.Millisecond)
+				} else {
+					ok = true
+				}
+			} else {
+				// IOHERE - This is a read (dataKey is the key, it is a string).
+				readAllCloser, ok = cli.Get(dataKey)
+			}
 
 			// Check for failure, and backoff exponentially on-failure.
 			if !ok {
-				max_duration := (2 << uint(current_attempt)) - 1
-				duration := rand.Intn(max_duration + 1)
+				maxDuration := (2 << uint(current_attempt)) - 1
+				duration := rand.Intn(maxDuration + 1)
 				log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
 				time.Sleep(time.Duration(duration) * time.Millisecond)
 			} else {
@@ -169,7 +187,7 @@ func doReduce(
 			}
 		}
 
-		if readAllCloser == nil {
+		if !usePocket && readAllCloser == nil {
 			log.Printf("\nWARNING: ReadAllCloser returned by ECClient.Get() for key %s is null. Skipping...\n", dataKey)
 			continue
 		}
@@ -178,21 +196,19 @@ func doReduce(
 			log.Fatal("ERROR: Failed to retrieve data from storage with key \"" + dataKey + "\" in allotted number of attempts.\n")
 		}
 
-		encoded_result, err := readAllCloser.ReadAll()
-		readAllCloser.Close()
-		if err != nil {
-			log.Printf("ERROR: storage encountered exception for key \"%s\"...", "addr", dataKey)
-			log.Printf("ERROR: Just skipping the key \"%s\"...", dataKey)
-
-			// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
-			continue
+		if !usePocket {
+			encodedResult, err = readAllCloser.ReadAll()
+			readAllCloser.Close()
+			if err != nil {
+				log.Fatal("Unexpected exception during ReadAll() for key \"%s\".\n", dataKey)
+			}
 		}
 		readEnd := time.Now()
 		readDuration := time.Since(readStart)
-		log.Printf("storage READ END. Key: \"%s\", Reduce Task #: %d, Bytes read: %f, Time: %d ms", dataKey, reduceTaskNum, float64(len(encoded_result))/float64(1e6), readDuration.Nanoseconds()/1e6)
-		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(encoded_result), Start: readStart.UnixNano(), End: readEnd.UnixNano()}
+		log.Printf("storage READ END. Key: \"%s\", Reduce Task #: %d, Bytes read: %f, Time: %d ms", dataKey, reduceTaskNum, float64(len(encodedResult))/float64(1e6), readDuration.Nanoseconds()/1e6)
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: dataKey, Bytes: len(encodedResult), Start: readStart.UnixNano(), End: readEnd.UnixNano()}
 		ioRecords = append(ioRecords, rec)
-		byte_buffer_res := bytes.NewBuffer(encoded_result)
+		byte_buffer_res := bytes.NewBuffer(encodedResult)
 		gobDecoder := gob.NewDecoder(byte_buffer_res)
 		err = gobDecoder.Decode(&kvs)
 		for _, kv := range kvs {
@@ -230,17 +246,17 @@ func doReduce(
 	gobEncoder := gob.NewEncoder(&byte_buffer)
 	err := gobEncoder.Encode(results)
 	checkError(err)
-	encoded_result := byte_buffer.Bytes()
+	encodedResult := byte_buffer.Bytes()
 
 	log.Printf("Writing final result to Redis at key \"%s\". Size: %f MB. md5: %x\n",
-		fileName, float64(len(encoded_result))/float64(1e6), md5.Sum(encoded_result))
+		fileName, float64(len(encodedResult))/float64(1e6), md5.Sum(encodedResult))
 
 	chunk_threshold := 512 * 1e6
 
 	/* Chunk up the final results if necessary. */
-	if len(encoded_result) > int(chunk_threshold) {
+	if len(encodedResult) > int(chunk_threshold) {
 		log.Printf("Final result is larger than %d MB. Storing it in pieces.\n", int(chunk_threshold/1e6))
-		chunks := split(encoded_result, int(chunk_threshold))
+		chunks := split(encodedResult, int(chunk_threshold))
 		num_chunks := len(chunks)
 		log.Println("Created", num_chunks, " chunks for final result", fileName)
 		base_key := fileName + "-part"
@@ -277,9 +293,9 @@ func doReduce(
 		}
 		checkError(err)
 	} else {
-		log.Printf("storage WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(encoded_result))/float64(1e6))
+		log.Printf("storage WRITE START. Key: \"%s\", Size: %f MB\n", fileName, float64(len(encodedResult))/float64(1e6))
 
-		success, writeStart := exponentialBackoffWrite(fileName, encoded_result, cli)
+		success, writeStart := exponentialBackoffWrite(fileName, encodedResult, cli)
 		if !success {
 			log.Fatal("ERROR while storing value in storage with key \"", fileName, "\"")
 		}
@@ -287,9 +303,9 @@ func doReduce(
 		writeDuration := time.Since(writeStart)
 		writeEnd := time.Now()
 
-		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", fileName, float64(len(encoded_result))/float64(1e6), writeDuration.Nanoseconds()/1e6)
+		log.Printf("storage WRITE END. Key: \"%s\", Size: %f, Time: %d ms \n", fileName, float64(len(encodedResult))/float64(1e6), writeDuration.Nanoseconds()/1e6)
 
-		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(encoded_result), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
+		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(encodedResult), Start: writeStart.UnixNano(), End: writeEnd.UnixNano()}
 		ioRecords = append(ioRecords, rec)
 	}
 
@@ -318,11 +334,11 @@ func exponentialBackoffWrite(key string, value []byte, cli *client.Client) (bool
 		_, ok := cli.EcSet(key, value)
 
 		if !ok {
-			max_duration := (2 << uint(current_attempt+4)) - 1
-			if max_duration > serverless.MaxBackoffSleepWrites {
-				max_duration = serverless.MaxBackoffSleepWrites
+			maxDuration := (2 << uint(current_attempt+4)) - 1
+			if maxDuration > serverless.MaxBackoffSleepWrites {
+				maxDuration = serverless.MaxBackoffSleepWrites
 			}
-			duration := rand.Intn(max_duration + 1)
+			duration := rand.Intn(maxDuration + 1)
 			log.Printf("[ERROR] Failed to write key \"%s\". Backing off for %d ms.\n", key, duration)
 			time.Sleep(time.Duration(duration) * time.Millisecond)
 		} else {
@@ -354,11 +370,16 @@ func (s greprService) DoService(raw []byte) error {
 	}
 
 	poolLock.Lock()
-	if !poolCreated && args.UsePocket {
+	if !poolCreated && !args.UsePocket {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
 		poolCreated = true
+	}
+
+	if !ringCreated && args.UsePocket {
+		log.Printf("Creating consistent hash ring now.\n")
+		InitHashRing(args.StorageIPs)
 	}
 	poolLock.Unlock()
 

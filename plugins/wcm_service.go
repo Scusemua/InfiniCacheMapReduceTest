@@ -27,6 +27,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/buraksezer/consistent"
+	"github.com/go-redis/redis"
 
 	//"github.com/go-redis/redis/v7"
 	"io/ioutil"
@@ -61,6 +63,38 @@ func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []stri
 			c.(*client.Client).Close()
 		},
 	}, clientPoolCapacity, serverless.PoolForStrictConcurrency)
+}
+
+var redisClients map[string]*redis.Client
+var members []consistent.Member
+var ring *consistent.Consistent
+var ringCreated = false
+
+func InitHashRing(storageIps []string) {
+	redisClients = make(map[string]*redis.Client)
+
+	cfg := consistent.Config{
+		PartitionCount:    7,
+		ReplicationFactor: 20,
+		Load:              1.25,
+		Hasher:            serverless.Hasher{},
+	}
+	ring := consistent.New(nil, cfg)
+
+	for _, ip := range storageIps {
+		log.Println("Creating Redis client for Redis @ %s:6378", ip)
+		redisClient := redis.NewClient(&redis.Options{
+			Addr:         fmt.Sprintf("%s:6378", ip),
+			Password:     "",
+			DB:           0,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 30 * time.Second,
+			MaxRetries:   3,
+		})
+		myMember := serverless.HashMember(ip)
+		ring.Add(myMember)
+		redisClients[ip] = redisClient
+	}
 }
 
 // To compile the map plugin: run:
@@ -324,16 +358,21 @@ func (s wcmService) DoService(raw []byte) error {
 	}
 
 	poolLock.Lock()
-	if !poolCreated {
+	if !poolCreated && !args.UsePocket {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
 		poolCreated = true
 	}
+
+	if !ringCreated && args.UsePocket {
+		log.Printf("Creating consistent hash ring now.\n")
+		InitHashRing(args.StorageIPs)
+	}
 	poolLock.Unlock()
 
 	doMap(args.JobName, args.S3Key, args.StorageIPs, args.TaskNum, args.NReduce,
-		args.DataShards, args.ParityShards, args.MaxGoroutines)
+		args.DataShards, args.ParityShards, args.MaxGoroutines, args.UsePocket)
 
 	return nil
 }

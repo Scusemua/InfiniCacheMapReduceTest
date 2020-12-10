@@ -22,8 +22,9 @@ import (
 	"math/rand"
 
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
+	"github.com/buraksezer/consistent"
+	"github.com/go-redis/redis"
 
-	//"github.com/go-redis/redis/v7"
 	"github.com/mason-leap-lab/infinicache/client"
 	//infinicache "github.com/mason-leap-lab/infinicache/client"
 	//"io"
@@ -82,6 +83,38 @@ func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []stri
 			c.(*client.Client).Close()
 		},
 	}, clientPoolCapacity, serverless.PoolForStrictConcurrency)
+}
+
+var redisClients map[string]*redis.Client
+var members []consistent.Member
+var ring *consistent.Consistent
+var ringCreated = false
+
+func InitHashRing(storageIps []string) {
+	redisClients = make(map[string]*redis.Client)
+
+	cfg := consistent.Config{
+		PartitionCount:    7,
+		ReplicationFactor: 20,
+		Load:              1.25,
+		Hasher:            serverless.Hasher{},
+	}
+	ring := consistent.New(nil, cfg)
+
+	for _, ip := range storageIps {
+		log.Println("Creating Redis client for Redis @ %s:6378", ip)
+		redisClient := redis.NewClient(&redis.Options{
+			Addr:         fmt.Sprintf("%s:6378", ip),
+			Password:     "",
+			DB:           0,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 30 * time.Second,
+			MaxRetries:   3,
+		})
+		myMember := serverless.HashMember(ip)
+		ring.Add(myMember)
+		redisClients[ip] = redisClient
+	}
 }
 
 // Used to chunk up the final results to prevent writing huge blocks of data at once.
@@ -480,11 +513,16 @@ func (s wcrService) DoService(raw []byte) error {
 
 	// Make sure only one worker at a time can check this in order to ensure that the pool has been created.
 	poolLock.Lock()
-	if !poolCreated {
+	if !poolCreated && !args.UsePocket {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
 		poolCreated = true
+	}
+
+	if !ringCreated && args.UsePocket {
+		log.Printf("Creating consistent hash ring now.\n")
+		InitHashRing(args.StorageIPs)
 	}
 	poolLock.Unlock()
 

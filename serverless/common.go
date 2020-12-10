@@ -3,10 +3,26 @@ package serverless
 import (
 	"log"
 	"strconv"
+
+	"github.com/dchest/siphash"
 )
 
 // Debugging enabled?
 const debugEnabled = true
+
+type Hasher struct{}
+
+// Sum64 will return hash of the given data.
+func (h Hasher) Sum64(data []byte) uint64 {
+	// you should use a proper hash function for uniformity.
+	return siphash.Hash(5, 5, data)
+}
+
+type HashMember string
+
+func (m HashMember) String() string {
+	return string(m)
+}
 
 // DPrintf will only print if the debugEnabled const has been set to true
 func Debug(format string, a ...interface{}) (n int, err error) {
@@ -57,8 +73,10 @@ func MergeName(jobName string, reduceTask int) string {
 
 // Maximum number of retry attempts during exponential backoff.
 const MaxAttemptsDuringBackoff = 10
+
 // Maximum amount of time workers/clients can sleep during an exponentially backed-off read.
 const MaxBackoffSleepReads = 10000
+
 // Maximum amount of time workers/clients can sleep during an exponentially backed-off write.
 const MaxBackoffSleepWrites = 10000
 
@@ -74,19 +92,19 @@ func ServiceName(service string, phase jobPhase) string {
 }
 
 type MapReduceArgs struct {
-	JobName       string		// Name of the MapReduce job being executed.
-	S3Key         string		// S3 key of data that needs to be downloaded for the job.
-	TaskNum       int			// Identifier for the task.
-	NReduce       int			// The number of Reducers. Used to partition keys to reducers during Map.
-	NOthers       int			// The number of Mappers. Used in Reduce.
-	SampleKeys    []string		// Used to partition the keys to reducers during TeraSort such that they're relatively soretd.
-	StorageIPs    []string		// The hostnames (format "<IP>:<PORT>") of remote/intermediate storage.
-	DataShards    int			// InfiniStore parameter.
-	ParityShards  int			// InfiniStore parameter.
-	MaxGoroutines int			// InfiniStore parameter.
-	ClientPoolCapacity int 		// Maximum capacity of the pool of InfiniStore clients.
-	Pattern 	  string 		// Regex, used for Grep.
-	UsePocket	  bool 			// Use Pocket for intermediate storage?
-	PocketJobId   string		// The JobID of the Pocket job, if we're using pocket.
-	ChunkThreshold int			// Threshold above which we break intermediate data into ChunkThreshold-sized pieces for reading/writing to storage.
+	JobName            string   // Name of the MapReduce job being executed.
+	S3Key              string   // S3 key of data that needs to be downloaded for the job.
+	TaskNum            int      // Identifier for the task.
+	NReduce            int      // The number of Reducers. Used to partition keys to reducers during Map.
+	NOthers            int      // The number of Mappers. Used in Reduce.
+	SampleKeys         []string // Used to partition the keys to reducers during TeraSort such that they're relatively soretd.
+	StorageIPs         []string // The hostnames (format "<IP>:<PORT>") of remote/intermediate storage.
+	DataShards         int      // InfiniStore parameter.
+	ParityShards       int      // InfiniStore parameter.
+	MaxGoroutines      int      // InfiniStore parameter.
+	ClientPoolCapacity int      // Maximum capacity of the pool of InfiniStore clients.
+	Pattern            string   // Regex, used for Grep.
+	UsePocket          bool     // Use Pocket for intermediate storage?
+	PocketJobId        string   // The JobID of the Pocket job, if we're using pocket.
+	ChunkThreshold     int      // Threshold above which we break intermediate data into ChunkThreshold-sized pieces for reading/writing to storage.
 }
