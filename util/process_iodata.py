@@ -14,19 +14,19 @@ if __name__ == "__main__":
 
     root_dir = os.path.join(args.iodata_dir, args.prefix)
     
-    srt_map = open(os.path.join(root_dir, "srt_map.csv"), "w")
-    srt_reduce = open(os.path.join(root_dir, "srt_reduce.csv"), "w")
-    wc_map = open(os.path.join(root_dir, "wc_map.csv"), "w")
-    wc_reduce = open(os.path.join(root_dir, "wc_reduce.csv"), "w")    
+    srt_map = open(os.path.join(root_dir, "srt_map_V2.csv"), "w")
+    srt_reduce = open(os.path.join(root_dir, "srt_reduce_V2.csv"), "w")
+    wc_map = open(os.path.join(root_dir, "wc_map_V2.csv"), "w")
+    wc_reduce = open(os.path.join(root_dir, "wc_reduce_V2.csv"), "w")    
 
     for root, subdirs, files in os.walk(root_dir):
         print(files)
         for file in files:
             if args.job:
-                if not"wc" in file and not "srt" in file:
+                if not "wc" in file and not "srt" in file:
                     continue
-                if file.endswith(".bak"):
-                    continue
+            if not file.endswith(".dat"):
+                continue
             full_filepath = os.path.join(root, file)
             # # Read in the file
             # with open(full_filepath, 'r') as _file :

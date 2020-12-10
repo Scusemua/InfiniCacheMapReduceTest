@@ -52,59 +52,58 @@ if __name__ == "__main__":
    
    data = dict()
    
-   start_times = list()
+   start_times_sion = list()
    sizes = set()
    print("Processing map data...")
    df = []
    for line in map_lines:
-      line = line.replace('}', '')
-      line = line.replace('{', '')
+      # line = line.replace('}', '')
+      # line = line.replace('{', '')
       splits = line.split("\t")
       task_num = splits[0]
       redis_key = splits[1]
       bytes_written = float(splits[2])
-      start = float(splits[3][0:10] + "." + splits[3][10:-2])
-      end = float(splits[4][0:10] + "." + splits[4][10:-2])
+      start = float(splits[3])#[0:10])# + "." + splits[3][10:-2])
+      end = float(splits[4])#[0:10])# + "." + splits[4][10:-2])
       sizes.add(bytes_written)
-      start_times.append(start)
+      if not redis_key == "S3":
+         start_times_sion.append(start)
       data[redis_key] = {
          "start": start,
          "size": bytes_written
       }
       
-      var = dict(
-         Task = "Mapper " + str(task_num), 
-         Start = datetime.datetime.fromtimestamp(start).strftime('%Y-%m-%d %H:%M:%S.%f'), 
-         Finish = datetime.datetime.fromtimestamp(end).strftime('%Y-%m-%d %H:%M:%S.%f'), 
-         Complete = bytes_written)
-      df.append(var)
+   # var = dict(
+   #    Task = "Mapper " + str(task_num), 
+   #    Start = datetime.datetime.fromtimestamp(start).strftime('%Y-%m-%d %H:%M:%S.%f'), 
+   #    Finish = datetime.datetime.fromtimestamp(end).strftime('%Y-%m-%d %H:%M:%S.%f'), 
+   #    Complete = bytes_written)
+   # df.append(var)
    
-   start_times.sort()
+   start_times_sion.sort()
    end_times_s3 = list()
    end_times_mr = list()
    entries = list() 
    
    print("Processing reduce data...")
-   for line in reduce_lines:
-      line = line.replace('}', '')
-      line = line.replace('{', '')   
+   for line in reduce_lines: 
       splits = line.split("\t")
       task_num = splits[0]
       redis_key = splits[1]
       bytes_read = float(splits[2])
-      start = float(splits[3][0:10] + "." + splits[3][10:-2])
-      end = float(splits[4][0:10] + "." + splits[4][10:-2])
+      start = float(splits[3])#[0:10])# + "." + splits[3][10:-2])
+      end = float(splits[4])#[0:10])# + "." + splits[4][10:-2])
       sizes.add(bytes_read)
-      if redis_key == "s3":
+      if redis_key == "S3":
          end_times_s3.append(end)
       else:
          end_times_mr.append(end)
-      var = dict(
-         Task = "Reducer " + str(task_num), 
-         Start = datetime.datetime.fromtimestamp(start).strftime('%Y-%m-%d %H:%M:%S.%f'), 
-         Finish = datetime.datetime.fromtimestamp(end).strftime('%Y-%m-%d %H:%M:%S.%f'), 
-         Complete = bytes_read)
-      df.append(var) 
+      # var = dict(
+      #    Task = "Reducer " + str(task_num), 
+      #    Start = datetime.datetime.fromtimestamp(start).strftime('%Y-%m-%d %H:%M:%S.%f'), 
+      #    Finish = datetime.datetime.fromtimestamp(end).strftime('%Y-%m-%d %H:%M:%S.%f'), 
+      #    Complete = bytes_read)
+      # df.append(var) 
       
       d = data[redis_key]
       
@@ -116,29 +115,30 @@ if __name__ == "__main__":
    time_series_mr = dict()
    time_series_s3 = dict()
    
-   diff = end_times_mr[-1] - start_times[0]
-   granularity = diff / 100 
-   
-   t = start_times[0]
+   diff = end_times_mr[-1] - start_times_sion[0]
+   granularity = diff / 1000
+   print(diff)
+   t = start_times_sion[0]
    while t < end_times_mr[-1]:
       wss = calculate_working_set_size(t, entries)
       time_series_mr[t] = wss 
       t += granularity
    
-   while t < end_times_s3[-1]:
-      wss = calculate_working_set_size(t, entries)
-      time_series_s3[t] = wss 
-      t += granularity
+   # t = start_times_sion[0]
+   # while t < end_times_s3[-1]:
+   #    wss = calculate_working_set_size(t, entries)
+   #    time_series_s3[t] = wss 
+   #    t += granularity
 
-   for k,v in time_series_s3.items():
-      print("{}, {}".format(k, v))
-   print("\nmr:")
+   # for k,v in time_series_s3.items():
+   #    print("{}, {}".format(k, v))
+   # print("\nmr:")
    for k,v in time_series_mr.items():
       print("{}, {}".format(k, v))
    
-   blue = Color("blue")
-   colors = list(blue.range_to(Color("red"), len(sizes)))
+   #blue = Color("blue")
+   #colors = list(blue.range_to(Color("red"), len(sizes)))
    
-   print("Creating Gantt chart...")
+   #print("Creating Gantt chart...")
    #fig = ff.create_gantt(df, colors=[c.rgb for c in colors], index_col='Complete', show_colorbar=True, group_tasks = True, showgrid_x=True, showgrid_y=True)
    #fig.show()

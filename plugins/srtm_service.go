@@ -88,6 +88,9 @@ func InitHashRing(storageIps []string) {
 		myMember := serverless.HashMember(ip)
 		ring.Add(myMember)
 		redisClients[ip] = redisClient
+
+		fmt.Printf("Created Redis client for IP %s\n" % s)
+		fmt.Printf("Ping: %v\n", redisClient.Ping(ctx))
 	}
 }
 
