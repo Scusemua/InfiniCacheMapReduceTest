@@ -309,9 +309,14 @@ func doReduceDriver(
 				owner := ring.LocateKey([]byte(dataKey))
 				log.Printf("Located owner %s for key \"%s\"", owner.String(), dataKey)
 				redisClient := redisClients[owner.String()]
-				var err error
-				encodedResult, err = redisClient.Get(dataKey).Result()
+				res, err := redisClient.Get(dataKey).Result()
 
+				if err == redis.Nil {
+					log.Printf("WARNING: Key \"%s\" does not exist in intermediate storage.\n", dataKey)
+					log.Printf("WARNING: Skipping key \"%s\"...\n", dataKey)
+					// In theory, there was just no task mapped to this Reducer for this value of i. So just move on...
+					break
+				}
 				if err != nil {
 					maxDuration := (2 << uint(currentAttempt)) - 1
 					duration := rand.Intn(maxDuration + 1)
@@ -319,6 +324,7 @@ func doReduceDriver(
 					time.Sleep(time.Duration(duration) * time.Millisecond)
 				} else {
 					ok = true
+					encodedResult = []byte(res)
 				}
 			} else {
 				// IOHERE - This is a read (dataKey is the key, it is a string).
