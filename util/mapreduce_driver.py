@@ -1010,7 +1010,7 @@ This will download all of the metadata to a folder MapReduceProjectRoot/util/IOD
 # mrd.update_lambdas(worker_ips + [client_ip])
 # mrd.update_lambdas_prefixed(worker_ips + [client_ip], first_number = start_lambda_prefix)
 # mrd.update_lambdas(worker_ips) # Workers only, so we can do manually on client to see progress.
-# mrd.update_lambdas_prefixed(worker_ips) # Workers only, so we can do manually on client to see progress.
+# mrd.update_lambdas_prefixed(worker_ips, first_number = start_lambda_prefix) # Workers only, so we can do manually on client to see progress.
 
 # ====================
 # Launching Workloads
@@ -1156,6 +1156,7 @@ if __name__ == "__main__":
 # go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 15 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.116.159:6378 -storageIps 10.0.84.102:6378 -chunkThreshold 512000000
 
 # Six-node SORT Commands ** REMEMBER TO CHANGE -nReduce PARAMETER **
+
 # 1 MB
 # go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.107.175:6378 -storageIps 10.0.103.112:6378 -storageIps 10.0.119.161:6378 -storageIps 10.0.126.226:6378 -storageIps 10.0.113.151:6378 -storageIps 10.0.102.40:6378
 # 100 MB

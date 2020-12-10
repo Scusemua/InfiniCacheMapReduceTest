@@ -117,16 +117,17 @@ type IORecord struct {
 // processed, and the value is the file's contents. The return value
 // should be a slice of key/value pairs, each represented by a
 // mapreduce.KeyValue.
-func mapF(document string, value string) (res []KeyValue) {
+func mapF(document string, value string) []KeyValue {
+	res := make([]KeyValue, 0, 50000000) // Preallocate very large array...
 	for _, s := range strings.FieldsFunc(value, func(r rune) bool {
-		if !unicode.IsLetter(r) {
+		if !unicode.IsLetter(r) && !unicode.IsNumber(r) {
 			return true
 		}
 		return false
 	}) {
 		res = append(res, KeyValue{s, "1"})
 
-		if len(res)%500 == 0 {
+		if len(res)%1000000 == 0 {
 			log.Printf("Identified %d words so far.\n", len(res))
 		}
 	}
