@@ -217,7 +217,7 @@ func readExponentialBackoff(key string, cli *client.Client, usePocket bool) ([]b
 			readAllCloser, ok = cli.Get(key)
 		} else {
 			owner := ring.LocateKey([]byte(key))
-			log.Printf("Located owner %s for key \"%s\"", owner.String(), k)
+			log.Printf("Located owner %s for key \"%s\"", owner.String(), key)
 			redisClient := redisClients[owner.String()]
 
 			res, err := redisClient.Get(key).Result()
@@ -225,7 +225,7 @@ func readExponentialBackoff(key string, cli *client.Client, usePocket bool) ([]b
 			if err != nil {
 				maxDuration := (2 << uint(current_attempt)) - 1
 				duration := rand.Intn(maxDuration + 1)
-				log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
+				log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", key, duration)
 				time.Sleep(time.Duration(duration) * time.Millisecond)
 			} else {
 				ok = true
@@ -248,7 +248,7 @@ func readExponentialBackoff(key string, cli *client.Client, usePocket bool) ([]b
 	}
 
 	if !success || readAllCloser == nil {
-		log.Printf("ERROR: Storage encountered exception for key \"%s\".\n", p)
+		log.Printf("ERROR: Storage encountered exception for key \"%s\".\n", key)
 		log.Fatal("Cannot create sorted file if data is missing.")
 	}
 
