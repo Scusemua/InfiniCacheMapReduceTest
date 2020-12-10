@@ -14,6 +14,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/gob"
 
@@ -68,6 +69,7 @@ var poolCreated = false
 
 var poolLock = &sync.Mutex{}
 
+var ctx = context.Background()
 var clientPool *serverless.Pool
 
 func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []string, clientPoolCapacity int) {

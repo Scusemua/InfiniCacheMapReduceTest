@@ -14,6 +14,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 
 	//"encoding/json"
@@ -47,6 +48,7 @@ var clientCreated = false // Has this InfiniStore client been created yet?
 var clientDialed = false  // Have we called the client's Dial function yet?
 var poolCreated = false
 
+var ctx = context.Background()
 var poolLock = &sync.Mutex{}
 var clientPool *serverless.Pool
 
