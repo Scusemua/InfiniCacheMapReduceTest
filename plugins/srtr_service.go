@@ -8,6 +8,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/gob"
 
@@ -18,7 +19,7 @@ import (
 
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/buraksezer/consistent"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 
 	"github.com/mason-leap-lab/infinicache/client"
 	//infinicache "github.com/mason-leap-lab/infinicache/client"
@@ -91,6 +92,7 @@ var poolCreated = false
 var poolLock = &sync.Mutex{}
 
 var clientPool *serverless.Pool
+var ctx = context.Background()
 
 func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []string, clientPoolCapacity int) {
 	clientPool = serverless.InitPool(&serverless.Pool{
@@ -305,7 +307,7 @@ func doReduceDriver(
 				owner := ring.LocateKey([]byte(dataKey))
 				log.Printf("Located owner %s for key \"%s\"", owner.String(), dataKey)
 				redisClient := redisClients[owner.String()]
-				res, err := redisClient.Get(dataKey).Result()
+				res, err := redisClient.Get(ctx, dataKey).Result()
 
 				if err == redis.Nil {
 					log.Printf("WARNING: Key \"%s\" does not exist in intermediate storage.\n", dataKey)
@@ -576,7 +578,7 @@ func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client, 
 			owner := ring.LocateKey([]byte(key))
 			log.Printf("Located owner %s for key \"%s\"", owner.String(), key)
 			redisClient := redisClients[owner.String()]
-			redisClient.Set(key, value, 0)
+			redisClient.Set(ctx, key, value, 0)
 		} else {
 			// IOHERE - This is a write (k is the key, it is a string, encodedResult is the value, it is []byte).
 			_, ok = ecClient.EcSet(key, value)

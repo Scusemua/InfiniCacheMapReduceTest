@@ -23,7 +23,7 @@ import (
 
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"github.com/buraksezer/consistent"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 
 	"github.com/mason-leap-lab/infinicache/client"
 	//infinicache "github.com/mason-leap-lab/infinicache/client"

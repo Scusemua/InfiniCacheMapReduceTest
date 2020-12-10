@@ -3,6 +3,7 @@ package serverless
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/md5"
 
 	//"encoding/json"
@@ -18,7 +19,7 @@ import (
 	"strconv"
 
 	"github.com/buraksezer/consistent"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 
 	"github.com/mason-leap-lab/infinicache/client"
 
@@ -29,6 +30,7 @@ import (
 var redisClients map[string]*redis.Client
 var members []consistent.Member
 var ring *consistent.Consistent
+var ctx = context.Background()
 
 func InitHashRing(storageIps []string) {
 	redisClients = make(map[string]*redis.Client)
@@ -220,9 +222,11 @@ func readExponentialBackoff(key string, cli *client.Client, usePocket bool) ([]b
 			log.Printf("Located owner %s for key \"%s\"", owner.String(), key)
 			redisClient := redisClients[owner.String()]
 
-			res, err := redisClient.Get(key).Result()
+			res, err := redisClient.Get(ctx, key).Result()
 
-			if err != nil {
+			if err == redis.Nil {
+				log.Fatal("ERROR: Key \"%s\" does not exist...\n", key)
+			} else if err != nil {
 				maxDuration := (2 << uint(current_attempt)) - 1
 				duration := rand.Intn(maxDuration + 1)
 				log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", key, duration)

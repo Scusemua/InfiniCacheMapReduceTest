@@ -7,6 +7,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 
 	//"encoding/json"
@@ -19,7 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/buraksezer/consistent"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 
 	//"github.com/Scusemua/PythonGoBridge"
 	"io/ioutil"
@@ -57,6 +58,7 @@ func InitPool(dataShard int, parityShard int, ecMaxGoroutine int, addrArr []stri
 	}, clientPoolCapacity, serverless.PoolForStrictConcurrency)
 }
 
+var ctx = context.Background()
 var redisClients map[string]*redis.Client
 var members []consistent.Member
 var ring *consistent.Consistent
@@ -261,7 +263,7 @@ func doMap(
 				owner := ring.LocateKey([]byte(k))
 				log.Printf("Located owner %s for key \"%s\"", owner.String(), k)
 				redisClient := redisClients[owner.String()]
-				redisClient.Set(k, marshalled_result, 0)
+				redisClient.Set(ctx, k, marshalled_result, 0)
 			} else {
 				// IOHERE - This is a write (k is the key, it is a string, encoded_result is the value, it is []byte).
 				_, ok = cli.EcSet(k, marshalled_result)

@@ -28,7 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/buraksezer/consistent"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 
 	//"github.com/go-redis/redis/v7"
 	"io/ioutil"
