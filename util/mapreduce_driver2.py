@@ -1154,6 +1154,9 @@ if __name__ == "__main__":
 # Temp
 # go run client.go -driverHostname 10.0.116.159:1232 -jobName srt -nReduce 15 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -dataShards 10 -parityShards 2 -maxGoRoutines 32 -storageIps 10.0.116.159:6378 -storageIps 10.0.84.102:6378 -chunkThreshold 512000000
 
+# Redis 
+# go run client.go -driverHostname 10.0.116.159:1232 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -storageIps "infinistore-tests.fvya82.ng.0001.use1.cache.amazonaws.com"
+
 # Six-node SORT Commands ** REMEMBER TO CHANGE -nReduce PARAMETER **
 # 1 MB
 # go run client.go -driverHostname 10.0.116.159:1232 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/1MB_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.96.61:6378 -storageIps 10.0.124.238:6378 -storageIps 10.0.103.211:6378 -storageIps 10.0.115.115:6378 -storageIps 10.0.99.85:6378 -storageIps 10.0.114.230:6378

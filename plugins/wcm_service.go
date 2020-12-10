@@ -82,9 +82,9 @@ func InitHashRing(storageIps []string) {
 	ring := consistent.New(nil, cfg)
 
 	for _, ip := range storageIps {
-		log.Println("Creating Redis client for Redis @ %s:6378", ip)
+		log.Println("Creating Redis client for Redis @ %s", ip)
 		redisClient := redis.NewClient(&redis.Options{
-			Addr:         fmt.Sprintf("%s:6378", ip),
+			Addr:         fmt.Sprintf("%s", ip),
 			Password:     "",
 			DB:           0,
 			ReadTimeout:  30 * time.Second,
