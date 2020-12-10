@@ -578,7 +578,13 @@ func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client, 
 			owner := ring.LocateKey([]byte(key))
 			log.Printf("Located owner %s for key \"%s\"", owner.String(), key)
 			redisClient := redisClients[owner.String()]
-			redisClient.Set(ctx, key, value, 0)
+			redisErr := redisClient.Set(ctx, key, value, 0).Err()
+
+			if redisErr != nil {
+				ok = false
+			} else {
+				ok = true
+			}
 		} else {
 			// IOHERE - This is a write (k is the key, it is a string, encodedResult is the value, it is []byte).
 			_, ok = ecClient.EcSet(key, value)

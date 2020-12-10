@@ -266,7 +266,13 @@ func doMap(
 				owner := ring.LocateKey([]byte(k))
 				log.Printf("Located owner %s for key \"%s\"", owner.String(), k)
 				redisClient := redisClients[owner.String()]
-				redisClient.Set(ctx, k, marshalled_result, 0)
+				redisErr := redisClient.Set(ctx, k, marshalled_result, 0).Err()
+
+				if redisErr != nil {
+					ok = false
+				} else {
+					ok = true
+				}
 			} else {
 				// IOHERE - This is a write (k is the key, it is a string, encoded_result is the value, it is []byte).
 				_, ok = cli.EcSet(k, marshalled_result)
