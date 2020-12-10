@@ -420,7 +420,7 @@ func doReduceDriver(
 			// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 			// I put it in its own function bc there are several write calls in this file and I did not
 			// wanna reuse the same code in each location.
-			success, writeStart := exponentialBackoffWrite(chunk_key, chunk, cli)
+			success, writeStart := exponentialBackoffWrite(chunk_key, chunk, cli, usePocket)
 			//success := exponentialBackoffWrite(chunk_key, chunk)
 
 			writeEnd := time.Now()
@@ -448,7 +448,7 @@ func doReduceDriver(
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
 		// wanna reuse the same code in each location.
-		success, writeStart := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli)
+		success, writeStart := exponentialBackoffWrite(fileName, numberOfChunksSerialized, cli, usePocket)
 
 		rec := IORecord{TaskNum: reduceTaskNum, RedisKey: fileName, Bytes: len(numberOfChunksSerialized), Start: writeStart.UnixNano(), End: time.Now().UnixNano()}
 		ioRecords = append(ioRecords, rec)
@@ -464,7 +464,7 @@ func doReduceDriver(
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
 		// wanna reuse the same code in each location.
-		success, writeStart := exponentialBackoffWrite(fileName, marshalled_result, cli)
+		success, writeStart := exponentialBackoffWrite(fileName, marshalled_result, cli, usePocket)
 		//success := exponentialBackoffWrite(fileName, marshalled_result)
 		if !success {
 			log.Fatal("ERROR while storing value in storage with key \"", fileName, "\"")
@@ -490,7 +490,7 @@ func doReduceDriver(
 }
 
 // Encapsulates a write operation. Currently, this is an InfiniStore write operation.
-func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) (bool, time.Time) {
+func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client, usePocket bool) (bool, time.Time) {
 	//func exponentialBackoffWrite(key string, value []byte) bool {
 	success := false
 	var writeStart time.Time
@@ -499,7 +499,22 @@ func exponentialBackoffWrite(key string, value []byte, ecClient *client.Client) 
 		// Call the EcSet InfiniStore function to store 'value' at key 'key'.
 		writeStart = time.Now()
 		// IOHERE - This is a write (key is the key, it is a string, value is the value, it is []byte).
-		_, ok := ecClient.EcSet(key, value)
+		var ok bool
+		if usePocket {
+			owner := ring.LocateKey([]byte(key))
+			log.Printf("Located owner %s for key \"%s\"", owner.String(), key)
+			redisClient := redisClients[owner.String()]
+			redisErr := redisClient.Set(ctx, key, value, 0).Err()
+
+			if redisErr != nil {
+				ok = false
+			} else {
+				ok = true
+			}
+		} else {
+			// IOHERE - This is a write (k is the key, it is a string, encodedResult is the value, it is []byte).
+			_, ok = ecClient.EcSet(key, value)
+		}
 
 		if !ok {
 			max_duration := (2 << uint(currentAttempt+4)) - 1
