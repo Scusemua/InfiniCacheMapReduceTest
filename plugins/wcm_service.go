@@ -240,7 +240,10 @@ func doMap(
 	//cli.Dial(storageIPs)
 
 	log.Printf("Mapper getting storage client from client pool now...\n")
-	cli := clientPool.Get().(*client.Client)
+	var cli *client.Client
+	if !usePocket {
+		cli = clientPool.Get().(*client.Client)
+	}
 
 	log.Println("Mapper successfully created storage client.")
 
@@ -283,7 +286,22 @@ func doMap(
 			log.Printf("md5 of marshalled result for key \"%s\": %x\n", k, md5.Sum(marshalled_result))
 			writeStart = time.Now()
 			// IOHERE - This is a write (k is the key, it is a string, marshalled_result is the value, it is []byte).
-			_, ok := cli.EcSet(k, marshalled_result)
+			var ok bool
+			if usePocket {
+				owner := ring.LocateKey([]byte(k))
+				log.Printf("Located owner %s for key \"%s\"", owner.String(), k)
+				redisClient := redisClients[owner.String()]
+				redisErr := redisClient.Set(ctx, k, marshalled_result, 0).Err()
+
+				if redisErr != nil {
+					ok = false
+				} else {
+					ok = true
+				}
+			} else {
+				// IOHERE - This is a write (k is the key, it is a string, encoded_result is the value, it is []byte).
+				_, ok = cli.EcSet(k, marshalled_result)
+			}
 
 			if !ok {
 				max_duration := (2 << uint(current_attempt+4)) - 1
@@ -320,7 +338,9 @@ func doMap(
 		checkError(err)
 	}
 
-	clientPool.Put(cli)
+	if !usePocket {
+		clientPool.Put(cli)
+	}
 }
 
 // We supply you an ihash function to help with mapping of a given
