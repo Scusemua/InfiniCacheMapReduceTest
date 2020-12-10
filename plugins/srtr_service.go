@@ -309,6 +309,7 @@ func doReduceDriver(
 				owner := ring.LocateKey([]byte(dataKey))
 				log.Printf("Located owner %s for key \"%s\"", owner.String(), dataKey)
 				redisClient := redisClients[owner.String()]
+				var err error
 				encodedResult, err = redisClient.Get(dataKey).Result()
 
 				if err != nil {
@@ -356,6 +357,7 @@ func doReduceDriver(
 		// To get the data from the read, we call ReadAll() on the ReadAllCloser object. This is still
 		// InfiniStore specific. That's just how it works. After reading, we call Close().
 		if !usePocket {
+			var err error
 			encodedResult, err = readAllCloser.ReadAll()
 			readAllCloser.Close()
 			if err != nil {
