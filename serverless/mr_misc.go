@@ -17,11 +17,45 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/buraksezer/consistent"
+	"github.com/go-redis/redis"
+
 	"github.com/mason-leap-lab/infinicache/client"
 
 	//"strings"
 	"time"
 )
+
+var redisClients map[string]*redis.Client
+var members []consistent.Member
+var ring *consistent.Consistent
+
+func InitHashRing(storageIps []string) {
+	redisClients = make(map[string]*redis.Client)
+
+	cfg := consistent.Config{
+		PartitionCount:    7,
+		ReplicationFactor: 20,
+		Load:              1.25,
+		Hasher:            Hasher{},
+	}
+	ring := consistent.New(nil, cfg)
+
+	for _, ip := range storageIps {
+		log.Println("Creating Redis client for Redis @ %s:6378", ip)
+		redisClient := redis.NewClient(&redis.Options{
+			Addr:         fmt.Sprintf("%s:6378", ip),
+			Password:     "",
+			DB:           0,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 30 * time.Second,
+			MaxRetries:   3,
+		})
+		myMember := HashMember(ip)
+		ring.Add(myMember)
+		redisClients[ip] = redisClient
+	}
+}
 
 // merge combines the results of the many reduce jobs into a single
 // output file XXX use merge sort
@@ -45,13 +79,15 @@ func (drv *Driver) merge(
 	// 	MaxRetries:   3,
 	// })
 
-	// Create new InfiniStore client.
-	cli := client.NewClient(dataShards, parityShards, maxGoRoutines)
-	//var addrList = "127.0.0.1:6378"
-	//addrArr := strings.Split(addrList, ",")
-	//storageIps2 := []string{"10.0.109.88:6378", "10.0.121.202:6378"}
-	log.Printf("Creating storage client for IPs: %v\n", storageIps)
-	cli.Dial(storageIps)
+	var cli *client.Client
+	if !usePocket {
+		// Create new InfiniStore client.
+		cli = client.NewClient(dataShards, parityShards, maxGoRoutines)
+		log.Printf("Creating storage client for IPs: %v\n", storageIps)
+		cli.Dial(storageIps)
+	} else {
+		InitHashRing(storageIps)
+	}
 
 	kvs := make(map[string]string)
 	for i := 0; i < drv.nReduce; i++ {
@@ -60,26 +96,10 @@ func (drv *Driver) merge(
 
 		log.Printf("InfiniStore READ START. Key: \"%s\"\n", p)
 		start := time.Now()
-		reader, success := readExponentialBackoff(p, cli)
+		result, success := readExponentialBackoff(p, cli, usePocket)
 
-		//if err2 != nil {
 		if !success {
-			log.Printf("ERROR: Storage encountered exception for key \"%s\".\n", p)
-			log.Fatal("Cannot create sorted file if data is missing.")
-		}
-
-		if reader == nil {
-			log.Printf("WARNING: Key \"%s\" does not exist.\n", p)
-			log.Printf("Skipping for now...")
-			continue
-		}
-
-		result, err2 := reader.ReadAll()
-		reader.Close()
-
-		if err2 != nil {
-			log.Printf("ERROR: Storage encountered exception when calling ReadAll for key \"%s\"...\n", p)
-			log.Fatal(err2)
+			log.Fatal("Failed to retrieve data from storage for key \"%s\"\n", p)
 		}
 
 		firstReadDuration := time.Since(start)
@@ -117,14 +137,11 @@ func (drv *Driver) merge(
 
 					log.Printf("storage READ CHUNK START. Key: \"%s\", Chunk #: %d.\n", key, i)
 					chunkStart := time.Now()
-					reader, success := readExponentialBackoff(key, cli)
-					if reader == nil || !success {
+					res, success := readExponentialBackoff(key, cli, usePocket)
+					if !success {
 						log.Printf("ERROR: storage encountered exception for key \"%s\". This occurred while retrieving chunks.\n", key)
 					}
-					res, err2 := reader.ReadAll()
-					reader.Close()
 					readDuration := time.Since(chunkStart)
-					checkError(err2)
 
 					log.Printf("storage READ CHUNK END. Key: \"%s\", Chunk #: %d, Bytes read: %f, Time: %d ms, md5: %x\n",
 						key, i, float64(len(res))/float64(1e6), readDuration.Nanoseconds()/1e6, md5.Sum(res))
@@ -186,20 +203,40 @@ func (drv *Driver) merge(
 	file.Close()
 }
 
-func readExponentialBackoff(key string, cli *client.Client) (client.ReadAllCloser, bool) {
+func readExponentialBackoff(key string, cli *client.Client, usePocket bool) ([]byte, bool) {
 	var readAllCloser client.ReadAllCloser
+	var encodedResult []byte
 	var ok bool
 	success := false
 	// Exponential backoff.
 	for current_attempt := 0; current_attempt < MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for read to key \"%s\".\n", current_attempt, MaxAttemptsDuringBackoff, key)
-		// IOHERE - This is a read (key is the key, it is a string).
-		readAllCloser, ok = cli.Get(key)
+
+		if usePocket {
+			// IOHERE - This is a read (key is the key, it is a string).
+			readAllCloser, ok = cli.Get(key)
+		} else {
+			owner := ring.LocateKey([]byte(key))
+			log.Printf("Located owner %s for key \"%s\"", owner.String(), k)
+			redisClient := redisClients[owner.String()]
+
+			res, err := redisClient.Get(key).Result()
+
+			if err != nil {
+				maxDuration := (2 << uint(current_attempt)) - 1
+				duration := rand.Intn(maxDuration + 1)
+				log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", dataKey, duration)
+				time.Sleep(time.Duration(duration) * time.Millisecond)
+			} else {
+				ok = true
+				encodedResult = []byte(res)
+			}
+		}
 
 		// Check for failure, and backoff exponentially on-failure.
 		if !ok {
-			max_duration := (2 << uint(current_attempt)) - 1
-			duration := rand.Intn(max_duration + 1)
+			maxDuration := (2 << uint(current_attempt)) - 1
+			duration := rand.Intn(maxDuration + 1)
 			log.Printf("[ERROR] Failed to read key \"%s\". Backing off for %d ms.\n", key, duration)
 			time.Sleep(time.Duration(duration) * time.Millisecond)
 		} else {
@@ -210,5 +247,17 @@ func readExponentialBackoff(key string, cli *client.Client) (client.ReadAllClose
 		}
 	}
 
-	return readAllCloser, success
+	if !success || readAllCloser == nil {
+		log.Printf("ERROR: Storage encountered exception for key \"%s\".\n", p)
+		log.Fatal("Cannot create sorted file if data is missing.")
+	}
+
+	result, err2 := readAllCloser.ReadAll()
+	readAllCloser.Close()
+
+	if err2 != nil {
+		log.Fatal(err2)
+	}
+
+	return result, success
 }
