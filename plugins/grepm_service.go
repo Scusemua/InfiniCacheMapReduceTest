@@ -242,7 +242,7 @@ func doMap(
 	checkError(err)
 	defer ioData.Close()
 	for _, rec := range ioRecords {
-		_, err := ioData.WriteString(fmt.Sprintf("%v\n", rec))
+		_, err := ioData.WriteString(fmt.Sprintf("%d\t%s\t%d\t%v\t%v\n", rec.TaskNum, rec.RedisKey, rec.Bytes, rec.Start, rec.End))
 		checkError(err)
 	}
 
