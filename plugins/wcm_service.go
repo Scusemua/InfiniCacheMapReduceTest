@@ -195,6 +195,7 @@ func doMap(
 	dataShards int,
 	parityShards int,
 	maxGoRoutines int,
+	usePocket bool,
 ) {
 	var err error
 	var b []byte
