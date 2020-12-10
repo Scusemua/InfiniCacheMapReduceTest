@@ -1,4 +1,5 @@
 import argparse 
+import fileinput
 import os
 import pandas as pd
 
@@ -12,14 +13,50 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     root_dir = os.path.join(args.iodata_dir, args.prefix)
+    
+    srt_map = open(os.path.join(root_dir, "srt_map.csv"), "w")
+    srt_reduce = open(os.path.join(root_dir, "srt_reduce.csv"), "w")
+    wc_map = open(os.path.join(root_dir, "wc_map.csv"), "w")
+    wc_reduce = open(os.path.join(root_dir, "wc_reduce.csv"), "w")    
 
     for root, subdirs, files in os.walk(root_dir):
         print(files)
         for file in files:
             if args.job:
-                if not args.job in file:
-                    continue         
+                if not"wc" in file and not "srt" in file:
+                    continue
+                if file.endswith(".bak"):
+                    continue
             full_filepath = os.path.join(root, file)
+            # # Read in the file
+            # with open(full_filepath, 'r') as _file :
+            #     filedata = _file.read()
+
+            # # Replace the target string
+            #     filedata = filedata.replace('{', '')
+            #     filedata = filedata.replace('}', '')
+
+            # # Write the file out again
+            # with open(full_filepath, 'w') as _file:
+            #     _file.write(filedata)
             print("Processing file \"%s\"" % full_filepath)
-            df = pd.read_csv(full_filepath, sep = " ", header = None, names = ["TaskNumber", "TaskKey", "SizeBytes", "StartTime", "EndTime"])
-            print(df)
+            with open(full_filepath, 'r') as _file:
+                filedata = _file.read()
+                if "srt" in full_filepath:
+                    if "map" in full_filepath:
+                        srt_map.write(filedata)
+                    elif "reduce" in full_filepath:
+                        srt_reduce.write(filedata)
+                    else:
+                        print("Unknown file type: " + file)
+                elif "wc" in full_filepath:
+                    if "map" in full_filepath:
+                        wc_map.write(filedata)
+                    elif "reduce" in full_filepath:
+                        wc_reduce.write(filedata)
+                    else:
+                        print("Unknown file type: " + file)
+                else:
+                    print("Unknown job: " + file)
+            #df = pd.read_csv(full_filepath, delim_whitespace=True, header = None, names = ["TaskNumber", "TaskKey", "SizeBytes", "StartTime", "EndTime"])
+            #print(df)
