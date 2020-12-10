@@ -214,7 +214,7 @@ func readExponentialBackoff(key string, cli *client.Client, usePocket bool) ([]b
 	for current_attempt := 0; current_attempt < MaxAttemptsDuringBackoff; current_attempt++ {
 		log.Printf("Attempt %d/%d for read to key \"%s\".\n", current_attempt, MaxAttemptsDuringBackoff, key)
 
-		if usePocket {
+		if !usePocket {
 			// IOHERE - This is a read (key is the key, it is a string).
 			readAllCloser, ok = cli.Get(key)
 		} else {
