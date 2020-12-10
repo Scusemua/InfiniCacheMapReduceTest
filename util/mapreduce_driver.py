@@ -556,7 +556,7 @@ def pull_from_github_infinistore(ips, reset_first = False, key_path = KEYFILE_PA
     #else:
     execute_command(command, 2, get_pty = True, ips = ips, key_path = key_path)
 
-def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
+def launch_infinistore_proxies(ips, starting_lambda_prefix = 0, key_path = KEYFILE_PATH):
     """
     Launch the InfiniStore proxies on the VMs.
 
@@ -567,10 +567,11 @@ def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
     """
     prefix = datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M') + "/"
 
+    current_lambda_prefix = starting_lambda_prefix
     # Each proxy needs a slightly different command as each proxy uses different Lambdas.
     for i in range(0, len(ips)):
         ip = ips[i]
-        lambda_prefix = "CacheNode%d-" % i 
+        lambda_prefix = "CacheNode%d-" % current_lambda_prefix
         print("Assigning lambda prefix \"%s\" to proxy at ip %s." % (lambda_prefix, ip))
         #command = "cd {}/evaluation; export PATH=$PATH:/usr/local/go/bin;go run $PWD/../proxy/proxy.go -debug=true -prefix={} -lambda-prefix={} -disable-color >./log 2>&1 &".format(INFINISTORE_DIRECTORY, prefix, lambda_prefix)
         #command = "nohup go run {}/proxy/proxy.go -debug=true -prefix={} -lambda-prefix={} -disable-color </dev/null >{}/evaluation/log 2>&1 &".format(INFINISTORE_DIRECTORY, prefix, lambda_prefix, INFINISTORE_DIRECTORY)
@@ -580,6 +581,7 @@ def launch_infinistore_proxies(ips, key_path = KEYFILE_PATH):
         command = "launch_proxy_driver.sh \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\"" % (INFINISTORE_DIRECTORY, lambda_prefix, prefix, key_path, ip, "ubuntu")
         print("About to execute command:\n %s" % command)
         subprocess.run(command, shell=True)
+        current_lambda_prefix += 1
     return prefix
 
 def export_cloudwatch_logs(ips, prefix, start, end, key_path = KEYFILE_PATH):
@@ -908,14 +910,14 @@ def print_time():
     print(date_time)
     return date_time
 
-def launch_proxies_and_record_metadata(worker_ips : list, client_ip : str) -> (str, str):
+def launch_proxies_and_record_metadata(worker_ips : list, client_ip : str, starting_lambda_prefix = 0) -> (str, str):
     """
     This just calls launch_infinistore_proxies and returns a start time and prefix.
 
     Good for when you want to run an experiment.
     """
     start_time = print_time()
-    experiment_prefix = launch_infinistore_proxies(worker_ips + [client_ip])
+    experiment_prefix = launch_infinistore_proxies(worker_ips + [client_ip], starting_lambda_prefix = starting_lambda_prefix)
     print("experiment_prefix = " + str(experiment_prefix)) 
     return start_time, experiment_prefix   
 
@@ -1095,7 +1097,8 @@ if __name__ == "__main__":
     # experiment_prefix = mrd.launch_infinistore_proxies(worker_ips + [client_ip])
     # print("experiment_prefix = " + str(experiment_prefix))
     # This function does the same thing as the previous three lines. Just use this.
-    start_time, experiment_prefix = mrd.launch_proxies_and_record_metadata(worker_ips, client_ip)
+    start_time, experiment_prefix = mrd.launch_proxies_and_record_metadata(worker_ips, client_ip, starting_lambda_prefix = 0)
+    start_time, experiment_prefix = mrd.launch_proxies_and_record_metadata(worker_ips, client_ip, starting_lambda_prefix = 7)
 
     # ===============================================================================================
     # NOTE: I generally copy-and-paste these into a terminal session, so I leave the FULL paths here
@@ -1133,6 +1136,9 @@ if __name__ == "__main__":
     end_time = mrd.print_time()
 
 # ======================================================================================================
+# PRE-FORMATTED COMMANDS - Just copy-and-paste into Client VM to run.
+# Make sure to update the driverHostname to the private IPv4 of the EC2 VM.
+# 
 # This is a pre-formatted command to run the MapReduce client. I created a long-running EC2 VM (like one
 # that I stop and start but never terminate) so its private IPv4 is basically static. You use the VM's
 # private IPv4 for the 'driverHostname' parameter, along with port 1234.
@@ -1155,7 +1161,7 @@ if __name__ == "__main__":
 # 50 GB
 # go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/50GB_50Partitions_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.78.140:6378 -storageIps 10.0.82.103:6378 -storageIps 10.0.73.57:6378 -storageIps 10.0.95.241:6378 -storageIps 10.0.77.246:6378 -storageIps 10.0.77.240:6378
 # 100 GB
-# go run client.go -driverHostname 10.0.116.159:1234 -jobName srt -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.78.140:6378 -storageIps 10.0.82.103:6378 -storageIps 10.0.73.57:6378 -storageIps 10.0.95.241:6378 -storageIps 10.0.77.246:6378 -storageIps 10.0.77.240:6378
+# go run client.go -driverHostname 10.0.116.159:1234 -jobName wc -nReduce 90 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/100GB_50Partitions_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.78.140:6378 -storageIps 10.0.82.103:6378 -storageIps 10.0.73.57:6378 -storageIps 10.0.95.241:6378 -storageIps 10.0.77.246:6378 -storageIps 10.0.77.240:6378
 
 # go run client.go -driverHostname 10.0.116.159:1234 -jobName wc -nReduce 84 -sampleDataKey sample_data.dat -s3KeyFile /home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/util/50GB_50Partitions_S3Keys.txt -storageIps 10.0.116.159:6378 -storageIps 10.0.78.140:6378 -storageIps 10.0.82.103:6378 -storageIps 10.0.73.57:6378 -storageIps 10.0.95.241:6378 -storageIps 10.0.77.246:6378 -storageIps 10.0.77.240:6378
 
