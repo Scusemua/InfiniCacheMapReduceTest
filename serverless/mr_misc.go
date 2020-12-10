@@ -252,12 +252,15 @@ func readExponentialBackoff(key string, cli *client.Client, usePocket bool) ([]b
 		log.Fatal("Cannot create sorted file if data is missing.")
 	}
 
-	result, err2 := readAllCloser.ReadAll()
-	readAllCloser.Close()
+	if !usePocket {
+		var err2 error
+		encodedResult, err2 = readAllCloser.ReadAll()
+		readAllCloser.Close()
 
-	if err2 != nil {
-		log.Fatal(err2)
+		if err2 != nil {
+			log.Fatal(err2)
+		}
 	}
 
-	return result, success
+	return encodedResult, success
 }
