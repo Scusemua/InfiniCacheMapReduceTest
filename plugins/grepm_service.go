@@ -208,18 +208,8 @@ func doMap(
 			log.Printf("Attempt %d/%d for write to key \"%s\".\n", current_attempt, serverless.MaxAttemptsDuringBackoff, k)
 			log.Printf("md5 of marshalled result for key \"%s\": %x\n", k, md5.Sum(encoded_result))
 			writeStart = time.Now()
-
-			var ok bool
-
-			if usePocket {
-				owner := ring.LocateKey([]byte(k))
-				log.Printf("Located owner %s for key \"%s\"", owner.String(), k)
-				redisClient := redisClients[owner.String()]
-				redisClient.Set(k, encoded_result, 0)
-			} else {
-				// IOHERE - This is a write (k is the key, it is a string, encoded_result is the value, it is []byte).
-				_, ok = cli.EcSet(k, encoded_result)
-			}
+			// IOHERE - This is a write (k is the key, it is a string, encoded_result is the value, it is []byte).
+			_, ok := cli.EcSet(k, encoded_result)
 
 			if !ok {
 				max_duration := (2 << uint(current_attempt+4)) - 1
@@ -298,16 +288,11 @@ func (s grepmService) DoService(raw []byte) error {
 	}
 
 	poolLock.Lock()
-	if !poolCreated && !args.UsePocket {
+	if !poolCreated && args.UsePocket {
 		log.Printf("Initiating client pool now. Pool size = %d.\n", args.ClientPoolCapacity)
 		InitPool(args.DataShards, args.ParityShards, args.MaxGoroutines, args.StorageIPs, args.ClientPoolCapacity)
 
 		poolCreated = true
-	}
-
-	if !ringCreated && args.UsePocket {
-		log.Printf("Creating consistent hash ring now.\n")
-		InitHashRing(args.StorageIPs)
 	}
 	poolLock.Unlock()
 

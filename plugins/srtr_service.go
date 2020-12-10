@@ -373,7 +373,7 @@ func doReduceDriver(
 		log.Printf("[REDUCER #%d] Decoding data for key \"%s\" now...\n", reduceTaskNum, dataKey)
 		byte_buffer_res := bytes.NewBuffer(encodedResult)
 		gobDecoder := gob.NewDecoder(byte_buffer_res)
-		err = gobDecoder.Decode(&kvs)
+		err := gobDecoder.Decode(&kvs)
 
 		checkError(err)
 
