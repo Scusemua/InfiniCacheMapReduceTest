@@ -13,4 +13,4 @@ KEYPATH=$3
 mkdir iodata/$PREFIX
 mkdir iodata/$PREFIX$IP
 
-scp -i $KEYPATH -r ubuntu@$IP:/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main/IOData $PREFIX/$IP/
+scp -i $KEYPATH -r ubuntu@$IP:/home/ubuntu/project/src/github.com/Scusemua/InfiniCacheMapReduceTest/main/IOData ./iodata/$PREFIX$IP/

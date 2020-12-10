@@ -125,6 +125,10 @@ func mapF(document string, value string) (res []KeyValue) {
 		return false
 	}) {
 		res = append(res, KeyValue{s, "1"})
+
+		if len(res)%500 == 0 {
+			log.Printf("Identified %d words so far.\n", len(res))
+		}
 	}
 	return res
 }
