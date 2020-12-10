@@ -414,7 +414,7 @@ func doReduceDriver(
 	checkError(err2)
 	defer f2.Close()
 	for _, rec := range ioRecords {
-		_, err := ioData.WriteString(fmt.Sprintf("%d\t%s\t%d\t%v\t%v\n", rec.TaskNum, rec.RedisKey, rec.Bytes, rec.Start, rec.End))
+		_, err := f2.WriteString(fmt.Sprintf("%d\t%s\t%d\t%v\t%v\n", rec.TaskNum, rec.RedisKey, rec.Bytes, rec.Start, rec.End))
 		checkError(err2)
 	}
 
