@@ -261,16 +261,11 @@ func doReduceDriver(
 	// In theory, you would create whatever clients that Pocket uses here...
 	// =====================================================================
 
-	log.Printf("[REDUCER #%d] Getting storage client from client pool now...\n", reduceTaskNum)
-
-	// This creates a new InfiniStore EcClient object.
-	// cli := client.NewClient(dataShards, parityShards, maxEcGoroutines)
-	cli := clientPool.Get().(*client.Client)
-
-	// This effectively connects the InfiniStore EcClient to all of the proxies.
-	//cli.Dial(storageIps)
-
-	log.Printf("[REDUCER #%d] Successfully created storage client\n", reduceTaskNum)
+	if !usePocket {
+		log.Printf("[REDUCER #%d] Getting storage client from client pool now...\n", reduceTaskNum)
+		cli = clientPool.Get().(*client.Client)
+		log.Printf("[REDUCER #%d] Successfully created storage client\n", reduceTaskNum)
+	}
 
 	ioRecords := make([]IORecord, 0)
 
