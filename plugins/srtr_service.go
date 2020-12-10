@@ -560,7 +560,9 @@ func doReduceDriver(
 
 	// Close the client when we're done with it.
 	// cli.Close()
-	clientPool.Put(cli)
+	if !usePocket {
+		clientPool.Put(cli)
+	}
 }
 
 // Encapsulates a write operation. Currently, this is an InfiniStore write operation.

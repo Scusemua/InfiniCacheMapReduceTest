@@ -315,7 +315,9 @@ func doMap(
 
 	//redis_client.Close()
 	// cli.Close()
-	clientPool.Put(cli)
+	if !usePocket {
+		clientPool.Put(cli)
+	}
 }
 
 // We supply you an ihash function to help with mapping of a given
