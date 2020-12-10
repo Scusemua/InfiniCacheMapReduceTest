@@ -253,7 +253,7 @@ func readExponentialBackoff(key string, cli *client.Client, usePocket bool) ([]b
 		}
 	}
 
-	if !success || readAllCloser == nil {
+	if !success || (!usePocket && readAllCloser == nil) {
 		log.Printf("ERROR: Storage encountered exception for key \"%s\".\n", key)
 		log.Fatal("Cannot create sorted file if data is missing.")
 	}
