@@ -89,7 +89,7 @@ func InitHashRing(storageIps []string) {
 		ring.Add(myMember)
 		redisClients[ip] = redisClient
 
-		fmt.Printf("Created Redis client for IP %s\n" % ip)
+		fmt.Printf("Created Redis client for IP %s\n", ip)
 		fmt.Printf("Ping: %v\n", redisClient.Ping(ctx))
 	}
 }
