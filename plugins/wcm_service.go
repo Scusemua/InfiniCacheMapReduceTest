@@ -119,6 +119,8 @@ type IORecord struct {
 // mapreduce.KeyValue.
 func mapF(document string, value string) []KeyValue {
 	res := make([]KeyValue, 0, 50000000) // Preallocate very large array...
+	every := 100
+	thresh := 1000
 	for _, s := range strings.FieldsFunc(value, func(r rune) bool {
 		if !unicode.IsLetter(r) && !unicode.IsNumber(r) {
 			return true
@@ -127,8 +129,20 @@ func mapF(document string, value string) []KeyValue {
 	}) {
 		res = append(res, KeyValue{s, "1"})
 
-		if len(res)%1000000 == 0 {
+		if len(res)%every == 0 {
 			log.Printf("Identified %d words so far.\n", len(res))
+		}
+
+		// Every time the order of magnitude of the number of results increases,
+		// we decrease the frequency that we print something.
+		if len(res) >= thresh {
+			thresh = thresh * 10
+			every = every * 10
+
+			// Cap at printing every 5mil words.
+			if every >= 10000000 {
+				every = 5000000
+			}
 		}
 	}
 	return res
