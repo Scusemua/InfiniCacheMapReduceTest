@@ -261,6 +261,7 @@ func doReduceDriver(
 	// In theory, you would create whatever clients that Pocket uses here...
 	// =====================================================================
 
+	var cli *client.Client
 	if !usePocket {
 		log.Printf("[REDUCER #%d] Getting storage client from client pool now...\n", reduceTaskNum)
 		cli = clientPool.Get().(*client.Client)
