@@ -239,7 +239,7 @@ func doMap(
 		}
 
 		if !success {
-			log.Fatal("Failed to write key \"%s\" to storage in minimum number of attempts.")
+			log.Fatal("Failed to write key \"" + k + "\" to storage in maximum number of attempts.")
 		}
 
 		writeDuration := time.Since(writeStart)
