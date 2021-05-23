@@ -377,7 +377,7 @@ func doReduceDriver(
 		new_kv.Value = output
 
 		// Print a message every increment of 5%.
-		if i%five_percent == 0 {
+		if (five_percent > 0 && i%five_percent) == 0 {
 			percent_done := (float64(i) / float64(max)) * 100
 			log.Printf("Completed %f%% (%d/%d) of REDUCE operations.\n", percent_done, i, max)
 		}

@@ -910,7 +910,7 @@ def print_time():
     print(date_time)
     return date_time
 
-def launch_proxies_and_record_metadata(worker_ips : list, client_ip : str, starting_lambda_prefix = 0) -> (str, str):
+def launch_proxies_and_record_metadata(worker_ips : list, client_ip : str, starting_lambda_prefix = 0):
     """
     This just calls launch_infinistore_proxies and returns a start time and prefix.
 

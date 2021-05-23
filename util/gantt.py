@@ -51,15 +51,17 @@ if __name__ == "__main__":
       reduce_lines = f.readlines()
    
    data = dict()
-   
+
    start_times = list()
    sizes = set()
    print("Processing map data...")
    df = []
+   count = 1
    for line in map_lines:
-      line = line.replace('}', '')
-      line = line.replace('{', '')
+      count += 1
       splits = line.split(" ")
+      if len(splits) == 1:
+         splits = line.split("\t")
       task_num = splits[0]
       redis_key = splits[1]
       bytes_written = float(splits[2])
@@ -102,6 +104,8 @@ if __name__ == "__main__":
          Complete = bytes_read)
       df.append(var) 
       
+      if redis_key not in data:
+         continue
       d = data[redis_key]
       
       entry = Entry(d["start"], end, d["size"])
@@ -111,7 +115,7 @@ if __name__ == "__main__":
    time_series = dict()
    
    diff = end_times[-1] - start_times[0]
-   granularity = diff / 100 
+   granularity = diff / 1000
    
    t = start_times[0]
    while t < end_times[-1]:
