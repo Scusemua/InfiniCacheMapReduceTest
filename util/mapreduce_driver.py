@@ -773,7 +773,7 @@ def update_lambdas_prefixed(ips : list, prefix = "CacheNode", first_number = 0, 
     for i in range(0, len(ips)):
         ip = ips[i]
         lambda_prefix = prefix + "{}-".format(num)
-        command = "cd {}/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {} {}".format(INFINISTORE_DIRECTORY, random.randint(600, 650), lambda_prefix, code)
+        command = "cd {}/deploy; export PATH=$PATH:/usr/local/go/bin; yes | ./update_function.sh {} {} {}".format(INFINISTORE_DIRECTORY, random.randint(600, 650), lambda_prefix, code)
         print("Full command: {}".format(command))
         execute_command(
             command = command,
@@ -840,7 +840,7 @@ def update_lambdas(ips : list, key_path = KEYFILE_PATH):
 
     I usually just use update_lambdas_prefixed.
     """
-    command = "cd {}/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {}".format(INFINISTORE_DIRECTORY, random.randint(600, 900))
+    command = "cd {}/deploy; export PATH=$PATH:/usr/local/go/bin; yes | ./update_function.sh {}".format(INFINISTORE_DIRECTORY, random.randint(600, 900))
     print("Full command: {}".format(command))
     execute_command(
         command = command,
