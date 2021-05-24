@@ -17,6 +17,8 @@ import time
 import importlib
 rl = importlib.reload
 
+next_timeout = 600
+
 """
 This file contains scripts that I use to orchestrate workloads on remote clusters/virtual machines.
 
@@ -757,7 +759,7 @@ def launch_workers(
     #     get_pty = True 
     # )
 
-def update_lambdas_prefixed(ips : list, prefix = "CacheNode", first_number = 0, key_path = KEYFILE_PATH, update_code = False):
+def update_lambdas_prefixed(ips : list, prefix = "CacheNode", first_number = 0, key_path = KEYFILE_PATH, update_code = False, timeout = -1):
     """
     This executes the ./update_function.sh InfiniStore script on each of the VMs specified by their
     IP address.
@@ -773,6 +775,8 @@ def update_lambdas_prefixed(ips : list, prefix = "CacheNode", first_number = 0, 
     "<BASE_PREFIX><NUMBER>-". 
 
     This passes a random integer (currently between 60 and 120) for the timeout for the Lambda functions.
+
+    Return the recommended value for the next timeout.
     """
     num = first_number
     code = ""
@@ -780,10 +784,13 @@ def update_lambdas_prefixed(ips : list, prefix = "CacheNode", first_number = 0, 
     if update_code:
         code = "-code "
 
+    if timeout == -1:
+        timeout = random.randint(600, 1000)
+
     for i in range(0, len(ips)):
         ip = ips[i]
         lambda_prefix = prefix + "{}-".format(num)
-        command = "cd {}/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {} {}".format(INFINISTORE_DIRECTORY, random.randint(600, 650), lambda_prefix, code)
+        command = "cd {}/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {} {}".format(INFINISTORE_DIRECTORY, timeout, lambda_prefix, code)
         print("Full command: {}".format(command))
         execute_command(
             command = command,
@@ -793,6 +800,15 @@ def update_lambdas_prefixed(ips : list, prefix = "CacheNode", first_number = 0, 
             get_pty = True 
         )
         num += 1
+    
+    # Randomly recommend 50 above or 50 below the last-used timeout value. We only recommend an increased
+    # timeout if the current timeout is 950 or less. If the timeout is greater than 950, we'll recommend
+    # decreasing it. Additionally, we will ALWAYS recommend increasing the timeout if the current timeout
+    # is less than or equal to 600.
+    if timeout <= 600 or (random.random() >= 0.50 and timeout <= 950):
+        return timeout + 50 # Jingyuan recommended 50 as difference for timeout.
+    else:
+        return timeout - 50 # Jingyuan recommended 50 as difference for timeout.
 
 def retrieve_remote_log(public_ip : str, private_ip : str, port : int, key_path = KEYFILE_PATH):
     """
@@ -1024,11 +1040,16 @@ This will download all of the metadata to a folder MapReduceProjectRoot/util/IOD
 # mrd.build_mapreduce(worker_ips + [client_ip])
 # mrd.build_infinistore(worker_ips + [client_ip])
 # mrd.update_lambdas(worker_ips + [client_ip])
-# mrd.update_lambdas_prefixed(worker_ips + [client_ip], update_code = False)
-# mrd.update_lambdas_prefixed(worker_ips + [client_ip], update_code = True)
 # mrd.update_lambdas(worker_ips) # Workers only, so we can do manually on client to see progress.
-# mrd.update_lambdas_prefixed(worker_ips, update_code = False) # Workers only, so we can do manually on client to see progress.
-# mrd.update_lambdas_prefixed(worker_ips, update_code = True) # Workers only, so we can do manually on client to see progress.
+#
+# next_timeout = mrd.update_lambdas_prefixed(worker_ips + [client_ip], update_code = False, timeout = next_timeout)
+# next_timeout = mrd.update_lambdas_prefixed(worker_ips + [client_ip], update_code = True, timeout = next_timeout)
+#
+# Workers only, so we can do manually on client to see progress.
+# next_timeout = mrd.update_lambdas_prefixed(worker_ips, update_code = False, timeout = next_timeout) 
+#
+# Workers only, so we can do manually on client to see progress.
+# next_timeout = mrd.update_lambdas_prefixed(worker_ips, update_code = True, timeout = next_timeout) 
 
 # ====================
 # Launching Workloads
