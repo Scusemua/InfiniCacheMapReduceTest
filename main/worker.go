@@ -223,7 +223,7 @@ func main() {
 
 	filename := "WorkerLog-" + string(wk.address)
 	f, err := os.OpenFile(filename+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	serverless.logCreate(filename)
+	serverless.LogCreate(filename)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}

@@ -12,7 +12,7 @@ import (
 const debugEnabled = true
 
 //logCreate create the nanoLog
-func logCreate(filename string) error {
+func LogCreate(filename string) error {
 	// Set up nanoLog writer
 	path := filename + "_playback.clog"
 	nanoLogout, err := os.Create(path)
