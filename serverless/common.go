@@ -2,7 +2,9 @@ package serverless
 
 import (
 	"github.com/ScottMansfield/nanolog"
+	"github.com/mason-leap-lab/infinicache/client"
 	"log"
+	"os"
 	"strconv"
 )
 
