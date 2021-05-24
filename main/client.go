@@ -68,8 +68,8 @@ func main() {
 
 	drv := serverless.NewDriver(*driverHostname) // the 1st cmd-line argument: driver hostname and ip addr
 
-	filename := "Client-"+(*driverHostname)+"-"+(*jobName)+
-	f, err := os.OpenFile(filename + ".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	filename := "Client-" + (*driverHostname) + "-" + (*jobName)
+	f, err := os.OpenFile(filename+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	serverless.logCreate(filename)
 
 	if err != nil {
