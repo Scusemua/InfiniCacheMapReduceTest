@@ -26,7 +26,7 @@ echo "USERNAME = $USERNAME"
 
 # Old command:
 # SSH_COMMAND="cd $INFINISTORE_ROOT_DIRECTORY/evaluation; export PATH=\$PATH:/usr/local/go/bin;go run \$PWD/../proxy/proxy.go -debug=true -prefix=$EXPERIMENTAL_PREFIX -lambda-prefix=$LAMBDA_PREFIX -disable-color >./log 2>&1 &"
-SSH_COMMAND="cd $INFINISTORE_ROOT_DIRECTORY/evaluation; make build; bin/proxy -debug=true -prefix=$EXPERIMENTAL_PREFIX -lambda-prefix=$LAMBDA_PREFIX -disable-color >./log 2>&1 &"
+SSH_COMMAND="cd $INFINISTORE_ROOT_DIRECTORY/evaluation; make build; bin/proxy -debug=true -prefix=$EXPERIMENTAL_PREFIX -lambda-prefix=$LAMBDA_PREFIX >./log 2>&1 &"
 
 echo "Preparing to execute the following command:"
 echo "$SSH_COMMAND"

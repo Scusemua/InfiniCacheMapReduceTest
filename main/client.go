@@ -68,7 +68,10 @@ func main() {
 
 	drv := serverless.NewDriver(*driverHostname) // the 1st cmd-line argument: driver hostname and ip addr
 
-	f, err := os.OpenFile("Client-"+(*driverHostname)+"-"+(*jobName)+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	filename := "Client-"+(*driverHostname)+"-"+(*jobName)+
+	f, err := os.OpenFile(filename + ".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	serverless.logCreate(filename)
+
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
@@ -95,9 +98,10 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	go drv.Run(*jobName, *s3KeyFile, *sampleDataKey, *nReduce, *dataShards, *parityShards, 
-		*maxGoRoutines, *pattern, *clientPoolCapacity, *chunkThreshold, *usePocket, 
+	go drv.Run(*jobName, *s3KeyFile, *sampleDataKey, *nReduce, *dataShards, *parityShards,
+		*maxGoRoutines, *pattern, *clientPoolCapacity, *chunkThreshold, *usePocket,
 		*numLambdasPocket, *capacityGbPocket, *peakMbpsPocket, *latencySensitivePocket, storageIps)
 
 	drv.Wait()
+	nanolog.Flush()
 }

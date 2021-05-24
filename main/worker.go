@@ -205,6 +205,7 @@ loop:
 		}
 	}
 	serverless.Debug("Worker: %v RPC server exit\n", wk.address)
+	nanolog.Flush()
 }
 
 // The main entrance of worker.go
@@ -220,7 +221,9 @@ func main() {
 	wk.shutdown = make(chan struct{})
 	wk.nTasks = 0
 
-	f, err := os.OpenFile("WorkerLog-"+string(wk.address)+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	filename := "WorkerLog-" + string(wk.address)
+	f, err := os.OpenFile(filename+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	serverless.logCreate(filename)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}

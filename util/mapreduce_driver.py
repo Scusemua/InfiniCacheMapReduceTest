@@ -610,6 +610,16 @@ def stop_infinistore_proxies(ips, key_path = KEYFILE_PATH):
     command = "cd %s/evaluation; make stop-server" % INFINISTORE_DIRECTORY
     execute_command(command, 1, get_pty = True, ips = ips, key_path = key_path)
 
+def kill_all_related_processes(
+    ips = None,
+    key_path = KEYFILE_PATH
+):
+    """
+    Kill both the proxies and the MapReduce processes.
+    """
+    kill_go_processes(ips = ips, key_path = key_path)
+    kill_proxies(ips = ips, key_path = key_path)
+
 # mrd.kill_go_processes(ips = worker_ips)
 # mrd.kill_go_processes(ips = worker_ips + [client_ip])
 # mrd.kill_go_processes(ips = [client_ip])
@@ -773,7 +783,7 @@ def update_lambdas_prefixed(ips : list, prefix = "CacheNode", first_number = 0, 
     for i in range(0, len(ips)):
         ip = ips[i]
         lambda_prefix = prefix + "{}-".format(num)
-        command = "cd {}/deploy; export PATH=$PATH:/usr/local/go/bin; yes | ./update_function.sh {} {} {}".format(INFINISTORE_DIRECTORY, random.randint(600, 650), lambda_prefix, code)
+        command = "cd {}/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {} {} {}".format(INFINISTORE_DIRECTORY, random.randint(600, 650), lambda_prefix, code)
         print("Full command: {}".format(command))
         execute_command(
             command = command,
@@ -840,7 +850,7 @@ def update_lambdas(ips : list, key_path = KEYFILE_PATH):
 
     I usually just use update_lambdas_prefixed.
     """
-    command = "cd {}/deploy; export PATH=$PATH:/usr/local/go/bin; yes | ./update_function.sh {}".format(INFINISTORE_DIRECTORY, random.randint(600, 900))
+    command = "cd {}/deploy; export PATH=$PATH:/usr/local/go/bin; ./update_function.sh {}".format(INFINISTORE_DIRECTORY, random.randint(600, 900))
     print("Full command: {}".format(command))
     execute_command(
         command = command,
@@ -999,6 +1009,7 @@ This will download all of the metadata to a folder MapReduceProjectRoot/util/IOD
 # mrd.clean_workers(worker_ips = worker_ips)
 # mrd.kill_proxies(ips = worker_ips + [client_ip])
 # mrd.kill_go_processes(ips = worker_ips + [client_ip])
+# mrd.kill_all_related_processes(ips = worker_ips + [client_ip])
 
 # ====================
 # Pulling from Github:
@@ -1189,5 +1200,5 @@ if __name__ == "__main__":
 # These are two hard-coded functions to start InfiniStore proxies. The first uses CacheNode0
 # while the second uses CacheNode1. This is just for debugging, as the prefix values are old/outdated.
 
-#go run $PWD/../proxy/proxy.go -debug=true -prefix=202011291702/ -lambda-prefix=CacheNode0- -disable-color >./log 2>&1
-#go run $PWD/../proxy/proxy.go -debug=true -prefix=202011291702/ -lambda-prefix=CacheNode1- -disable-color >./log 2>&1
+#go run $PWD/../proxy/proxy.go -debug=true -prefix=202105241032/ -lambda-prefix=CacheNode0- -disable-color >./log 2>&1
+#go run $PWD/../proxy/proxy.go -debug=true -prefix=202105241032/ -lambda-prefix=CacheNode1- -disable-color >./log 2>&1
