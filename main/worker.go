@@ -14,6 +14,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/ScottMansfield/nanolog"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"io"
 	"log"

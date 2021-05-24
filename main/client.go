@@ -15,6 +15,7 @@ package main
 
 import (
 	"flag"
+	"github.com/ScottMansfield/nanolog"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"io"
 	"log"
