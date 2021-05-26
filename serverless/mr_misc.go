@@ -81,7 +81,7 @@ func (drv *Driver) merge(
 		reader.Close()
 
 		// For debugging purposes, get the length of the result.
-		result_length = len(result)
+		result_length := len(result)
 
 		log.Printf("Stream length = %d, result length = %d. Key = \"%s\"\n", stream_length, result_length, p)
 
