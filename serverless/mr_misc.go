@@ -74,8 +74,20 @@ func (drv *Driver) merge(
 			continue
 		}
 
+		// For debugging purposes, get the length from the stream.
+		stream_length := reader.Len()
+
 		result, err2 := reader.ReadAll()
 		reader.Close()
+
+		// For debugging purposes, get the length of the result.
+		result_length = len(result)
+
+		log.Printf("Stream length = %d, result length = %d. Key = \"%s\"\n", stream_length, result_length, p)
+
+		if stream_length != result_length {
+			log.Printf("\n[WARNING] Stream and result lengths differ for key %s!\n", p)
+		}
 
 		if err2 != nil {
 			log.Printf("ERROR: Storage encountered exception when calling ReadAll for key \"%s\"...\n", p)
@@ -100,6 +112,7 @@ func (drv *Driver) merge(
 		// err := json.Unmarshal([]byte(result), &results)
 
 		if err != nil {
+
 			byte_buffer_res := bytes.NewBuffer(result)
 			gobDecoder := gob.NewDecoder(byte_buffer_res)
 			err = gobDecoder.Decode(&res_int)
