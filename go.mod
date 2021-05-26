@@ -2,6 +2,8 @@ module github.com/Scusemua/InfiniCacheMapReduceTest
 
 go 1.12
 
+replace github.com/mason-leap-lab/infinicache => ../../mason-leap-lab/infinicache
+
 require (
 	github.com/Scusemua/PythonGoBridge v0.0.0-20201208185307-5495b806ac76
 	github.com/aws/aws-sdk-go v1.31.1
