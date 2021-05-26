@@ -112,6 +112,7 @@ func (drv *Driver) merge(
 		// err := json.Unmarshal([]byte(result), &results)
 
 		if err != nil {
+			log.Printf("Obtained error when decoding to []KeyValue: %v", err)
 
 			byte_buffer_res := bytes.NewBuffer(result)
 			gobDecoder := gob.NewDecoder(byte_buffer_res)

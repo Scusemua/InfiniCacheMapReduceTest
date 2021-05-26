@@ -62,7 +62,7 @@ KEYFILE_PATH = "C:\\Users\\benrc\\.ssh\\CS484_Desktop.pem"
 INFINISTORE_BRANCH = "origin/config_ben"
 
 # This is the branch to use for the MapReduce framework.
-MAPREDUCE_BRANCH = "origin/pocket"
+MAPREDUCE_BRANCH = "origin/ecclient"
 
 def get_private_ips(region_name="us-east-1"):
     """

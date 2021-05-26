@@ -412,6 +412,7 @@ func doReduceDriver(
 
 	log.Printf("Completed reduce operations. Encoding the results now...\n")
 
+	// Encode the results list.
 	var byte_buffer bytes.Buffer
 	gobEncoder := gob.NewEncoder(&byte_buffer)
 	err := gobEncoder.Encode(results)
@@ -454,7 +455,7 @@ func doReduceDriver(
 			counter = counter + 1
 		}
 
-		// Encode the results list.
+		// Encode the number of chunks.
 		var byte_buffer bytes.Buffer
 		gobEncoder := gob.NewEncoder(&byte_buffer)
 		err3 := gobEncoder.Encode(num_chunks)
