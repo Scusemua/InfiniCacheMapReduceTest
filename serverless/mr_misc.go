@@ -84,7 +84,7 @@ func (drv *Driver) merge(
 
 		firstReadDuration := time.Since(start)
 
-		var res_int int // If wecoding to []KeyValue fails, we'll try to decode an int in case everything was chunked.
+		var res_int int // If encoding to []KeyValue fails, we'll try to decode an int in case everything was chunked.
 		results := make([]KeyValue, 0)
 
 		log.Println("Unmarshalling data retrieved from storage now...")

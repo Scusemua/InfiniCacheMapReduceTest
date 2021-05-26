@@ -362,12 +362,14 @@ func doReduceDriver(
 
 	fileName := serverless.MergeName(jobName, reduceTaskNum)
 
+	// Store all results in here.
 	results := make([]KeyValue, len(inputs), len(inputs))
 
 	// Calculate five percent of the inputs. We'll print an update every five percent
 	// during reduce operations (e.g., 0% done, 5% done, 10% done, ...., 90% done, 95% done, 100% done).
 	five_percent := int(float64(len(inputs)) * 0.05)
 
+	// Perform Reduce operations. Generate results. Store them in the list.
 	doReduce := func(k string, v []string, i int, max int) {
 		//log.Printf("[REDUCER #%d] Reduce %d/%d: key = \"%s\"...\n", reduceTaskNum, i, max, k)
 		output := reduceF(k, v)
@@ -451,6 +453,8 @@ func doReduceDriver(
 			ioRecords = append(ioRecords, rec)
 			counter = counter + 1
 		}
+
+		// Encode the results list.
 		var byte_buffer bytes.Buffer
 		gobEncoder := gob.NewEncoder(&byte_buffer)
 		err3 := gobEncoder.Encode(num_chunks)
@@ -479,8 +483,9 @@ func doReduceDriver(
 		// The exponentialBackoffWrite encapsulates the Set/Write procedure with exponential backoff.
 		// I put it in its own function bc there are several write calls in this file and I did not
 		// wanna reuse the same code in each location.
+		// Write the encoded results list to intermediate storage.
 		success, writeStart := exponentialBackoffWrite(fileName, marshalled_result, cli)
-		//success := exponentialBackoffWrite(fileName, marshalled_result)
+
 		if !success {
 			log.Fatal("ERROR while storing value in storage with key \"", fileName, "\"")
 		}
