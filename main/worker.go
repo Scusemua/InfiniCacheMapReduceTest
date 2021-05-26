@@ -14,7 +14,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/ScottMansfield/nanolog"
 	"github.com/Scusemua/InfiniCacheMapReduceTest/serverless"
 	"io"
 	"log"
@@ -171,6 +170,8 @@ func (wk *Worker) startRPCServer() {
 	defer wk.l.Close()
 	wk.register(wk.masterAddr)
 
+	serverless.LogCreate("WorkerLog-" + wk.address)
+
 	// DON'T MODIFY CODE BELOW
 	serverless.Debug("Worker: %v To start the RPC server...\n", wk.address)
 loop:
@@ -224,7 +225,6 @@ func main() {
 
 	filename := "WorkerLog-" + string(wk.address)
 	f, err := os.OpenFile(filename+".out", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	serverless.LogCreate(filename)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
